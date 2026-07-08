@@ -7,8 +7,10 @@ export default function Home() {
     <>
       <Navbar />
       <main>
-        <h2>Stop using boring timers for your product launch.</h2>
-        <h1>Create a CamelClock!</h1>
+        <div id="hero-text">
+          <h2>Stop using boring timers for your product launch.</h2>
+          <h1 id="hero-text-action">Create a CamelClock!</h1>
+        </div>
         <CamelClockBuilder />
       </main>
     </>

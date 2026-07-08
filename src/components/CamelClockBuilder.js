@@ -10,14 +10,10 @@ export default function CamelClockBuilder() {
 
     return (
         <div className="camel-builder">
-            <div className="canvas-wrapper nbtc">
-                <CamelClock scale={4} month={month} day={day} time={time} />
-            </div>
-
             <form className="camel-builder-form" onSubmit={(e) => e.preventDefault()}>
                 <label>
-                    Month
-                    <select value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+                    MONTH
+                    <select className="nbtc" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
                         <option value={0}>January</option>
                         <option value={1}>February</option>
                         <option value={2}>March</option>
@@ -34,8 +30,9 @@ export default function CamelClockBuilder() {
                 </label>
 
                 <label>
-                    Day
+                    DAY
                     <input 
+                        className="nbtc"
                         type="number" 
                         min="1" 
                         max="31" 
@@ -45,10 +42,18 @@ export default function CamelClockBuilder() {
                 </label>
 
                 <label>
-                    Time
-                    <input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
+                    TIME
+                    <input 
+                        className="nbtc"
+                        type="time" 
+                        value={time} 
+                        onChange={(e) => setTime(e.target.value)} />
                 </label>
             </form>
+
+            <div className="canvas-wrapper nbtc">
+                <CamelClock scale={8} month={month} day={day} time={time} />
+            </div>
         </div>
     );
 }

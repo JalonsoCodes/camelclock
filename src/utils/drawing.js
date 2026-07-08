@@ -1,4 +1,6 @@
-export function drawCamel(canvas, template, levels, scale) {
+import { eyeOne, eyeTwo, eyeThree, eyeFour } from "@/utils/grids";
+
+export function drawCamel(canvas, template, levels, eyeFrame, scale, primaryColour, secondaryColour) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -55,15 +57,24 @@ export function drawCamel(canvas, template, levels, scale) {
         startCol += humpWidth + humpSpacing;
     });
 
+    const eyeFrames = [eyeOne, eyeTwo, eyeThree, eyeFour];
+    const currentEye = eyeFrames[eyeFrame];
+
+    for (let r = 0; r < 2; r++) {
+        for (let c = 0; c < 2; c++) {
+            newCamel[13 + r][9 + c] = currentEye[r][c];
+        }
+    }
+
     for (let r = 0; r < newCamel.length; r++) {
         for (let c = 0; c < newCamel[0].length; c++) {
             const colourIndex = newCamel[r][c];
             if (colourIndex === 1) {
                 ctx.fillStyle = "#000000";
             } else if (colourIndex === 2) {
-                ctx.fillStyle = "#DBB279";
+                ctx.fillStyle = primaryColour;
             } else if (colourIndex === 3) {
-                ctx.fillStyle = "#8E652C";
+                ctx.fillStyle = secondaryColour;
             } else {
                 continue;
             }
