@@ -1,32 +1,39 @@
 import { eyeOne, eyeTwo, eyeThree, eyeFour } from "@/utils/grids";
 
-export function drawCamel(canvas, template, levels, eyeFrame, scale, primaryColour, secondaryColour) {
+export function calculateHumpMetrics(numHumps) {
+    const humpWidth = 10;
+    const humpSpacing = numHumps > 0 ? Math.floor(54 / numHumps) - humpWidth : 0;
+    
+    const startCol = 18 + Math.round((54 - (numHumps * humpWidth + (numHumps - 1) * humpSpacing)) / 2);
+    const humpsSpanWidth = numHumps * humpWidth + (numHumps - 1) * humpSpacing;
+    const endColSpacing = 77 - (startCol + humpsSpanWidth);
+
+    return { startCol, humpsSpanWidth, endColSpacing, humpWidth, humpSpacing };
+}
+
+export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const newCamel = template.map(row => [...row]);
+    const startRow = 24;
 
-    const startRow = 24
-    const humpWidth = 10
-    const numHumps = levels.length;
-    const humpSpacing = Math.floor(54 / numHumps) - humpWidth;
-    
-    let startCol = 18 + Math.round((54 - (numHumps * humpWidth + (numHumps - 1) * humpSpacing)) / 2);
+    const numHumps = levelNumbers.length;
+    let { startCol, humpWidth, humpSpacing } = calculateHumpMetrics(numHumps);
 
-    levels.forEach(level => {
-        const getHumpGrid = (level) => {
-            if (level === 0) {
+    levelNumbers.forEach(levelNum => {
+        const getHumpGrid = (levelNum) => {
+            if (levelNum === 0) {
                 return [
                     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
                 ];
-            } else if (level === 1) {
+            } else if (levelNum === 1) {
                 return [
                     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
                     [1, 1, 2, 2, 2, 2, 2, 2, 1, 1]
                 ];
-            } else if (level === 2) {
+            } else if (levelNum === 2) {
                 return [
                     [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
                     [0, 0, 1, 2, 2, 2, 2, 1, 0, 0],
@@ -37,7 +44,7 @@ export function drawCamel(canvas, template, levels, eyeFrame, scale, primaryColo
                     [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
                     [0, 0, 1, 2, 2, 2, 2, 1, 0, 0]
                 ]
-                for (let h = 0; h <= level - 3; h++) {
+                for (let h = 0; h <= levelNum - 3; h++) {
                     tempHump.push([0, 1, 2, 2, 2, 2, 2, 2, 1, 0]);
                 }
                 tempHump.push([1, 2, 2, 2, 2, 2, 2, 2, 2, 1]);
@@ -46,7 +53,7 @@ export function drawCamel(canvas, template, levels, eyeFrame, scale, primaryColo
             }
         }
 
-        const hump = getHumpGrid(level);
+        const hump = getHumpGrid(levelNum);
         const humpHeight = hump.length;
 
         for (let r = 0; r < humpHeight; r++) {
