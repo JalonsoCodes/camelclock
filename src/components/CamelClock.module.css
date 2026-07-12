@@ -32,7 +32,7 @@
     top: 50%;
     transform: translateX(-100%) translateY(-55%); 
     font-size: 1.2rem;
-    color: black;
+    color: var(--secondary-colour);
     white-space: normal;
     width: min-content;
     text-wrap: balance;
@@ -58,7 +58,7 @@
 }
 
 .label {
-    color: var(--secondary-colour);
+    color: black;
     font-size: 1rem;
     text-transform: uppercase;
 }
