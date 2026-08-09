@@ -1,5 +1,6 @@
 html {
   font-size: 62.5%;
+  scroll-behavior: smooth;
 }
 
 * {
@@ -98,6 +99,23 @@ button:hover {
   background-clip: text;
   color: transparent;
   filter: drop-shadow(4px 4px 0px black);
+}
+
+.typewriter-text {
+  color: var(--primary-colour);
+}
+
+.typewriter-cursor {
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .camel-builder {
@@ -213,5 +231,30 @@ input.colour-swatch::-webkit-color-swatch {
 }
 
 .canvas-wrapper {
+  background-color: white;
+}
+
+.embed-button {
+  width: 100%;
+  background-color: var(--secondary-colour);
+  font-size: 1.6rem;
+  font-weight: bold;
+  color: white;
+  padding: 1.2rem;
+  height: 4.8rem;
+}
+
+#solutions {
+  margin-top: 12.0rem;
+}
+
+.solutions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4.0rem;
+  margin-top: 4.0rem;
+}
+
+.solutions-cell {
   background-color: white;
 }

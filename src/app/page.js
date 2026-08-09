@@ -1,6 +1,8 @@
 import Navbar from "@/components/Navbar";
 import CamelClockBuilder from "@/components/CamelClockBuilder";
 import CamelClock from "@/components/CamelClock";
+import Typewriter from "@/components/Typewriter";
+import Solutions from "@/components/Solutions";
 
 export default function Home() {
   return (
@@ -8,11 +10,16 @@ export default function Home() {
       <Navbar />
       <main>
         <div id="hero-text">
-          <h2>Stop using a boring timer for your product launch.</h2>
+          <h2>
+            Stop using a boring timer for your{" "}
+            <Typewriter words={["product launch", "limited-time promotion", "unmissable event"]} />
+            .
+          </h2>
           <h1 id="hero-text-action">Create a CamelClock!</h1>
           <h2>The integrated and stylish Countdown + Waitlist</h2>
         </div>
         <CamelClockBuilder />
+        <Solutions />
       </main>
     </>
   )

@@ -142,7 +142,7 @@ export default function CamelClock({ title, month, day, time, introText, primary
     const totalCols = camelTemplate[0].length;
 
     return (
-        <div ref={containerRef} className={styles.clockContainer}>
+        <div ref={containerRef} className={styles.clockContainer} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour }}>
             <h2 className={styles.clockTitle}>{title}</h2>
             
             <div className={styles.wrapper}>

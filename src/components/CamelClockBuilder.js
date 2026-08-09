@@ -155,6 +155,10 @@ export default function CamelClockBuilder() {
                         </div>
                     </label>
                 </div>
+
+                <button className="embed-button" type="button">
+                    Embed on your site
+                </button>
             </form>
 
             <div className="canvas-wrapper nbtc">
