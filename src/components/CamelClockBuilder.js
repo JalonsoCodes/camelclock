@@ -8,6 +8,7 @@ export default function CamelClockBuilder() {
     const [month, setMonth] = useState(11);
     const [day, setDay] = useState(25);
     const [time, setTime] = useState("00:00");
+    const [introText, setIntroText] = useState("Ends in:");
     const [primaryColour, setPrimaryColour] = useState("#DBB279");
     const [secondaryColour, setSecondaryColour] = useState("#8E652C");
 
@@ -28,7 +29,7 @@ export default function CamelClockBuilder() {
                         className="nbtc" 
                         type="text" 
                         value={title} 
-                        maxLength="75" 
+                        maxLength="72" 
                         onChange={(e) => setTitle(e.target.value)} 
                         onFocus={(e) => e.target.select()} 
                     />
@@ -77,6 +78,18 @@ export default function CamelClockBuilder() {
                     />
                 </label>
 
+                <label>
+                    LABEL
+                    <input
+                        className="nbtc" 
+                        type="text" 
+                        value={introText} 
+                        onChange={(e) => setIntroText(e.target.value)} 
+                        onFocus={(e) => e.target.select()} 
+                        maxLength="15" 
+                    />
+                </label>
+
                 <div className="form-group">
                     <label>
                         PRIMARY COLOUR
@@ -103,7 +116,7 @@ export default function CamelClockBuilder() {
                                             setPrimaryColour(`#${cleanValue}`);
                                         }
                                     }} 
-                                    maxLength={6} 
+                                    maxLength={7} 
                                     onFocus={(e) => e.target.select()}
                                 />
                             </div>
@@ -135,7 +148,7 @@ export default function CamelClockBuilder() {
                                             setSecondaryColour(`#${cleanValue}`);
                                         }
                                     }} 
-                                    maxLength={6}
+                                    maxLength={7}
                                     onFocus={(e) => e.target.select()}
                                 />
                             </div>
@@ -145,7 +158,7 @@ export default function CamelClockBuilder() {
             </form>
 
             <div className="canvas-wrapper nbtc">
-                <CamelClock title={title} month={month} day={day} time={time} primaryColour={primaryColour} secondaryColour={secondaryColour} />
+                <CamelClock title={title} month={month} day={day} time={time} introText={introText} primaryColour={primaryColour} secondaryColour={secondaryColour} />
             </div>
         </div>
     );

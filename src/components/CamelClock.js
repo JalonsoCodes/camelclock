@@ -66,7 +66,7 @@ function getHumpLevels(now, month, day, time) {
     }));
 }
 
-export default function CamelClock({ title, month, day, time, primaryColour, secondaryColour, introText = "Ends in:"}) {
+export default function CamelClock({ title, month, day, time, introText, primaryColour, secondaryColour}) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const [levels, setLevels] = useState([0, 0, 0, 0, 0]);
@@ -139,7 +139,7 @@ export default function CamelClock({ title, month, day, time, primaryColour, sec
     }, [levels, eyeFrame, calculatedScale]);
 
     const { startCol, humpWidth, humpSpacing } = calculateHumpMetrics(levels.length);
-    const totalCols = camelTemplate[0].length; // 77
+    const totalCols = camelTemplate[0].length;
 
     return (
         <div ref={containerRef} className={styles.clockContainer}>

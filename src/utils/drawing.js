@@ -31,23 +31,23 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
             } else if (levelNum === 1) {
                 return [
                     [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
-                    [1, 1, 2, 2, 2, 2, 2, 2, 1, 1]
+                    [1, 1, 3, 2, 2, 2, 2, 2, 1, 1]
                 ];
             } else if (levelNum === 2) {
                 return [
                     [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-                    [0, 0, 1, 2, 2, 2, 2, 1, 0, 0],
-                    [1, 1, 2, 2, 2, 2, 2, 2, 1, 1]
+                    [0, 0, 1, 3, 2, 2, 2, 1, 0, 0],
+                    [1, 1, 3, 2, 2, 2, 2, 2, 1, 1]
                 ];
             } else {
                 let tempHump = [
                     [0, 0, 0, 1, 1, 1, 1, 0, 0, 0],
-                    [0, 0, 1, 2, 2, 2, 2, 1, 0, 0]
+                    [0, 0, 1, 3, 2, 2, 2, 1, 0, 0]
                 ]
                 for (let h = 0; h <= levelNum - 3; h++) {
-                    tempHump.push([0, 1, 2, 2, 2, 2, 2, 2, 1, 0]);
+                    tempHump.push([0, 1, 3, 2, 2, 2, 2, 2, 1, 0]);
                 }
-                tempHump.push([1, 2, 2, 2, 2, 2, 2, 2, 2, 1]);
+                tempHump.push([1, 3, 2, 2, 2, 2, 2, 2, 2, 1]);
 
                 return tempHump;
             }

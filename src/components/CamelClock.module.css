@@ -13,6 +13,8 @@
     font-size: 2.0rem;
     word-break: break-word;
     text-align: center;
+    text-shadow: 2px 2px black;
+    letter-spacing: 0.1rem;
 }
 
 .wrapper {
@@ -30,12 +32,11 @@
 .introLabel {
     position: absolute;
     top: 50%;
-    transform: translateX(-100%) translateY(-55%); 
+    transform: translateX(-100%) translateY(-50%); 
     font-size: 1.2rem;
     color: var(--secondary-colour);
-    white-space: normal;
+    text-shadow: 1px 1px black;
     width: min-content;
-    text-wrap: balance;
     text-align: right;
     padding-right: 0.8rem;
 }
@@ -55,6 +56,7 @@
     font-size: 2.4rem;
     font-weight: bold;
     margin-bottom: 0.6rem;
+    text-shadow: 2px 2px black;
 }
 
 .label {
