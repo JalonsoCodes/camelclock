@@ -13,7 +13,7 @@ export default function Home() {
         <div id="hero-text">
           <h2>
             Stop using a boring timer for your{" "}
-            <Typewriter words={["product launch", "exclusive offer", "unmissable event", "merch drop"]} />
+            <Typewriter words={["product launch", "exclusive offer", "unmissable event", "SaaS release", "fundraiser", "merch drop"]} />
             .
           </h2>
           <h1 id="hero-text-action">Create a CamelClock!</h1>

@@ -303,7 +303,9 @@ input.colour-swatch::-webkit-color-swatch {
   font-weight: bold;
   color: white;
   padding: 1.2rem;
-  height: 4.8rem;
+  min-height: 4.8rem;
+  text-align: center;
+  line-height: 1.5;
 }
 
 .randomise-button {
@@ -311,7 +313,9 @@ input.colour-swatch::-webkit-color-swatch {
   font-size: 1.6rem;
   font-weight: bold;
   padding: 1.2rem;
-  height: 4.8rem;
+  min-height: 4.8rem;
+  text-align: center;
+  line-height: 1.5;
 }
 
 #solutions {
@@ -436,11 +440,11 @@ input.colour-swatch::-webkit-color-swatch {
 
   #hero-text {
     font-size: 110%;
-    line-height: 3.0rem;
+    line-height: 4.0rem;
   }
 
   #hero-text > * {
-    margin-bottom: 3.0rem;
+    margin-bottom: 4.0rem;
   }
 
   .camel-builder {
@@ -474,7 +478,7 @@ input.colour-swatch::-webkit-color-swatch {
 
   #hero-text {
     font-size: 100%;
-    line-height: 2.6rem;
+    line-height: 4.0rem;
   }
 
   .solutions-grid {
