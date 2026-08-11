@@ -13,11 +13,24 @@ html {
 :root {
   --primary-colour: #DBB279;
   --secondary-colour: #8E652C;
+  --bg-colour: white;
+  --fg-colour: black;
+  --card-colour: white;
+  --border-colour: black;
+  --pixel-dark: #000000;
+}
+
+.dark {
+  --bg-colour: #0f1115;
+  --fg-colour: #e8e8e8;
+  --card-colour: #1a1d23;
+  --border-colour: #8f8f8f;
+  --pixel-dark: #e8e8e8;
 }
 
 body {
-  background-color: white;
-  color: black;
+  background-color: var(--bg-colour);
+  color: var(--fg-colour);
   background-image: 
     linear-gradient(to right, color-mix(in srgb, var(--secondary-colour) 25%, transparent) 1px, transparent 1px),
     linear-gradient(to bottom, color-mix(in srgb, var(--secondary-colour) 25%, transparent) 1px, transparent 1px);
@@ -26,7 +39,7 @@ body {
 }
 
 a {
-  color: black;
+  color: var(--fg-colour);
   text-decoration: none;
 }
 
@@ -35,8 +48,8 @@ a:hover {
 }
 
 .nbtc {
-  border: 4px solid black;
-  box-shadow: 8px 8px 0px black;
+  border: 4px solid var(--border-colour);
+  box-shadow: 8px 8px 0px var(--border-colour);
 }
 
 button {
@@ -45,8 +58,8 @@ button {
   font-weight: bold;
   cursor: pointer;
   padding: 0.8rem 1.6rem;
-  border: 4px solid black;
-  box-shadow: 8px 8px 0px black;
+  border: 4px solid var(--border-colour);
+  box-shadow: 8px 8px 0px var(--border-colour);
   transition: transform 0.1s ease, box-shadow 0.1s ease;
 }
 
@@ -67,7 +80,8 @@ button:hover {
 .navbar {
   display: flex;
   justify-content: space-between;
-  background-color: white;
+  position: relative;
+  background-color: var(--card-colour);
   align-items: center;
   padding: 2.0rem;
   margin-bottom: 7.6rem;
@@ -82,6 +96,48 @@ button:hover {
 .nav-links {
   display: flex;
   gap: 3.0rem;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.theme-toggle {
+  background: none;
+  border: none;
+  box-shadow: none;
+  font-size: 2.0rem;
+  padding: 0.4rem;
+  color: var(--fg-colour);
+}
+
+.theme-toggle:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.8rem;
+  cursor: pointer;
+}
+
+.hamburger span {
+  width: 2.2rem;
+  height: 0.3rem;
+  background-color: var(--fg-colour);
+  display: block;
+}
+
+.hamburger:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
 }
 
 #hero-text {
@@ -98,7 +154,7 @@ button:hover {
   background: linear-gradient(to right, var(--primary-colour), var(--secondary-colour));
   background-clip: text;
   color: transparent;
-  filter: drop-shadow(4px 4px 0px black);
+  filter: drop-shadow(0.12em 0.12em 0px black);
 }
 
 .typewriter-text {
@@ -120,6 +176,7 @@ button:hover {
 
 .camel-builder {
   display: flex;
+  flex-direction: row-reverse;
   align-items: center;
   gap: 6.0rem;
 }
@@ -167,6 +224,8 @@ button:hover {
   height: 4.8rem;
   caret-shape: block;
   caret-color: var(--secondary-colour);
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
 }
 
 .camel-builder-form select:focus,
@@ -195,8 +254,8 @@ input.colour-swatch {
 }
 
 input.colour-swatch:focus {
-  border-color: black;
-  box-shadow: 8px 8px 0px black;
+  border-color: var(--border-colour);
+  box-shadow: 8px 8px 0px var(--border-colour);
 }
 
 input.colour-swatch::-webkit-color-swatch-wrapper {
@@ -208,7 +267,7 @@ input.colour-swatch::-webkit-color-swatch {
 }
 
 .hex-input-container {
-  background-color: white;
+  background-color: var(--card-colour);
   display: flex;
   align-items: center;
 }
@@ -231,15 +290,26 @@ input.colour-swatch::-webkit-color-swatch {
 }
 
 .canvas-wrapper {
-  background-color: white;
+  background-color: var(--card-colour);
+  display: flex;
+  flex-direction: column;
 }
 
 .embed-button {
-  width: 100%;
+  width: calc(100% - 4.8rem);
+  margin: 0 2.4rem 2.4rem;
   background-color: var(--secondary-colour);
   font-size: 1.6rem;
   font-weight: bold;
   color: white;
+  padding: 1.2rem;
+  height: 4.8rem;
+}
+
+.randomise-button {
+  width: 100%;
+  font-size: 1.6rem;
+  font-weight: bold;
   padding: 1.2rem;
   height: 4.8rem;
 }
@@ -256,5 +326,168 @@ input.colour-swatch::-webkit-color-swatch {
 }
 
 .solutions-cell {
-  background-color: white;
+  background-color: var(--card-colour);
+}
+
+#pricing {
+  margin-top: 12.0rem;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4.0rem;
+  margin-top: 4.0rem;
+}
+
+.pricing-card {
+  background-color: var(--card-colour);
+  padding: 3.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+}
+
+.pricing-free {
+  border-color: var(--primary-colour);
+}
+
+.pricing-pro {
+  border-color: var(--secondary-colour);
+}
+
+.pricing-price {
+  font-size: 2.4rem;
+  font-weight: bold;
+}
+
+.pricing-period {
+  font-size: 1.4rem;
+  font-weight: normal;
+}
+
+.pricing-card ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.pricing-card li {
+  font-size: 1.4rem;
+}
+
+.pricing-card li::before {
+  content: "• ";
+  color: var(--secondary-colour);
+}
+
+.pricing-button {
+  margin-top: auto;
+}
+
+.pricing-pro .pricing-button {
+  background-color: var(--secondary-colour);
+  color: white;
+}
+
+@media (max-width: 1024px) {
+  body {
+    padding: 4.0rem 5.0rem;
+  }
+
+  .solutions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 3.0rem 2.5rem;
+  }
+
+  .navbar {
+    margin-bottom: 4.0rem;
+  }
+
+  .nav-links {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    transform: none;
+    flex-direction: column;
+    gap: 2.0rem;
+    padding: 2.0rem;
+    background-color: var(--card-colour);
+    border: 4px solid var(--border-colour);
+    box-shadow: 8px 8px 0px var(--border-colour);
+    display: none;
+    z-index: 10;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+
+  #hero-text {
+    font-size: 110%;
+    line-height: 3.0rem;
+  }
+
+  #hero-text > * {
+    margin-bottom: 3.0rem;
+  }
+
+  .camel-builder {
+    flex-direction: column;
+    gap: 4.0rem;
+  }
+
+  .camel-builder > * {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .camel-builder-form {
+    gap: 3.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 2.0rem;
+  }
+
+  .navbar {
+    padding: 1.5rem;
+  }
+
+  .navbar-content,
+  .nav-links {
+    gap: 1.5rem;
+  }
+
+  #hero-text {
+    font-size: 100%;
+    line-height: 2.6rem;
+  }
+
+  .solutions-grid {
+    grid-template-columns: 1fr;
+    gap: 3.0rem;
+  }
+
+  .pricing-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-group {
+    flex-direction: column;
+    gap: 3.0rem;
+  }
 }

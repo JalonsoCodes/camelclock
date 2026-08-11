@@ -72,6 +72,13 @@ export default function CamelClock({ title, month, day, time, introText, primary
     const [levels, setLevels] = useState([0, 0, 0, 0, 0]);
     const [eyeFrame, setEyeFrame] = useState(0);
     const [calculatedScale, setCalculatedScale] = useState(4);
+    const [themeToken, setThemeToken] = useState(0);
+
+    useEffect(() => {
+        const observer = new MutationObserver(() => setThemeToken((t) => t + 1));
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         if (!containerRef.current) return;
@@ -112,11 +119,12 @@ export default function CamelClock({ title, month, day, time, introText, primary
         canvas.width = camelTemplate[0].length * calculatedScale;
         canvas.height = camelTemplate.length * calculatedScale;
 
+        const pixelDark = getComputedStyle(document.documentElement).getPropertyValue("--pixel-dark").trim() || "#000000";
         const ctx = canvas.getContext("2d");
         if (ctx) {
             ctx.imageSmoothingEnabled = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "#000000"
+            ctx.strokeStyle = pixelDark;
             ctx.lineWidth = calculatedScale;
             ctx.setLineDash([calculatedScale * 2, calculatedScale * 2]);
 
@@ -135,14 +143,14 @@ export default function CamelClock({ title, month, day, time, introText, primary
 
         const levelNumbers = levels.map(l => l.level);
 
-        drawCamel(canvas, camelTemplate, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour);
-    }, [levels, eyeFrame, calculatedScale]);
+        drawCamel(canvas, camelTemplate, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark);
+    }, [levels, eyeFrame, calculatedScale, themeToken]);
 
     const { startCol, humpWidth, humpSpacing } = calculateHumpMetrics(levels.length);
     const totalCols = camelTemplate[0].length;
 
     return (
-        <div ref={containerRef} className={styles.clockContainer} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour }}>
+        <div ref={containerRef} className={styles.clockContainer} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": calculatedScale }}>
             <h2 className={styles.clockTitle}>{title}</h2>
             
             <div className={styles.wrapper}>

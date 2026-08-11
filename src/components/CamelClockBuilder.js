@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import CamelClock from "./CamelClock";
 
+function hslToHex(h, s, l) {
+    s /= 100;
+    l /= 100;
+    const k = (n) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
+    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+}
+
 export default function CamelClockBuilder() {
     const [title, setTitle] = useState("My Amazing Promotion");
     const [month, setMonth] = useState(11);
@@ -20,8 +30,22 @@ export default function CamelClockBuilder() {
         document.documentElement.style.setProperty('--secondary-colour', secondaryColour);
     }, [secondaryColour]);
 
+    const randomiseColours = () => {
+        const hue = Math.floor(Math.random() * 360);
+        setPrimaryColour(hslToHex(hue, 55, 68));
+        const secondaryHue = (hue + 60 + Math.floor(Math.random() * 120)) % 360;
+        setSecondaryColour(hslToHex(secondaryHue, 45, 30));
+    };
+
     return (
         <div className="camel-builder">
+            <div className="canvas-wrapper nbtc">
+                <CamelClock title={title} month={month} day={day} time={time} introText={introText} primaryColour={primaryColour} secondaryColour={secondaryColour} />
+                <button className="embed-button" type="button">
+                    Embed on your site
+                </button>
+            </div>
+
             <form className="camel-builder-form" onSubmit={(e) => e.preventDefault()}>
                 <label>
                     TITLE
@@ -156,14 +180,10 @@ export default function CamelClockBuilder() {
                     </label>
                 </div>
 
-                <button className="embed-button" type="button">
-                    Embed on your site
+                <button className="randomise-button" type="button" onClick={randomiseColours}>
+                    Randomise colours
                 </button>
             </form>
-
-            <div className="canvas-wrapper nbtc">
-                <CamelClock title={title} month={month} day={day} time={time} introText={introText} primaryColour={primaryColour} secondaryColour={secondaryColour} />
-            </div>
         </div>
     );
 }

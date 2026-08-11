@@ -11,7 +11,7 @@ export function calculateHumpMetrics(numHumps) {
     return { startCol, humpsSpanWidth, endColSpacing, humpWidth, humpSpacing };
 }
 
-export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour) {
+export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000") {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -77,7 +77,7 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
         for (let c = 0; c < newCamel[0].length; c++) {
             const colourIndex = newCamel[r][c];
             if (colourIndex === 1) {
-                ctx.fillStyle = "#000000";
+                ctx.fillStyle = pixelDark;
             } else if (colourIndex === 2) {
                 ctx.fillStyle = primaryColour;
             } else if (colourIndex === 3) {

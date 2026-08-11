@@ -3,6 +3,7 @@ import CamelClockBuilder from "@/components/CamelClockBuilder";
 import CamelClock from "@/components/CamelClock";
 import Typewriter from "@/components/Typewriter";
 import Solutions from "@/components/Solutions";
+import Pricing from "@/components/Pricing";
 
 export default function Home() {
   return (
@@ -12,7 +13,7 @@ export default function Home() {
         <div id="hero-text">
           <h2>
             Stop using a boring timer for your{" "}
-            <Typewriter words={["product launch", "limited-time promotion", "unmissable event"]} />
+            <Typewriter words={["product launch", "exclusive offer", "unmissable event", "merch drop"]} />
             .
           </h2>
           <h1 id="hero-text-action">Create a CamelClock!</h1>
@@ -20,6 +21,7 @@ export default function Home() {
         </div>
         <CamelClockBuilder />
         <Solutions />
+        <Pricing />
       </main>
     </>
   )
