@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 
@@ -27,7 +28,7 @@ export default function Navbar() {
             <div className="navbar-content">
                 <ThemeToggle />
 
-                <button className="btn nbtc">Sign In</button>
+                <Link href="/dashboard" className="btn-link">Sign In</Link>
 
                 <button
                     className="hamburger"

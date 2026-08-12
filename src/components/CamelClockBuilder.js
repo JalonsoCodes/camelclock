@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CamelClock from "./CamelClock";
+import { supabase } from "@/lib/supabaseClient";
 
 function hslToHex(h, s, l) {
     s /= 100;
@@ -13,21 +15,26 @@ function hslToHex(h, s, l) {
     return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 }
 
-export default function CamelClockBuilder() {
-    const [title, setTitle] = useState("My Amazing Promotion");
-    const [month, setMonth] = useState(11);
-    const [day, setDay] = useState(25);
-    const [time, setTime] = useState("00:00");
-    const [introText, setIntroText] = useState("Ends in:");
-    const [primaryColour, setPrimaryColour] = useState("#DBB279");
-    const [secondaryColour, setSecondaryColour] = useState("#8E652C");
+export default function CamelClockBuilder({ initialValues = null, clockId = null }) {
+    const [title, setTitle] = useState(initialValues?.title ?? "My Amazing Promotion");
+    const [month, setMonth] = useState(initialValues?.month ?? 11);
+    const [day, setDay] = useState(initialValues?.day ?? 25);
+    const [time, setTime] = useState(initialValues?.time ?? "00:00");
+    const [introText, setIntroText] = useState(initialValues?.introText ?? "Ends in:");
+    const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? "#DBB279");
+    const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? "#8E652C");
+    const [isSaving, setIsSaving] = useState(false);
+    const [statusMessage, setStatusMessage] = useState("");
+    const router = useRouter();
 
     useEffect(() => {
         document.documentElement.style.setProperty('--primary-colour', primaryColour);
+        return () => document.documentElement.style.setProperty('--primary-colour', '#DBB279');
     }, [primaryColour]);
 
     useEffect(() => {
         document.documentElement.style.setProperty('--secondary-colour', secondaryColour);
+        return () => document.documentElement.style.setProperty('--secondary-colour', '#8E652C');
     }, [secondaryColour]);
 
     const randomiseColours = () => {
@@ -35,6 +42,53 @@ export default function CamelClockBuilder() {
         setPrimaryColour(hslToHex(hue, 55, 68));
         const secondaryHue = (hue + 60 + Math.floor(Math.random() * 120)) % 360;
         setSecondaryColour(hslToHex(secondaryHue, 45, 30));
+    };
+
+    const handleSave = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+        setStatusMessage("");
+
+        // Calculate target timestamp
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const [hours, minutes] = time.split(":").map(Number);
+        
+        let targetDate = new Date(currentYear, month, day, hours || 0, minutes || 0);
+
+        // If chosen date/time is in the past, default to next year
+        if (targetDate <= now) {
+            targetDate.setFullYear(currentYear + 1);
+        }
+
+        try {
+            const payload = {
+                title: title,
+                target_at: targetDate.toISOString(),
+                intro_text: introText,
+                primary_colour: primaryColour,
+                secondary_colour: secondaryColour,
+            };
+
+            const { data, error } = clockId
+                ? await supabase.from("clocks").update(payload).eq("id", clockId).select()
+                : await supabase.from("clocks").insert([payload]).select();
+
+            if (error) {
+                throw error;
+            }
+
+            setStatusMessage("Saved successfully!");
+            console.log("Saved clock:", data);
+            if (clockId) {
+                router.push("/dashboard");
+            }
+        } catch (error) {
+            console.error("Error saving clock:", error);
+            setStatusMessage("Failed to save. Please try again.");
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -46,7 +100,7 @@ export default function CamelClockBuilder() {
                 </button>
             </div>
 
-            <form className="camel-builder-form" onSubmit={(e) => e.preventDefault()}>
+            <form className="camel-builder-form" onSubmit={handleSave}>
                 <label>
                     TITLE
                     <input 
@@ -183,6 +237,18 @@ export default function CamelClockBuilder() {
                 <button className="randomise-button" type="button" onClick={randomiseColours}>
                     Randomise colours
                 </button>
+
+                <button 
+                    className="save-button nbtc" type="submit" disabled={isSaving}>
+                    {isSaving ? "Saving..." : "Save to Database"}
+                </button>
+
+                {/* Status Message Feedback */}
+                {statusMessage && (
+                    <p style={{ marginTop: "0.5rem", textAlign: "center", fontSize: "1.2rem" }}>
+                        {statusMessage}
+                    </p>
+                )}
             </form>
         </div>
     );
