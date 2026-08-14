@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { drawCamel, calculateHumpMetrics } from "@/utils/drawing";
+import { drawCamel } from "@/utils/drawing";
 import { camelTemplate } from "@/utils/grids";
 import styles from "./CamelClock.module.css";
 
@@ -14,7 +14,7 @@ function getHumpLevels(now, month, day, time) {
         target.setFullYear(currentYear + 1);
     }
 
-    let diffMs = target - now;
+    let diffMs = Math.max(0, target - now);
 
     let yearsLeft = target.getFullYear() - now.getFullYear();
     let monthsLeft = target.getMonth() - now.getMonth();
@@ -44,13 +44,49 @@ function getHumpLevels(now, month, day, time) {
     const secondsLeft = (diffMs / 1000) % 60;
     
     const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-    
+
+    const exactSecs = secondsLeft;
+    const exactMins = (diffMs / (1000 * 60)) % 60;
+    const exactHours = (diffMs / (1000 * 60 * 60)) % 24;
+    const exactDays = daysLeft + (exactHours / 24); 
+    const exactMonths = totalMonthsLeft + (exactDays / daysInCurrentMonth);
+
     const allUnits = [
-        { label: "Months", value: totalMonthsLeft, displayValue: totalMonthsLeft, max: 12 },
-        { label: "Days", value: daysLeft, displayValue: daysLeft, max: daysInCurrentMonth },
-        { label: "Hours", value: hoursLeft, displayValue: hoursLeft, max: 24 },
-        { label: "Mins", value: minutesLeft, displayValue: minutesLeft, max: 60 },
-        { label: "Secs", value: secondsLeft, displayValue: Math.floor(secondsLeft), max: 60 } 
+        { 
+            label: "Months", 
+            value: totalMonthsLeft, 
+            displayValue: totalMonthsLeft, 
+            exactValue: exactMonths % 12, 
+            max: 12 
+        },
+        { 
+            label: "Days", 
+            value: daysLeft, 
+            displayValue: daysLeft, 
+            exactValue: exactDays, 
+            max: daysInCurrentMonth 
+        },
+        { 
+            label: "Hours", 
+            value: hoursLeft, 
+            displayValue: hoursLeft, 
+            exactValue: exactHours, 
+            max: 24 
+        },
+        { 
+            label: "Mins", 
+            value: minutesLeft, 
+            displayValue: minutesLeft, 
+            exactValue: exactMins, 
+            max: 60 
+        },
+        { 
+            label: "Secs", 
+            value: secondsLeft, 
+            displayValue: Math.floor(secondsLeft), 
+            exactValue: exactSecs, 
+            max: 60 
+        } 
     ];
 
     const firstActiveIndex = allUnits.findIndex(unit => unit.value > 0);
@@ -60,7 +96,8 @@ function getHumpLevels(now, month, day, time) {
         : allUnits.slice(firstActiveIndex);
 
     return activeUnits.map(unit => ({
-        level: Math.floor((unit.value / unit.max) * 24),
+        // Map exact unit ratio to 60 hump levels (updates every second for Secs)
+        level: Math.min(59, Math.floor((unit.exactValue / unit.max) * 60)),
         label: unit.label,
         value: unit.displayValue
     }));
@@ -69,7 +106,13 @@ function getHumpLevels(now, month, day, time) {
 export default function CamelClock({ title, month, day, time, introText, primaryColour, secondaryColour}) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
-    const [levels, setLevels] = useState([0, 0, 0, 0, 0]);
+    const [levels, setLevels] = useState([
+        { level: 0 }, 
+        { level: 0 }, 
+        { level: 0 }, 
+        { level: 0 }, 
+        { level: 0 }
+    ]);
     const [eyeFrame, setEyeFrame] = useState(0);
     const [calculatedScale, setCalculatedScale] = useState(4);
     const [themeToken, setThemeToken] = useState(0);
@@ -133,9 +176,10 @@ export default function CamelClock({ title, month, day, time, introText, primary
             ctx.lineTo(canvas.width, 0);
             ctx.stroke();
 
+            // Baseline shifted to row 80 for expanded template height
             ctx.beginPath();
-            ctx.moveTo(0, 44 * calculatedScale);
-            ctx.lineTo(canvas.width, 44 * calculatedScale);
+            ctx.moveTo(0, 80 * calculatedScale);
+            ctx.lineTo(canvas.width, 80 * calculatedScale);
             ctx.stroke();
 
             ctx.setLineDash([]);
@@ -146,8 +190,11 @@ export default function CamelClock({ title, month, day, time, introText, primary
         drawCamel(canvas, camelTemplate, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark);
     }, [levels, eyeFrame, calculatedScale, themeToken]);
 
-    const { startCol, humpWidth, humpSpacing } = calculateHumpMetrics(levels.length);
     const totalCols = camelTemplate[0].length;
+    const numHumps = levels.length;
+    const humpWidth = numHumps ** 2 - 11 * numHumps + 40;
+    const totalWidthOfHumps = humpWidth * numHumps;
+    const startCol = 21 + (50 - totalWidthOfHumps) / 2;
 
     return (
         <div ref={containerRef} className={styles.clockContainer} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": calculatedScale }}>
@@ -157,15 +204,17 @@ export default function CamelClock({ title, month, day, time, introText, primary
                 <canvas ref={canvasRef} style={{ imageRendering: "pixelated", width: "100%", display: "block" }} />
 
                 <div className={styles.digitalRow}>
-                    <div 
-                        className={styles.introLabel}
-                        style={{ left: `${(startCol / totalCols) * 100}%` }}
-                    >
-                        {introText}
-                    </div>
+                    {introText && (
+                        <div 
+                            className={styles.introLabel}
+                            style={{ left: `${(startCol / totalCols) * 100}%` }}
+                        >
+                            {introText}
+                        </div>
+                    )}
 
                     {levels.map((unit, index) => {
-                        const humpLeft = startCol + index * (humpWidth + humpSpacing);
+                        const humpLeft = startCol + index * humpWidth;
                         const humpCenter = humpLeft + (humpWidth / 2);
                         const leftPercentage = `${(humpCenter / totalCols) * 100}%`;
 
