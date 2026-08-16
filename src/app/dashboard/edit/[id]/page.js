@@ -23,6 +23,7 @@ export default async function EditClockPage({ params }) {
         day: target.getDate(),
         time: `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`,
         introText: clock.intro_text,
+        celebrationMessage: clock.celebration_message,
         primaryColour: clock.primary_colour,
         secondaryColour: clock.secondary_colour,
     };

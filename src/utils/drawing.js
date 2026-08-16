@@ -11,7 +11,7 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
     const numHumps = levelNumbers.length;
     const humpWidth = numHumps ** 2 - 11 * numHumps + 40;
     const totalWidthOfHumps = humpWidth * numHumps;
-    let startCol = 21 + (50 - totalWidthOfHumps) / 2;
+    let startCol = 22 + (50 - totalWidthOfHumps) / 2;
 
     levelNumbers.forEach(levelNum => {
         const getHumpGrid = (levelNum) => {
@@ -111,15 +111,25 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
         }
     }
 
-    for (let r = 0; r < newCamel.length; r++) {
-        for (let c = 0; c < newCamel[0].length; c++) {
-            const colourIndex = newCamel[r][c];
+    drawGrid(canvas, newCamel, scale, primaryColour, secondaryColour, pixelDark);
+}
+
+export function drawGrid(canvas, grid, scale, primaryColour, secondaryColour, pixelDark = "#000000") {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    for (let r = 0; r < grid.length; r++) {
+        for (let c = 0; c < grid[0].length; c++) {
+            const colourIndex = grid[r][c];
             if (colourIndex === 1) {
                 ctx.fillStyle = pixelDark;
             } else if (colourIndex === 2) {
                 ctx.fillStyle = primaryColour;
             } else if (colourIndex === 3) {
                 ctx.fillStyle = secondaryColour;
+            } else if (colourIndex === 4) {
+                ctx.fillStyle = "#525129";
             } else {
                 continue;
             }

@@ -7,7 +7,7 @@ export default async function DashboardPage() {
     const { data: clocks = [] } = await supabase
         .from("clocks")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("target_at", { ascending: true });
 
     return <DashboardView clocks={clocks} />;
 }

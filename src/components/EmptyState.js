@@ -5,7 +5,7 @@ export default function EmptyState() {
         <div className="empty-state nbtc">
             <h2>NO CLOCKS YET</h2>
             <p>Build your first CamelClock and it will show up here.</p>
-            <Link href="/" className="btn-link">CREATE YOUR FIRST CLOCK</Link>
+            <Link href="/new" className="btn-link">CREATE YOUR FIRST CLOCK</Link>
         </div>
     );
 }

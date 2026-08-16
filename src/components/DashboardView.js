@@ -45,7 +45,7 @@ export default function DashboardView({ clocks }) {
                     {clocks.map((clock) => (
                         <ClockCard key={clock.id} clock={clock} onDeleted={() => router.refresh()} />
                     ))}
-                    <Link href="/" className="clock-card new-clock-placeholder nbtc">
+                    <Link href="/new" className="clock-card new-clock-placeholder nbtc">
                         <span className="new-clock-icon">+</span>
                         <span className="new-clock-text">NEW CLOCK</span>
                     </Link>

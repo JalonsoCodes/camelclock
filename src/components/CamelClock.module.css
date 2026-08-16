@@ -24,6 +24,43 @@
     width: 100%;
 }
 
+.canvasWrap {
+    position: relative;
+    width: 100%;
+}
+
+.completionMessage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: calc(var(--clock-scale) * 4px);
+    text-align: center;
+    text-shadow: calc(var(--clock-scale) * 0.4px) calc(var(--clock-scale) * 0.4px) black;
+    padding: calc(var(--clock-scale) * 2px);
+    line-height: 1.6;
+    word-break: break-word;
+}
+
+.homeLink {
+    position: absolute;
+    bottom: calc(var(--clock-scale) * 2px);
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #ffffff;
+    font-size: calc(var(--clock-scale) * 2px);
+    text-shadow: calc(var(--clock-scale) * 0.4px) calc(var(--clock-scale) * 0.4px) black;
+    text-decoration: none;
+}
+
+.homeLink:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
 .digitalRow {
     position: relative;
     width: 100%;
@@ -67,4 +104,50 @@
     font-size: calc(var(--clock-scale) * 2px);
     line-height: calc(var(--clock-scale) * 2.4px);
     text-transform: uppercase;
+}
+
+.replayButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: none;
+    border: none;
+    box-shadow: none;
+    padding: 0.4rem 0.8rem;
+    min-height: auto;
+    margin-top: 1.6rem;
+    font-size: 1.4rem;
+    font-weight: normal;
+    color: var(--secondary-colour);
+    cursor: pointer;
+    line-height: 1.2;
+}
+
+.replayButton:hover {
+    transform: none;
+    box-shadow: none;
+    opacity: 0.75;
+}
+
+.replayButton > svg {
+    width: 1.6rem;
+    height: 1.6rem;
+}
+
+.endedLabel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--clock-primary);
+    font-size: calc(var(--clock-scale) * 5px);
+    font-weight: bold;
+    line-height: calc(var(--clock-scale) * 6px);
+    text-shadow: calc(var(--clock-scale) * 0.4px) calc(var(--clock-scale) * 0.4px) black;
+}
+
+.celebrated .clockTitle,
+.celebrated .endedLabel,
+.celebrated .replayButton {
+    color: #525129;
 }

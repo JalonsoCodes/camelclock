@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useCallback, useRef } from "react";
 import CamelClock from "./CamelClock";
+import ShareDialog from "./ShareDialog";
 import { supabase } from "@/lib/supabaseClient";
 
 function hslToHex(h, s, l) {
@@ -16,16 +16,18 @@ function hslToHex(h, s, l) {
 }
 
 export default function CamelClockBuilder({ initialValues = null, clockId = null }) {
+    const clockRef = useRef(null);
     const [title, setTitle] = useState(initialValues?.title ?? "My Amazing Promotion");
     const [month, setMonth] = useState(initialValues?.month ?? 11);
     const [day, setDay] = useState(initialValues?.day ?? 25);
     const [time, setTime] = useState(initialValues?.time ?? "00:00");
-    const [introText, setIntroText] = useState(initialValues?.introText ?? "Ends in:");
+    const [introText, setIntroText] = useState(initialValues?.introText ?? "in");
+    const [celebrationMessage, setCelebrationMessage] = useState(initialValues?.celebrationMessage ?? "TIME IS UP!");
     const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? "#DBB279");
     const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? "#8E652C");
     const [isSaving, setIsSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
-    const router = useRouter();
+    const [savedClockId, setSavedClockId] = useState(null);
 
     useEffect(() => {
         document.documentElement.style.setProperty('--primary-colour', primaryColour);
@@ -37,12 +39,23 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         return () => document.documentElement.style.setProperty('--secondary-colour', '#8E652C');
     }, [secondaryColour]);
 
-    const randomiseColours = () => {
+    const randomiseColours = useCallback(() => {
         const hue = Math.floor(Math.random() * 360);
         setPrimaryColour(hslToHex(hue, 55, 68));
         const secondaryHue = (hue + 60 + Math.floor(Math.random() * 120)) % 360;
         setSecondaryColour(hslToHex(secondaryHue, 45, 30));
-    };
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key.toLowerCase() !== "r" || e.metaKey || e.ctrlKey || e.altKey) return;
+            const target = e.target;
+            if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
+            randomiseColours();
+        };
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [randomiseColours]);
 
     const handleSave = async (e) => {
         e.preventDefault();
@@ -66,6 +79,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 title: title,
                 target_at: targetDate.toISOString(),
                 intro_text: introText,
+                celebration_message: celebrationMessage,
                 primary_colour: primaryColour,
                 secondary_colour: secondaryColour,
             };
@@ -78,11 +92,9 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 throw error;
             }
 
+            setSavedClockId(data?.[0]?.id ?? clockId);
             setStatusMessage("Saved successfully!");
             console.log("Saved clock:", data);
-            if (clockId) {
-                router.push("/dashboard");
-            }
         } catch (error) {
             console.error("Error saving clock:", error);
             setStatusMessage("Failed to save. Please try again.");
@@ -94,10 +106,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     return (
         <div className="camel-builder">
             <div className="canvas-wrapper nbtc">
-                <CamelClock title={title} month={month} day={day} time={time} introText={introText} primaryColour={primaryColour} secondaryColour={secondaryColour} />
-                <button className="embed-button" type="button">
-                    Embed on your site
-                </button>
+                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} />
             </div>
 
             <form className="camel-builder-form" onSubmit={handleSave}>
@@ -156,17 +165,45 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     />
                 </label>
 
-                <label>
-                    LABEL
-                    <input
-                        className="nbtc" 
-                        type="text" 
-                        value={introText} 
-                        onChange={(e) => setIntroText(e.target.value)} 
-                        onFocus={(e) => e.target.select()} 
-                        maxLength="15" 
-                    />
-                </label>
+                <details className="more-options">
+                    <summary className="more-options-summary">
+                        MORE OPTIONS
+                        <span className="more-options-chevron" aria-hidden="true">▾</span>
+                    </summary>
+                    <div className="more-options-body">
+                        <label>
+                            LABEL
+                            <input
+                                className="nbtc" 
+                                type="text" 
+                                value={introText} 
+                                onChange={(e) => setIntroText(e.target.value)} 
+                                onFocus={(e) => e.target.select()} 
+                                maxLength="15" 
+                            />
+                        </label>
+
+                        <label>
+                            COMPLETION MESSAGE
+                            <textarea
+                                className="nbtc"
+                                value={celebrationMessage}
+                                onChange={(e) => setCelebrationMessage(e.target.value)}
+                                onFocus={(e) => e.target.select()}
+                                rows="3"
+                                maxLength="140"
+                                placeholder="Shown at the end of the animation"
+                            />
+                        </label>
+
+                        <button className="preview-button" type="button" onClick={() => clockRef.current?.preview()}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+                                <polygon points="6 3 20 12 6 21 6 3" />
+                            </svg>
+                            Preview completion
+                        </button>
+                    </div>
+                </details>
 
                 <div className="form-group">
                     <label>
@@ -235,12 +272,38 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 </div>
 
                 <button className="randomise-button" type="button" onClick={randomiseColours}>
-                    Randomise colours
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <polyline points="16 3 21 3 21 8" />
+                        <line x1="4" y1="20" x2="21" y2="3" />
+                        <polyline points="21 16 21 21 16 21" />
+                        <line x1="15" y1="15" x2="21" y2="21" />
+                        <line x1="4" y1="4" x2="9" y2="9" />
+                    </svg>
+                    <span className="randomise-text">
+                        {"Randomise colours".split("").map((char, i) => (
+                            <span key={i} className="randomise-char" style={{ animationDelay: `${i * 0.08}s` }}>
+                                {char}
+                            </span>
+                        ))}
+                    </span>
+                    <span className="randomise-hint">
+                        <kbd>
+                            <svg className="keyboard-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <rect x="2" y="6" width="20" height="12" rx="2" />
+                                <line x1="6" y1="10" x2="6" y2="10" />
+                                <line x1="10" y1="10" x2="10" y2="10" />
+                                <line x1="14" y1="10" x2="14" y2="10" />
+                                <line x1="18" y1="10" x2="18" y2="10" />
+                                <line x1="6" y1="14" x2="18" y2="14" />
+                            </svg>
+                            r
+                        </kbd>
+                    </span>
                 </button>
 
-                <button 
-                    className="save-button nbtc" type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : "Save to Database"}
+                <button
+                    className="share-button nbtc" type="submit" disabled={isSaving}>
+                    {isSaving ? "Saving..." : (clockId ? "Save changes" : "Create and share")}
                 </button>
 
                 {/* Status Message Feedback */}
@@ -250,6 +313,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </p>
                 )}
             </form>
+
+            {savedClockId && (
+                <ShareDialog clockId={savedClockId} title={title} onClose={() => setSavedClockId(null)} />
+            )}
         </div>
     );
 }

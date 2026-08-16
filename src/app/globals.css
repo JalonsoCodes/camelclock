@@ -38,6 +38,12 @@ body {
   padding: 4.0rem 12.0rem;
 }
 
+.page-container {
+  width: 100%;
+  max-width: 120rem;
+  margin: 0 auto;
+}
+
 a {
   color: var(--fg-colour);
   text-decoration: none;
@@ -239,7 +245,8 @@ button:hover {
 }
 
 .camel-builder-form select,
-.camel-builder-form input {
+.camel-builder-form input,
+.camel-builder-form textarea {
   font-size: 1.6rem;
   padding: 1.2rem;
   height: 4.8rem;
@@ -249,8 +256,14 @@ button:hover {
   color: var(--fg-colour);
 }
 
+.camel-builder-form textarea {
+  height: auto;
+  resize: vertical;
+}
+
 .camel-builder-form select:focus,
-.camel-builder-form input:focus {
+.camel-builder-form input:focus,
+.camel-builder-form textarea:focus {
   color: var(--secondary-colour);
   outline: none;
   border-color: var(--secondary-colour);
@@ -259,6 +272,48 @@ button:hover {
 
 .camel-builder-form label:focus-within {
   color: var(--secondary-colour);
+}
+
+.more-options-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 1.2rem;
+  list-style: none;
+  user-select: none;
+  color: var(--fg-colour);
+}
+
+.more-options-summary::-webkit-details-marker {
+  display: none;
+}
+
+.more-options-summary:hover,
+.more-options[open] .more-options-summary {
+  color: var(--primary-colour);
+}
+
+.more-options-chevron {
+  transition: transform 0.15s ease;
+  color: var(--secondary-colour);
+}
+
+.more-options[open] .more-options-chevron {
+  transform: rotate(180deg);
+}
+
+.more-options-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+  padding: 0;
+  margin-top: 0.8rem;
+}
+
+.more-options-body .preview-button {
+  margin-top: 0;
 }
 
 .colour-picker-wrapper {
@@ -316,27 +371,247 @@ input.colour-swatch::-webkit-color-swatch {
   flex-direction: column;
 }
 
-.embed-button {
-  width: calc(100% - 4.8rem);
-  margin: 0 2.4rem 2.4rem;
+.share-button {
+  width: 100%;
   background-color: var(--secondary-colour);
+  color: white;
   font-size: 1.6rem;
   font-weight: bold;
-  color: white;
   padding: 1.2rem;
   min-height: 4.8rem;
   text-align: center;
   line-height: 1.5;
 }
 
-.randomise-button, .save-button {
+.share-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2.4rem;
+}
+
+.share-dialog {
+  background-color: var(--card-colour);
   width: 100%;
-  font-size: 1.6rem;
-  font-weight: bold;
-  padding: 1.2rem;
+  max-width: 52rem;
+  padding: 3.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.share-dialog-title {
+  font-size: 1.8rem;
+}
+
+.share-dialog-subtitle {
+  font-size: 1.4rem;
+  opacity: 0.8;
+}
+
+.share-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.share-field-label {
+  font-size: 1.2rem;
+}
+
+.share-field-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.share-field-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  box-shadow: none;
+  background: none;
+  color: var(--fg-colour);
+  font-size: 1.2rem;
+  padding: 0 1.2rem;
+  height: 4.8rem;
+}
+
+.share-copy-button {
+  border: none;
+  box-shadow: none;
   min-height: 4.8rem;
-  text-align: center;
-  line-height: 1.5;
+  min-width: 8rem;
+}
+
+.share-copy-button:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.share-dialog-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.6rem;
+}
+
+.share-done-button {
+  min-height: 4.8rem;
+  min-width: 12rem;
+}
+
+.public-clock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 3.2rem;
+}
+
+.public-clock-card {
+  width: 100%;
+  max-width: 56rem;
+  background-color: var(--card-colour);
+  padding: 2.4rem;
+}
+
+.randomise-button {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0.4rem 0.8rem;
+  min-height: auto;
+  margin-top: -2.5rem;
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: var(--secondary-colour);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.randomise-button:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.randomise-button > svg {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.randomise-text .randomise-char {
+  display: inline-block;
+  white-space: pre;
+}
+
+.randomise-button:hover .randomise-char {
+  animation: rgb-char 0.8s steps(1, end) 1;
+}
+
+@keyframes rgb-char {
+  0% {
+    color: #ff00ff;
+  }
+  10% {
+    color: #6600ff;
+  }
+  20% {
+    color: #0088ff;
+  }
+  30% {
+    color: #00cc00;
+  }
+  40% {
+    color: #ffff00;
+  }
+  50% {
+    color: #ff9900;
+  }
+  60% {
+    color: #ff0000;
+  }
+  70%, 100% {
+    color: var(--secondary-colour);
+  }
+}
+
+.randomise-hint {
+  display: inline-flex;
+  align-items: center;
+  opacity: 0.6;
+}
+
+.randomise-hint kbd {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 3.2rem;
+  height: 2.4rem;
+  padding: 0 0.5rem;
+  border: 2px solid currentColor;
+  border-bottom-width: 3px;
+  border-radius: 0.4rem;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.randomise-hint .keyboard-icon {
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.randomise-button:hover .randomise-hint kbd {
+  animation: kbd-pop 0.4s ease-in-out 1;
+  animation-delay: 1.84s;
+}
+
+@keyframes kbd-pop {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.preview-button {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0.4rem 0.8rem;
+  min-height: auto;
+  margin-top: -2.5rem;
+  font-size: 1.4rem;
+  font-weight: normal;
+  color: var(--secondary-colour);
+  cursor: pointer;
+  line-height: 1.2;
+}
+
+.preview-button:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.75;
+}
+
+.preview-button > svg {
+  width: 1.6rem;
+  height: 1.6rem;
 }
 
 #solutions {

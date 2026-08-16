@@ -43,6 +43,7 @@ export default function ClockCard({ clock, onDeleted }) {
                 day={target.getDate()}
                 time={time}
                 introText={clock.intro_text}
+                celebrationMessage={clock.celebration_message}
                 primaryColour={clock.primary_colour}
                 secondaryColour={clock.secondary_colour}
             />

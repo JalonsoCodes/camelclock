@@ -18,7 +18,9 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={pixelatedFont.variable}>
-        {children}
+        <div className="page-container">
+          {children}
+        </div>
       </body>
     </html>
   );
