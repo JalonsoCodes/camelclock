@@ -118,7 +118,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, ref }) {
+export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -251,7 +251,6 @@ export default function CamelClock({ title, month, day, time, introText, celebra
             if (cancelled) return;
             setFrameIndex(i);
             if (i >= celebrationFrames.length - 1) {
-                console.log(celebrationFrames[i]);
                 setPhase("celebrated");
                 return;
             }

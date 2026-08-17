@@ -1,14 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
+import useFocusTrap from "@/hooks/useFocusTrap";
 
 export default function ShareDialog({ clockId, title, onClose }) {
     const [copied, setCopied] = useState(null);
+    const trapRef = useFocusTrap(true);
 
-    const shareUrl = `${window.location.origin}/c/${clockId}`;
-    const embedCode = `<iframe src="${shareUrl}" width="100%" height="560" frameborder="0" style="border:0;" title="${title.replace(/"/g, "&quot;")}"></iframe>`;
+    const shareUrl = `${window.location.origin}/clock/${clockId}`;
+    const embedCode = `<iframe src="${shareUrl}/embed" width="100%" height="560" frameborder="0" style="border:0;" title="${title.replace(/"/g, "&quot;")}"></iframe>`;
+
+    useEffect(() => {
+        const handleEsc = (e) => {
+            if (e.key === "Escape") onClose();
+        };
+        document.addEventListener("keydown", handleEsc);
+        return () => document.removeEventListener("keydown", handleEsc);
+    }, [onClose]);
 
     const copy = async (type, text) => {
         try {
@@ -22,7 +32,7 @@ export default function ShareDialog({ clockId, title, onClose }) {
 
     return createPortal(
         <div className="share-dialog-overlay" onClick={onClose}>
-            <div className="share-dialog nbtc" onClick={(e) => e.stopPropagation()}>
+            <div className="share-dialog nbtc" ref={trapRef} onClick={(e) => e.stopPropagation()}>
                 <h2 className="share-dialog-title">YOUR CLOCK IS READY</h2>
                 <p className="share-dialog-subtitle">&ldquo;{title}&rdquo; has been saved. Share a link or embed it anywhere.</p>
 

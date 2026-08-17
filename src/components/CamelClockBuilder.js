@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
-import { supabase } from "@/lib/supabaseClient";
+import AuthModal from "./auth/AuthModal";
+import { supabase } from "@/lib/supabase/client";
 
 function hslToHex(h, s, l) {
     s /= 100;
@@ -15,8 +16,11 @@ function hslToHex(h, s, l) {
     return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 }
 
-export default function CamelClockBuilder({ initialValues = null, clockId = null }) {
+const PENDING_KEY = "camelclocks.pending";
+
+export default function CamelClockBuilder({ initialValues = null, clockId = null, onSaved = null }) {
     const clockRef = useRef(null);
+    const autoSavedRef = useRef(false);
     const [title, setTitle] = useState(initialValues?.title ?? "My Amazing Promotion");
     const [month, setMonth] = useState(initialValues?.month ?? 11);
     const [day, setDay] = useState(initialValues?.day ?? 25);
@@ -28,6 +32,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [isSaving, setIsSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [savedClockId, setSavedClockId] = useState(null);
+    const [authModalOpen, setAuthModalOpen] = useState(false);
+    const [createdId, setCreatedId] = useState(null);
+
+    const effectiveId = clockId ?? createdId;
 
     useEffect(() => {
         document.documentElement.style.setProperty('--primary-colour', primaryColour);
@@ -57,56 +65,132 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [randomiseColours]);
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        setIsSaving(true);
-        setStatusMessage("");
-
-        // Calculate target timestamp
+    const buildPayload = (values) => {
         const now = new Date();
         const currentYear = now.getFullYear();
-        const [hours, minutes] = time.split(":").map(Number);
-        
-        let targetDate = new Date(currentYear, month, day, hours || 0, minutes || 0);
+        const [hours, minutes] = values.time.split(":").map(Number);
+
+        let targetDate = new Date(currentYear, values.month, values.day, hours || 0, minutes || 0);
 
         // If chosen date/time is in the past, default to next year
         if (targetDate <= now) {
             targetDate.setFullYear(currentYear + 1);
         }
 
-        try {
-            const payload = {
-                title: title,
-                target_at: targetDate.toISOString(),
-                intro_text: introText,
-                celebration_message: celebrationMessage,
-                primary_colour: primaryColour,
-                secondary_colour: secondaryColour,
-            };
+        return {
+            title: values.title,
+            target_at: targetDate.toISOString(),
+            intro_text: values.introText,
+            celebration_message: values.celebrationMessage,
+            primary_colour: values.primaryColour,
+            secondary_colour: values.secondaryColour,
+            celebration_type: "spit",
+        };
+    };
 
-            const { data, error } = clockId
-                ? await supabase.from("clocks").update(payload).eq("id", clockId).select()
+    const stashPending = (values) => {
+        try {
+            sessionStorage.setItem(PENDING_KEY, JSON.stringify(values));
+        } catch {
+            // ignore
+        }
+    };
+
+    const clearPending = () => {
+        try {
+            sessionStorage.removeItem(PENDING_KEY);
+        } catch {
+            // ignore
+        }
+    };
+
+    const performSave = async (values) => {
+        setIsSaving(true);
+        setStatusMessage("");
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            stashPending(values);
+            setAuthModalOpen(true);
+            setStatusMessage("Sign in to save and manage your CamelClocks.");
+            setIsSaving(false);
+            return false;
+        }
+
+        const payload = { ...buildPayload(values), user_id: user.id };
+
+        try {
+            const { data, error } = effectiveId
+                ? await supabase.from("clocks").update(payload).eq("id", effectiveId).select()
                 : await supabase.from("clocks").insert([payload]).select();
 
             if (error) {
                 throw error;
             }
 
-            setSavedClockId(data?.[0]?.id ?? clockId);
+            clearPending();
+            const savedId = data?.[0]?.id ?? effectiveId;
+            if (savedId) {
+                setCreatedId(savedId);
+            }
+            setSavedClockId(savedId);
             setStatusMessage("Saved successfully!");
-            console.log("Saved clock:", data);
+            onSaved?.();
         } catch (error) {
             console.error("Error saving clock:", error);
             setStatusMessage("Failed to save. Please try again.");
+            return false;
         } finally {
             setIsSaving(false);
         }
+
+        return true;
     };
+
+    const handleSave = (e) => {
+        e.preventDefault();
+        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour });
+    };
+
+    const restoreAndSave = async (pending) => {
+        setTitle(pending.title ?? "My Amazing Promotion");
+        setMonth(pending.month ?? 11);
+        setDay(pending.day ?? 25);
+        setTime(pending.time ?? "00:00");
+        setIntroText(pending.introText ?? "in");
+        setCelebrationMessage(pending.celebrationMessage ?? "TIME IS UP!");
+        setPrimaryColour(pending.primaryColour ?? "#DBB279");
+        setSecondaryColour(pending.secondaryColour ?? "#8E652C");
+        await performSave(pending);
+    };
+
+    useEffect(() => {
+        if (initialValues || autoSavedRef.current) return;
+        if (typeof window === "undefined" || window.location.pathname !== "/new") return;
+
+        let pending;
+        try {
+            pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null");
+        } catch {
+            pending = null;
+        }
+        if (!pending) return;
+
+        autoSavedRef.current = true;
+        // Restore and save any pending clock from before auth — must run once on mount
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        restoreAndSave(pending);
+        // initialValues is stable; run-once mount behavior is intentional
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     return (
         <div className="camel-builder">
             <div className="canvas-wrapper nbtc">
-                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} />
+                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" />
             </div>
 
             <form className="camel-builder-form" onSubmit={handleSave}>
@@ -303,7 +387,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
                 <button
                     className="share-button nbtc" type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : (clockId ? "Save changes" : "Create and share")}
+                    {isSaving ? "Saving..." : (effectiveId ? "Save changes" : "Create and share")}
                 </button>
 
                 {/* Status Message Feedback */}
@@ -313,6 +397,17 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </p>
                 )}
             </form>
+
+            {authModalOpen && (
+                <AuthModal
+                    mode="login"
+                    onClose={() => setAuthModalOpen(false)}
+                    onSuccess={() => {
+                        setAuthModalOpen(false);
+                        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour });
+                    }}
+                />
+            )}
 
             {savedClockId && (
                 <ShareDialog clockId={savedClockId} title={title} onClose={() => setSavedClockId(null)} />

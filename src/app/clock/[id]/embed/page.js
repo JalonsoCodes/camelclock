@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import CamelClock from "@/components/CamelClock";
-import { supabase } from "@/lib/supabaseClient";
+import EmbedMode from "@/components/EmbedMode";
+import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function PublicClockPage({ params }) {
+export default async function EmbedPage({ params }) {
     const { id } = await params;
+    const supabase = await createClient();
 
     const { data: clock } = await supabase
         .from("clocks")
@@ -22,6 +24,7 @@ export default async function PublicClockPage({ params }) {
 
     return (
         <main className="public-clock">
+            <EmbedMode />
             <div className="public-clock-card nbtc">
                 <CamelClock
                     title={clock.title}

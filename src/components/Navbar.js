@@ -2,15 +2,40 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
+import AuthModal from "./auth/AuthModal";
+import { supabase } from "@/lib/supabase/client";
 
 export default function Navbar() {
+    const router = useRouter();
     const [open, setOpen] = useState(false);
+    const [authOpen, setAuthOpen] = useState(false);
+    const [user, setUser] = useState(null);
+
+    useEffect(() => {
+        let mounted = true;
+
+        supabase.auth.getUser().then(({ data }) => {
+            if (mounted) setUser(data.user ?? null);
+        });
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (mounted) setUser(session?.user ?? null);
+        });
+
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
+    }, []);
 
     return (
         <nav className="navbar nbtc">
-            <div className="logo">
+            <Link href={user ? "/dashboard" : "/"} className="logo">
                 <Image 
                     src="/logo.png" 
                     alt="CamelClocks logo" 
@@ -18,17 +43,36 @@ export default function Navbar() {
                     height={40} 
                     priority 
                 />
-            </div>
+            </Link>
 
             <div className={`nav-links ${open ? "open" : ""}`}>
-                <a href="#solutions" onClick={() => setOpen(false)}>Solutions</a>
-                <a href="#pricing" onClick={() => setOpen(false)}>Pricing</a>
+                {user ? (
+                    <Link href="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+                ) : (
+                    <>
+                        <Link href="/#solutions" onClick={() => setOpen(false)}>Solutions</Link>
+                        <Link href="/#pricing" onClick={() => setOpen(false)}>Pricing</Link>
+                    </>
+                )}
             </div>
 
             <div className="navbar-content">
                 <ThemeToggle />
 
-                <Link href="/dashboard" className="btn-link">Sign In</Link>
+                {user ? (
+                    <>
+                        <Link href="/new" className="btn-link" onClick={() => setOpen(false)}>+ New</Link>
+                        <button
+                            className="sign-out-button"
+                            type="button"
+                            onClick={() => supabase.auth.signOut()}
+                        >
+                            Sign out
+                        </button>
+                    </>
+                ) : (
+                    <button className="btn-link" type="button" onClick={() => setAuthOpen(true)}>Sign In</button>
+                )}
 
                 <button
                     className="hamburger"
@@ -42,6 +86,10 @@ export default function Navbar() {
                     <span />
                 </button>
             </div>
+
+            {authOpen && (
+                <AuthModal onClose={() => setAuthOpen(false)} onSuccess={() => { setAuthOpen(false); router.push("/dashboard"); }} />
+            )}
         </nav>
     );
 }

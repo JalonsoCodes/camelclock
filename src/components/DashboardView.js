@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import DashboardHeader from "./DashboardHeader";
+import Navbar from "./Navbar";
 import ClockCard from "./ClockCard";
 import EmptyState from "./EmptyState";
 
@@ -21,7 +21,7 @@ export default function DashboardView({ clocks }) {
 
     return (
         <main className="dashboard">
-            <DashboardHeader />
+            <Navbar />
 
             <div className="stats-row">
                 <div className="stat-card nbtc">

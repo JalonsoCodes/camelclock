@@ -5,6 +5,14 @@ import Typewriter from "@/components/Typewriter";
 import Solutions from "@/components/Solutions";
 import Pricing from "@/components/Pricing";
 
+export const dynamic = "force-dynamic";
+
+export const metadata = {
+  title: "Create a Countdown Clock",
+  description:
+    "Design and share embeddable countdown clocks with pixel-art camels. Free for personal use.",
+};
+
 export default function Home() {
   return (
     <>

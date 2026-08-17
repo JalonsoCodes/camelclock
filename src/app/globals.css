@@ -627,6 +627,19 @@ input.colour-swatch::-webkit-color-swatch {
 
 .solutions-cell {
   background-color: var(--card-colour);
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+  padding-bottom: 1.6rem;
+}
+
+.template-add-button {
+  align-self: center;
+  font-size: 1.0rem;
+  background-color: var(--primary-colour);
+  color: black;
+  min-height: 3.6rem;
+  padding: 0.6rem 1.2rem;
 }
 
 #pricing {
@@ -903,6 +916,200 @@ input.colour-swatch::-webkit-color-swatch {
 
 .new-clock-text {
   font-size: 1.0rem;
+}
+
+.auth-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 80vh;
+  padding-top: 4.0rem;
+}
+
+.auth-card {
+  background-color: var(--card-colour);
+  width: 100%;
+  max-width: 44rem;
+  padding: 4.0rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+}
+
+.auth-title {
+  font-size: 2.0rem;
+  color: var(--primary-colour);
+  text-align: center;
+}
+
+.auth-subtitle {
+  font-size: 1.2rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+}
+
+.auth-label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+}
+
+.auth-input {
+  font-size: 1.6rem;
+  padding: 1.2rem;
+  height: 4.8rem;
+  caret-shape: block;
+  caret-color: var(--secondary-colour);
+  background-color: var(--bg-colour);
+  color: var(--fg-colour);
+  width: 100%;
+}
+
+.auth-input:focus {
+  color: var(--secondary-colour);
+  outline: none;
+  border-color: var(--secondary-colour);
+  box-shadow: 8px 8px 0px var(--secondary-colour);
+}
+
+.auth-button {
+  min-height: 4.8rem;
+  font-size: 1.6rem;
+  width: 100%;
+}
+
+.auth-error {
+  color: #e53935;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.auth-message {
+  color: #4caf50;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.auth-switch {
+  font-size: 1.2rem;
+  text-align: center;
+  opacity: 0.8;
+}
+
+.auth-switch a {
+  color: var(--primary-colour);
+}
+
+.auth-back {
+  text-align: center;
+  font-size: 1.2rem;
+  opacity: 0.7;
+}
+
+.auth-back a {
+  color: var(--fg-colour);
+}
+
+.auth-forgot {
+  font-size: 1.0rem;
+  text-align: right;
+}
+
+.auth-forgot a {
+  color: var(--primary-colour);
+  text-decoration: underline;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 1.6rem;
+  justify-content: center;
+  margin-top: 1.6rem;
+}
+
+.auth-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2.4rem;
+  max-width: none;
+}
+
+.auth-close {
+  align-self: center;
+  min-height: 3.6rem;
+  min-width: 10rem;
+}
+
+.auth-switch-link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  min-height: auto;
+  font-size: inherit;
+  color: var(--primary-colour);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-switch-link:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 0.8;
+}
+
+.clock-card-link {
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+  text-decoration: none;
+}
+
+.clock-card-link:hover {
+  text-decoration: none;
+}
+
+.clock-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.4rem;
+  width: 100%;
+}
+
+.edit-toggle {
+  font-size: 1.2rem;
+  background-color: var(--secondary-colour);
+  color: white;
+  min-height: 4.0rem;
+  padding: 0.8rem 1.6rem;
+}
+
+.live-clock {
+  display: flex;
+  justify-content: center;
+  padding-top: 1.0rem;
+}
+
+.live-clock .public-clock-card {
+  background-color: var(--card-colour);
+}
+
+body.embed-mode {
+  padding: 0;
+  background-image: none;
 }
 
 @media (max-width: 1024px) {
