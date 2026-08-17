@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import useFocusTrap from "@/hooks/useFocusTrap";
@@ -25,6 +24,11 @@ export default function AuthModal({ mode = "login", next = "/dashboard", onSucce
                 ref={trapRef}
                 onClick={(e) => e.stopPropagation()}
             >
+                {onClose && (
+                    <button className="auth-close-x" type="button" onClick={onClose} aria-label="Close">
+                        ✕
+                    </button>
+                )}
                 <h2 className="auth-title">{activeMode === "login" ? "SIGN IN" : "SIGN UP"}</h2>
                 <p className="auth-subtitle">
                     {activeMode === "login" ? "Manage your CamelClocks" : "Create your CamelClocks account"}
@@ -42,16 +46,6 @@ export default function AuthModal({ mode = "login", next = "/dashboard", onSucce
                         onSuccess={onSuccess}
                         onSwitchMode={() => setActiveMode("login")}
                     />
-                )}
-
-                {onClose ? (
-                    <button className="auth-close nbtc" type="button" onClick={onClose}>
-                        CLOSE
-                    </button>
-                ) : (
-                    <Link href="/" className="auth-close nbtc">
-                        CLOSE
-                    </Link>
                 )}
             </div>
         </div>

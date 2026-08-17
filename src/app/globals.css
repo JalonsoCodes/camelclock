@@ -105,6 +105,8 @@ button:hover {
 }
 
 .navbar {
+  --primary-colour: #DBB279;
+  --secondary-colour: #8E652C;
   display: flex;
   justify-content: space-between;
   position: relative;
@@ -126,6 +128,11 @@ button:hover {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
+}
+
+.nav-links a.nav-active {
+  text-decoration: 4px solid underline;
+  text-underline-offset: 0.4em;
 }
 
 .theme-toggle {
@@ -644,6 +651,8 @@ input.colour-swatch::-webkit-color-swatch {
 
 #pricing {
   margin-top: 12.0rem;
+  --primary-colour: #DBB279;
+  --secondary-colour: #8E652C;
 }
 
 .pricing-grid {
@@ -934,6 +943,29 @@ input.colour-swatch::-webkit-color-swatch {
   display: flex;
   flex-direction: column;
   gap: 2.0rem;
+  position: relative;
+}
+
+.auth-close-x {
+  position: absolute;
+  top: 1.6rem;
+  right: 1.6rem;
+  background: none;
+  border: none;
+  box-shadow: none;
+  font-size: 2.0rem;
+  cursor: pointer;
+  color: var(--fg-colour);
+  opacity: 0.6;
+  padding: 0.4rem;
+  line-height: 1;
+  transform: none;
+}
+
+.auth-close-x:hover {
+  opacity: 1;
+  transform: none;
+  box-shadow: none;
 }
 
 .auth-title {
@@ -1035,6 +1067,8 @@ input.colour-swatch::-webkit-color-swatch {
 }
 
 .auth-modal-overlay {
+  --primary-colour: #DBB279;
+  --secondary-colour: #8E652C;
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
@@ -1110,6 +1144,146 @@ input.colour-swatch::-webkit-color-swatch {
 body.embed-mode {
   padding: 0;
   background-image: none;
+}
+
+.admin-page {
+  max-width: 110.0rem;
+  margin: 0 auto;
+  padding: 8.0rem 4.0rem 4.0rem;
+}
+
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4.0rem;
+}
+
+.admin-header h1 {
+  margin: 0;
+}
+
+.admin-empty {
+  font-size: 1.4rem;
+  text-align: center;
+  padding: 6.0rem 0;
+}
+
+.admin-templates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4.0rem;
+}
+
+.admin-template-card {
+  display: grid;
+  grid-template-columns: 38.0rem 1fr;
+  gap: 3.2rem;
+  padding: 3.2rem;
+}
+
+.admin-template-preview {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.admin-template-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 3.2rem;
+}
+
+.admin-template-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-size: 1.2rem;
+}
+
+.admin-template-fields select,
+.admin-template-fields input:not(.colour-swatch):not(.colour-hex-text) {
+  font-size: 1.6rem;
+  padding: 1.2rem;
+  height: 4.8rem;
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
+}
+
+.admin-template-fields select:focus,
+.admin-template-fields input:not(.colour-swatch):not(.colour-hex-text):focus {
+  color: var(--secondary-colour);
+  outline: none;
+  border-color: var(--secondary-colour);
+  box-shadow: 8px 8px 0px var(--secondary-colour);
+}
+
+.admin-template-fields .colour-hex-text {
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
+  font-size: 1.6rem;
+  border: none;
+  box-shadow: none;
+  outline: none;
+}
+
+.admin-template-fields label:focus-within {
+  color: var(--secondary-colour);
+}
+
+.admin-template-fields .form-group {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.admin-template-fields .form-group > label {
+  flex: 1;
+}
+
+.admin-template-fields .three-quarter-split {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.admin-template-fields .three-quarter-split > label {
+  flex: 1;
+}
+
+.admin-template-fields .colour-swatch {
+  width: 100%;
+  height: 3.6rem;
+}
+
+.admin-template-actions {
+  display: flex;
+  gap: 1.2rem;
+  margin-top: 0.8rem;
+}
+
+.admin-template-actions .admin-save-button {
+  flex: 1;
+  background-color: #4caf50;
+  color: white;
+  font-size: 1.6rem;
+  font-weight: bold;
+  padding: 1.2rem;
+  min-height: 4.8rem;
+}
+
+.admin-template-actions .admin-delete-button {
+  flex: 1;
+  background-color: #e53935;
+  color: white;
+  font-size: 1.6rem;
+  font-weight: bold;
+  padding: 1.2rem;
+  min-height: 4.8rem;
+}
+
+.admin-template-status {
+  font-size: 1.0rem;
+  text-align: center;
+  margin: 0;
 }
 
 @media (max-width: 1024px) {
@@ -1237,5 +1411,13 @@ body.embed-mode {
 
   .card-actions {
     flex-direction: column;
+  }
+
+  .admin-template-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-template-preview {
+    justify-content: center;
   }
 }

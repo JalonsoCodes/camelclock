@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./auth/AuthModal";
@@ -10,21 +10,47 @@ import { supabase } from "@/lib/supabase/client";
 
 export default function Navbar() {
     const router = useRouter();
+    const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [authOpen, setAuthOpen] = useState(false);
     const [user, setUser] = useState(null);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         let mounted = true;
 
-        supabase.auth.getUser().then(({ data }) => {
-            if (mounted) setUser(data.user ?? null);
+        supabase.auth.getUser().then(async ({ data }) => {
+            if (!mounted) return;
+            const u = data.user ?? null;
+            setUser(u);
+            if (u) {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("is_admin")
+                    .eq("id", u.id)
+                    .single();
+                if (mounted) setIsAdmin(profile?.is_admin ?? false);
+            } else {
+                setIsAdmin(false);
+            }
         });
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            if (mounted) setUser(session?.user ?? null);
+        } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (!mounted) return;
+            const u = session?.user ?? null;
+            setUser(u);
+            if (u) {
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("is_admin")
+                    .eq("id", u.id)
+                    .single();
+                if (mounted) setIsAdmin(profile?.is_admin ?? false);
+            } else {
+                setIsAdmin(false);
+            }
         });
 
         return () => {
@@ -47,7 +73,10 @@ export default function Navbar() {
 
             <div className={`nav-links ${open ? "open" : ""}`}>
                 {user ? (
-                    <Link href="/dashboard" onClick={() => setOpen(false)}>Dashboard</Link>
+                    <>
+                        <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>Dashboard</Link>
+                        {isAdmin && <Link href="/admin/templates" className={pathname === "/admin/templates" ? "nav-active" : ""} onClick={() => setOpen(false)}>Templates</Link>}
+                    </>
                 ) : (
                     <>
                         <Link href="/#solutions" onClick={() => setOpen(false)}>Solutions</Link>
@@ -65,7 +94,10 @@ export default function Navbar() {
                         <button
                             className="sign-out-button"
                             type="button"
-                            onClick={() => supabase.auth.signOut()}
+                            onClick={async () => {
+                                await supabase.auth.signOut();
+                                router.push("/");
+                            }}
                         >
                             Sign out
                         </button>

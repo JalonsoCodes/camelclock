@@ -67,6 +67,7 @@ export default function TemplateCard({ template }) {
                 type="button"
                 onClick={handleAdd}
                 disabled={copying || copied}
+                style={{ backgroundColor: template.primary_colour }}
             >
                 {copied ? "ADDED!" : copying ? "ADDING..." : "+ ADD TO MY CLOCKS"}
             </button>
