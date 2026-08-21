@@ -31,7 +31,7 @@ export default function AuthModal({ mode = "login", next = "/dashboard", onSucce
                 )}
                 <h2 className="auth-title">{activeMode === "login" ? "SIGN IN" : "SIGN UP"}</h2>
                 <p className="auth-subtitle">
-                    {activeMode === "login" ? "Manage your CamelClocks" : "Create your CamelClocks account"}
+                    {activeMode === "login" ? "Manage your clocks" : "Create your CamelClock account"}
                 </p>
 
                 {activeMode === "login" ? (

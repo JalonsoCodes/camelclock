@@ -74,7 +74,7 @@
     transform: translateX(-100%) translateY(-50%); 
     font-size: calc(var(--clock-scale) * 2px);
     color: var(--clock-secondary);
-    text-shadow: 1px 1px black;
+    text-shadow: calc(var(--clock-scale) * 0.25px) calc(var(--clock-scale) * 0.25px) black;
     width: min-content;
     text-align: right;
     padding-right: calc(var(--clock-scale) * 1px);
@@ -92,17 +92,17 @@
 
 .value {
     color: var(--clock-primary);
-    font-size: calc(var(--clock-scale) * 5px);
+    font-size: calc(var(--clock-scale) * 4.2px);
     font-weight: bold;
-    line-height: calc(var(--clock-scale) * 6px);
+    line-height: calc(var(--clock-scale) * 5px);
     margin-bottom: calc(var(--clock-scale) * 1px);
     text-shadow: calc(var(--clock-scale) * 0.4px) calc(var(--clock-scale) * 0.4px) black;
 }
 
 .label {
     color: var(--fg-colour);
-    font-size: calc(var(--clock-scale) * 2px);
-    line-height: calc(var(--clock-scale) * 2.4px);
+    font-size: calc(var(--clock-scale) * 1.6px);
+    line-height: calc(var(--clock-scale) * 2px);
     text-transform: uppercase;
 }
 
@@ -150,4 +150,19 @@
 .celebrated .endedLabel,
 .celebrated .replayButton {
     color: #525129;
+}
+
+.watermark {
+    display: block;
+    text-align: center;
+    font-size: 1.2rem;
+    color: var(--clock-secondary);
+    opacity: 0.6;
+    text-decoration: none;
+    margin-top: auto;
+    padding-top: 1.2rem;
+}
+
+.watermark:hover {
+    opacity: 1;
 }

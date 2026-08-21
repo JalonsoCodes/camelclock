@@ -1,4 +1,4 @@
-import { eyeOne, eyeTwo, eyeThree, eyeFour } from "@/utils/grids";
+import { eyeOne, eyeTwo, eyeThree, eyeFour, wearables } from "@/utils/grids";
 
 export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000") {
     const ctx = canvas.getContext("2d");
@@ -135,6 +135,38 @@ export function drawGrid(canvas, grid, scale, primaryColour, secondaryColour, pi
             }
 
             ctx.fillRect(c * scale, r * scale, scale, scale);
+        }
+    }
+}
+
+export function drawWearables(canvas, boosts, scale) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    const bgColour = getComputedStyle(document.documentElement).getPropertyValue("--card-colour").trim() || "#ffffff";
+
+    for (const boostId of boosts) {
+        const wearable = wearables[boostId];
+        if (!wearable) continue;
+
+        const { grid, colours } = wearable;
+        const positions = wearable.positions || [wearable.anchor, wearable.mirrorAnchor].filter(Boolean);
+
+        for (const pos of positions) {
+            for (let r = 0; r < grid.length; r++) {
+                for (let c = 0; c < grid[r].length; c++) {
+                    const idx = grid[r][c];
+                    if (idx === 0) continue;
+                    const fill = idx === 100 ? bgColour : colours[idx];
+                    if (!fill) continue;
+                    const px = (pos.col + c) * scale;
+                    const py = (pos.row + r) * scale;
+                    ctx.clearRect(px, py, scale, scale);
+                    ctx.fillStyle = fill;
+                    ctx.fillRect(px, py, scale, scale);
+                }
+            }
         }
     }
 }

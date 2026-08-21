@@ -19,6 +19,10 @@ export default async function EmbedPage({ params }) {
         notFound();
     }
 
+    if (clock.status !== "live") {
+        notFound();
+    }
+
     const target = new Date(clock.target_at);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
@@ -35,6 +39,8 @@ export default async function EmbedPage({ params }) {
                     celebrationMessage={clock.celebration_message}
                     primaryColour={clock.primary_colour}
                     secondaryColour={clock.secondary_colour}
+                    boosts={clock.wearables || []}
+                    showWatermark
                 />
             </div>
         </main>

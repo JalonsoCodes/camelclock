@@ -1,4 +1,5 @@
 import { Press_Start_2P } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const pixelatedFont = Press_Start_2P({
@@ -9,16 +10,16 @@ const pixelatedFont = Press_Start_2P({
 
 export const metadata = {
   title: {
-    default: "CamelClocks — Countdown & Waitlist",
-    template: "%s | CamelClocks",
+    default: "CamelClock — Countdown & Waitlist",
+    template: "%s | CamelClock",
   },
   description:
     "Create beautiful, embeddable countdown clocks with pixel-art camels. Perfect for product launches, sales, and events.",
   openGraph: {
-    title: "CamelClocks — Countdown & Waitlist",
+    title: "CamelClock — Countdown & Waitlist",
     description:
       "Create beautiful, embeddable countdown clocks with pixel-art camels.",
-    siteName: "CamelClocks",
+    siteName: "CamelClock",
     type: "website",
   },
 };
@@ -37,6 +38,10 @@ export default function RootLayout({ children }) {
         <div className="page-container">
           {children}
         </div>
+        <footer className="site-footer">
+          <Link href="/privacy">Privacy Policy</Link>
+          <Link href="/terms">Terms of Service</Link>
+        </footer>
       </body>
     </html>
   );

@@ -64,7 +64,7 @@ export default function Navbar() {
             <Link href={user ? "/dashboard" : "/"} className="logo">
                 <Image 
                     src="/logo.png" 
-                    alt="CamelClocks logo" 
+                    alt="CamelClock logo" 
                     width={40} 
                     height={40} 
                     priority 
@@ -80,7 +80,6 @@ export default function Navbar() {
                 ) : (
                     <>
                         <Link href="/#solutions" onClick={() => setOpen(false)}>Solutions</Link>
-                        <Link href="/#pricing" onClick={() => setOpen(false)}>Pricing</Link>
                     </>
                 )}
             </div>
@@ -96,7 +95,11 @@ export default function Navbar() {
                             type="button"
                             onClick={async () => {
                                 await supabase.auth.signOut();
-                                router.push("/");
+                                if (pathname.startsWith("/clock/")) {
+                                    router.refresh();
+                                } else {
+                                    router.push("/");
+                                }
                             }}
                         >
                             Sign out

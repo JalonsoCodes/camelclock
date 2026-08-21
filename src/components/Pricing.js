@@ -20,7 +20,7 @@ export default function Pricing() {
                     <h3>Pro</h3>
                     <p className="pricing-price">£7.99 <span className="pricing-period">/ month</span></p>
                     <ul>
-                        <li>Up to 10 embeddable CamelClocks</li>
+                        <li>Up to 10 embeddable CamelClock</li>
                         <li>More advanced style customisation (wearables, branding)</li>
                         <li>Collect customers for waitlist</li>
                         <li>No CamelClock watermark</li>

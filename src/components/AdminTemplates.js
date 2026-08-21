@@ -4,6 +4,8 @@ import { useState } from "react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import { supabase } from "@/lib/supabase/client";
+import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
+import { validateClock } from "@/utils/validation";
 
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
@@ -19,6 +21,7 @@ const EMPTY_TEMPLATE = {
     secondary_colour: "#8E652C",
     celebration_type: "spit",
     template_sort_order: 100,
+    status: "live",
 };
 
 function TemplateEditor({ template, onSave, onDelete }) {
@@ -48,9 +51,24 @@ function TemplateEditor({ template, onSave, onDelete }) {
         setSaving(true);
         setStatus("");
 
+        const validation = validateClock({
+            title: fields.title,
+            introText: fields.intro_text,
+            celebrationMessage: fields.celebration_message,
+            primaryColour: fields.primary_colour,
+            secondaryColour: fields.secondary_colour,
+            month,
+            day,
+            time,
+        });
+        if (!validation.valid) {
+            setStatus(validation.errors[0]);
+            setSaving(false);
+            return;
+        }
+
         const currentYear = new Date().getFullYear();
-        const [hours, minutes] = time.split(":").map(Number);
-        let targetDate = new Date(currentYear, month, day, hours || 0, minutes || 0);
+        let targetDate = getConfiguredTarget(month, day, time, currentYear);
         if (targetDate <= new Date()) {
             targetDate.setFullYear(currentYear + 1);
         }
@@ -110,7 +128,12 @@ function TemplateEditor({ template, onSave, onDelete }) {
                 <div className="form-group three-quarter-split">
                     <label>
                         MONTH
-                        <select className="nbtc" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+                        <select className="nbtc" value={month} onChange={(e) => {
+                            const newMonth = Number(e.target.value);
+                            setMonth(newMonth);
+                            const maxDays = getDaysInMonth(newMonth, target.getFullYear());
+                            setDay((d) => Math.min(d, maxDays));
+                        }}>
                             {MONTH_NAMES.map((name, i) => (
                                 <option key={i} value={i}>{name}</option>
                             ))}

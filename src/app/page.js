@@ -3,7 +3,8 @@ import CamelClockBuilder from "@/components/CamelClockBuilder";
 import CamelClock from "@/components/CamelClock";
 import Typewriter from "@/components/Typewriter";
 import Solutions from "@/components/Solutions";
-import Pricing from "@/components/Pricing";
+// TODO: Re-add Pricing with "Coming Soon" email capture modal
+// import Pricing from "@/components/Pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -29,7 +30,7 @@ export default function Home() {
         </div>
         <CamelClockBuilder />
         <Solutions />
-        <Pricing />
+        {/* TODO: Re-add Pricing with "Coming Soon" email capture modal */}
       </main>
     </>
   )

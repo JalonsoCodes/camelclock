@@ -2,25 +2,10 @@
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
-import { drawCamel, drawGrid } from "@/utils/drawing";
+import { drawCamel, drawGrid, drawWearables } from "@/utils/drawing";
 import { camelTemplate, celebrationFrames, celebrationFrameDurationMs } from "@/utils/grids";
+import { getConfiguredTarget, getNextTarget } from "@/utils/time";
 import styles from "./CamelClock.module.css";
-
-function getConfiguredTarget(month, day, time, year) {
-    const [hours, minutes] = time.split(":").map(Number);
-    return new Date(year, month, day, hours || 0, minutes || 0, 0);
-}
-
-function getNextTarget(month, day, time) {
-    const now = new Date();
-    let target = getConfiguredTarget(month, day, time, now.getFullYear());
-
-    if (target <= now) {
-        target.setFullYear(now.getFullYear() + 1);
-    }
-
-    return target;
-}
 
 function getLevels(now, target) {
     const diffMs = target - now;
@@ -54,46 +39,35 @@ function getLevels(now, target) {
     
     const daysInCurrentMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
 
-    const exactSecs = secondsLeft;
-    const exactMins = (diffMs / (1000 * 60)) % 60;
-    const exactHours = (diffMs / (1000 * 60 * 60)) % 24;
-    const exactDays = daysLeft + (exactHours / 24); 
-    const exactMonths = totalMonthsLeft + (exactDays / daysInCurrentMonth);
-
     const allUnits = [
         { 
             label: "Months", 
             value: totalMonthsLeft, 
             displayValue: totalMonthsLeft, 
-            exactValue: exactMonths % 12, 
             max: 12 
         },
         { 
             label: "Days", 
             value: daysLeft, 
             displayValue: daysLeft, 
-            exactValue: exactDays, 
             max: daysInCurrentMonth 
         },
         { 
             label: "Hours", 
             value: hoursLeft, 
             displayValue: hoursLeft, 
-            exactValue: exactHours, 
             max: 24 
         },
         { 
             label: "Mins", 
             value: minutesLeft, 
             displayValue: minutesLeft, 
-            exactValue: exactMins, 
             max: 60 
         },
         { 
             label: "Secs", 
             value: secondsLeft, 
             displayValue: Math.floor(secondsLeft), 
-            exactValue: exactSecs, 
             max: 60 
         } 
     ];
@@ -105,8 +79,7 @@ function getLevels(now, target) {
         : allUnits.slice(firstActiveIndex);
 
     return activeUnits.map(unit => ({
-        // Map exact unit ratio to 60 hump levels (updates every second for Secs)
-        level: Math.min(59, Math.floor((unit.exactValue / unit.max) * 60)),
+        level: Math.min(59, Math.floor((unit.value / unit.max) * 60)),
         label: unit.label,
         value: unit.displayValue
     }));
@@ -118,7 +91,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, ref }) {
+export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -131,6 +104,7 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     ]);
     const [eyeFrame, setEyeFrame] = useState(0);
     const [calculatedScale, setCalculatedScale] = useState(4);
+    const [displayScale, setDisplayScale] = useState(4);
     const [themeToken, setThemeToken] = useState(0);
     const [phase, setPhase] = useState("counting");
     const [frameIndex, setFrameIndex] = useState(celebrationFrames.length - 1);
@@ -158,6 +132,7 @@ export default function CamelClock({ title, month, day, time, introText, celebra
                 
                 const newScale = Math.max(1, Math.floor(availableWidth / templateColumns));
                 setCalculatedScale(newScale);
+                setDisplayScale(Math.max(1, containerWidth / templateColumns));
             }
         };
 
@@ -168,34 +143,17 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     }, []);
 
     useEffect(() => {
-        let first = true;
         let timer;
 
         const tick = () => {
             const now = new Date();
             const configuredTarget = getConfiguredTarget(month, day, time, now.getFullYear());
-            const complete = configuredTarget <= now;
+            const target = configuredTarget <= now ? getNextTarget(month, day, time) : configuredTarget;
 
             if (phaseRef.current === "counting") {
-                const target = complete ? getNextTarget(month, day, time) : configuredTarget;
                 setLevels(getLevels(now, target));
                 setEyeFrame(prev => (prev + 1) % 4);
             }
-
-            if (complete) {
-                clearInterval(timer);
-                if (first) {
-                    setFrameIndex(celebrationFrames.length - 1);
-                    setPhase("celebrated");
-                } else {
-                    setFrameIndex(0);
-                    setPhase("celebrating");
-                }
-            } else if (first) {
-                setPhase("counting");
-            }
-
-            first = false;
         };
 
         tick();
@@ -230,12 +188,9 @@ export default function CamelClock({ title, month, day, time, introText, celebra
 
         const timeoutId = setTimeout(() => {
             setIsPreview(false);
+            setPhase("counting");
             const now = new Date();
-            const configuredTarget = getConfiguredTarget(month, day, time, now.getFullYear());
-            if (configuredTarget > now) {
-                setPhase("counting");
-                setLevels(getLevels(now, getNextTarget(month, day, time)));
-            }
+            setLevels(getLevels(now, getNextTarget(month, day, time)));
         }, 2000);
 
         return () => clearTimeout(timeoutId);
@@ -304,7 +259,11 @@ export default function CamelClock({ title, month, day, time, introText, celebra
 
             drawCamel(canvas, template, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark);
         }
-    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour]);
+
+        if (!celebrating && boosts.length > 0) {
+            drawWearables(canvas, boosts, calculatedScale);
+        }
+    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, boosts]);
 
     const startPreview = () => {
         setIsPreview(true);
@@ -328,19 +287,14 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     const startCol = 22 + (50 - totalWidthOfHumps) / 2;
 
     return (
-        <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": calculatedScale }}>
+        <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": displayScale }}>
             <h2 className={styles.clockTitle}>{title}</h2>
             
             <div className={styles.wrapper}>
                 <div className={styles.canvasWrap}>
                     <canvas ref={canvasRef} style={{ imageRendering: "pixelated", width: "100%", display: "block" }} />
-                    {phase === "celebrated" && (
-                        <>
-                            {celebrationMessage && (
-                                <div className={styles.completionMessage}>{celebrationMessage}</div>
-                            )}
-                            <Link href="/" className={styles.homeLink}>Create your CamelClock</Link>
-                        </>
+                    {phase === "celebrated" && celebrationMessage && (
+                        <div className={styles.completionMessage}>{celebrationMessage}</div>
                     )}
                 </div>
 
@@ -389,6 +343,10 @@ export default function CamelClock({ title, month, day, time, introText, celebra
                     </svg>
                     Replay completion animation
                 </button>
+            )}
+
+            {showWatermark && (
+                <Link href="/" className={styles.watermark}>Powered by CamelClock</Link>
             )}
         </div>
     );

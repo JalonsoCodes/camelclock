@@ -17,8 +17,8 @@ export async function generateMetadata({ params }) {
     return {
         title: clock?.title ?? "Clock",
         description: clock?.title
-            ? `Countdown to ${clock.title} — created on CamelClocks`
-            : "View this countdown clock on CamelClocks",
+            ? `Countdown to ${clock.title} — created on CamelClock`
+            : "View this countdown clock on CamelClock",
     };
 }
 
@@ -41,6 +41,10 @@ export default async function ClockPage({ params }) {
     } = await supabase.auth.getUser();
 
     const isOwner = !!user && user.id === clock.user_id;
+
+    if (clock.status === "draft" && !isOwner) {
+        notFound();
+    }
 
     return (
         <>

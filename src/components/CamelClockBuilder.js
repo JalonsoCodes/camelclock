@@ -1,10 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
+import { wearables as wearableData } from "@/utils/grids";
+import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
+import { validateClock } from "@/utils/validation";
 
 function hslToHex(h, s, l) {
     s /= 100;
@@ -19,6 +23,7 @@ function hslToHex(h, s, l) {
 const PENDING_KEY = "camelclocks.pending";
 
 export default function CamelClockBuilder({ initialValues = null, clockId = null, onSaved = null }) {
+    const router = useRouter();
     const clockRef = useRef(null);
     const autoSavedRef = useRef(false);
     const [title, setTitle] = useState(initialValues?.title ?? "My Amazing Promotion");
@@ -34,6 +39,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [savedClockId, setSavedClockId] = useState(null);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [createdId, setCreatedId] = useState(null);
+    const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? []);
 
     const effectiveId = clockId ?? createdId;
 
@@ -68,11 +74,8 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const buildPayload = (values) => {
         const now = new Date();
         const currentYear = now.getFullYear();
-        const [hours, minutes] = values.time.split(":").map(Number);
+        let targetDate = getConfiguredTarget(values.month, values.day, values.time, currentYear);
 
-        let targetDate = new Date(currentYear, values.month, values.day, hours || 0, minutes || 0);
-
-        // If chosen date/time is in the past, default to next year
         if (targetDate <= now) {
             targetDate.setFullYear(currentYear + 1);
         }
@@ -85,6 +88,8 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             primary_colour: values.primaryColour,
             secondary_colour: values.secondaryColour,
             celebration_type: "spit",
+            wearables: values.wearables ?? [],
+            status: "draft",
         };
     };
 
@@ -108,6 +113,13 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         setIsSaving(true);
         setStatusMessage("");
 
+        const validation = validateClock(values);
+        if (!validation.valid) {
+            setStatusMessage(validation.errors[0]);
+            setIsSaving(false);
+            return false;
+        }
+
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -115,7 +127,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         if (!user) {
             stashPending(values);
             setAuthModalOpen(true);
-            setStatusMessage("Sign in to save and manage your CamelClocks.");
+            setStatusMessage("Sign in to save and manage your clocks.");
             setIsSaving(false);
             return false;
         }
@@ -123,9 +135,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         const payload = { ...buildPayload(values), user_id: user.id };
 
         try {
-            const { data, error } = effectiveId
-                ? await supabase.from("clocks").update(payload).eq("id", effectiveId).select()
-                : await supabase.from("clocks").insert([payload]).select();
+            const isNew = !effectiveId;
+            const { data, error } = isNew
+                ? await supabase.from("clocks").insert([payload]).select()
+                : await supabase.from("clocks").update(payload).eq("id", effectiveId).select();
 
             if (error) {
                 throw error;
@@ -136,9 +149,15 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             if (savedId) {
                 setCreatedId(savedId);
             }
-            setSavedClockId(savedId);
-            setStatusMessage("Saved successfully!");
-            onSaved?.();
+
+            if (isNew) {
+                setStatusMessage("Clock saved! Redirecting to dashboard...");
+                setTimeout(() => router.push("/dashboard"), 1000);
+            } else {
+                setSavedClockId(savedId);
+                setStatusMessage("Saved successfully!");
+                onSaved?.();
+            }
         } catch (error) {
             console.error("Error saving clock:", error);
             setStatusMessage("Failed to save. Please try again.");
@@ -152,7 +171,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     const handleSave = (e) => {
         e.preventDefault();
-        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour });
+                        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, wearables: selectedWearables });
     };
 
     const restoreAndSave = async (pending) => {
@@ -164,6 +183,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         setCelebrationMessage(pending.celebrationMessage ?? "TIME IS UP!");
         setPrimaryColour(pending.primaryColour ?? "#DBB279");
         setSecondaryColour(pending.secondaryColour ?? "#8E652C");
+        setSelectedWearables(pending.wearables ?? []);
         await performSave(pending);
     };
 
@@ -190,7 +210,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     return (
         <div className="camel-builder">
             <div className="canvas-wrapper nbtc">
-                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" />
+                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" boosts={selectedWearables} />
             </div>
 
             <form className="camel-builder-form" onSubmit={handleSave}>
@@ -209,7 +229,12 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 <div className="form-group three-quarter-split">
                     <label>
                         MONTH
-                        <select className="nbtc" value={month} onChange={(e) => setMonth(Number(e.target.value))}>
+                        <select className="nbtc" value={month} onChange={(e) => {
+                            const newMonth = Number(e.target.value);
+                            setMonth(newMonth);
+                            const maxDays = getDaysInMonth(newMonth, new Date().getFullYear());
+                            setDay((d) => Math.min(d, maxDays));
+                        }}>
                             <option value={0}>January</option>
                             <option value={1}>February</option>
                             <option value={2}>March</option>
@@ -248,46 +273,6 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                         onChange={(e) => setTime(e.target.value)} 
                     />
                 </label>
-
-                <details className="more-options">
-                    <summary className="more-options-summary">
-                        MORE OPTIONS
-                        <span className="more-options-chevron" aria-hidden="true">▾</span>
-                    </summary>
-                    <div className="more-options-body">
-                        <label>
-                            LABEL
-                            <input
-                                className="nbtc" 
-                                type="text" 
-                                value={introText} 
-                                onChange={(e) => setIntroText(e.target.value)} 
-                                onFocus={(e) => e.target.select()} 
-                                maxLength="15" 
-                            />
-                        </label>
-
-                        <label>
-                            COMPLETION MESSAGE
-                            <textarea
-                                className="nbtc"
-                                value={celebrationMessage}
-                                onChange={(e) => setCelebrationMessage(e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                rows="3"
-                                maxLength="140"
-                                placeholder="Shown at the end of the animation"
-                            />
-                        </label>
-
-                        <button className="preview-button" type="button" onClick={() => clockRef.current?.preview()}>
-                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
-                                <polygon points="6 3 20 12 6 21 6 3" />
-                            </svg>
-                            Preview completion
-                        </button>
-                    </div>
-                </details>
 
                 <div className="form-group">
                     <label>
@@ -385,14 +370,96 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </span>
                 </button>
 
+                <details className="more-options">
+                    <summary className="more-options-summary">
+                        MORE OPTIONS
+                        <span className="more-options-chevron" aria-hidden="true">▾</span>
+                    </summary>
+                    <div className="more-options-body">
+                        <label>
+                            LABEL
+                            <input
+                                className="nbtc" 
+                                type="text" 
+                                value={introText} 
+                                onChange={(e) => setIntroText(e.target.value)} 
+                                onFocus={(e) => e.target.select()} 
+                                maxLength="15" 
+                            />
+                        </label>
+
+                        <label>
+                            COMPLETION MESSAGE
+                            <textarea
+                                className="nbtc"
+                                value={celebrationMessage}
+                                onChange={(e) => setCelebrationMessage(e.target.value)}
+                                onFocus={(e) => e.target.select()}
+                                rows="3"
+                                maxLength="140"
+                                placeholder="Shown at the end of the animation"
+                            />
+                        </label>
+
+                        <button className="preview-button" type="button" onClick={() => clockRef.current?.preview()}>
+                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+                                <polygon points="6 3 20 12 6 21 6 3" />
+                            </svg>
+                            Preview completion
+                        </button>
+
+                        <div className="wearables-section">
+                            <span className="wearables-label">WEARABLES</span>
+                            <div className="wearables-box nbtc">
+                                {(() => {
+                                    const categories = {};
+                                    Object.entries(wearableData).forEach(([id, item]) => {
+                                        if (!categories[item.category]) categories[item.category] = [];
+                                        categories[item.category].push({ id, ...item });
+                                    });
+                                    return Object.entries(categories).map(([cat, items]) => (
+                                        <div key={cat} className="wearables-category">
+                                            <div className="wearables-category-heading">{cat.toUpperCase()}</div>
+                                            <div className="wearables-list">
+                                                {items.map((item) => {
+                                                    const isSelected = selectedWearables.includes(item.id);
+                                                    return (
+                                                        <button
+                                                            key={item.id}
+                                                            type="button"
+                                                            className={`wearables-item${isSelected ? " selected" : ""}`}
+                                                            onClick={() => {
+                                                                setSelectedWearables((prev) => {
+                                                                    if (isSelected) return prev.filter((wid) => wid !== item.id);
+                                                                    return [
+                                                                        ...prev.filter((wid) => wearableData[wid]?.category !== cat),
+                                                                        item.id,
+                                                                    ];
+                                                                });
+                                                            }}
+                                                        >
+                                                            <span className="wearables-tick"><span className="wearables-tick-tick">✓</span></span>
+                                                            <span className="wearables-item-emoji">{item.emoji}</span>
+                                                            <span className="wearables-item-name">{item.name}</span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    ));
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+                </details>
+
                 <button
                     className="share-button nbtc" type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : (effectiveId ? "Save changes" : "Create and share")}
+                    {isSaving ? "Saving..." : (effectiveId ? "Save changes" : "Create")}
                 </button>
 
-                {/* Status Message Feedback */}
                 {statusMessage && (
-                    <p style={{ marginTop: "0.5rem", textAlign: "center", fontSize: "1.2rem" }}>
+                    <p className="builder-status-message">
                         {statusMessage}
                     </p>
                 )}
@@ -404,7 +471,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     onClose={() => setAuthModalOpen(false)}
                     onSuccess={() => {
                         setAuthModalOpen(false);
-                        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour });
+        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, wearables: selectedWearables });
                     }}
                 />
             )}

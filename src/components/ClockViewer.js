@@ -21,6 +21,7 @@ function getInitialValues(clock) {
         celebrationMessage: clock.celebration_message,
         primaryColour: clock.primary_colour,
         secondaryColour: clock.secondary_colour,
+        wearables: clock.wearables || [],
     };
 }
 
@@ -46,10 +47,10 @@ export default function ClockViewer({ clock, isOwner: initialOwner }) {
 
     return (
         <div className="clock-viewer">
-            {isOwner && (
-                <button className="edit-toggle nbtc" type="button" onClick={() => setEditing((e) => !e)}>
-                    {editing ? "← BACK TO VIEW" : "EDIT CLOCK"}
-                </button>
+            {clock.status === "draft" && isOwner && (
+                <div className="draft-banner nbtc">
+                    This CamelClock is in your Drafts &mdash; only you can see it.
+                </div>
             )}
 
             {editing && isOwner ? (
@@ -62,19 +63,28 @@ export default function ClockViewer({ clock, isOwner: initialOwner }) {
                     }}
                 />
             ) : (
-                <div className="public-clock-card nbtc">
-                    <CamelClock
-                        title={clock.title}
-                        month={target.getMonth()}
-                        day={target.getDate()}
-                        time={formatTime(target)}
-                        introText={clock.intro_text}
-                        celebrationMessage={clock.celebration_message}
-                        primaryColour={clock.primary_colour}
-                        secondaryColour={clock.secondary_colour}
-                        celebrationType={clock.celebration_type}
-                    />
-                </div>
+                <>
+                    <div className="public-clock-card nbtc">
+                        {isOwner && (
+                            <button className="edit-fab nbtc" type="button" onClick={() => setEditing(true)}>
+                                EDIT
+                            </button>
+                        )}
+                        <CamelClock
+                            title={clock.title}
+                            month={target.getMonth()}
+                            day={target.getDate()}
+                            time={formatTime(target)}
+                            introText={clock.intro_text}
+                            celebrationMessage={clock.celebration_message}
+                            primaryColour={clock.primary_colour}
+                            secondaryColour={clock.secondary_colour}
+                            celebrationType={clock.celebration_type}
+                            boosts={clock.wearables || []}
+                            showWatermark
+                        />
+                    </div>
+                </>
             )}
         </div>
     );

@@ -10,7 +10,7 @@ export default function ShareDialog({ clockId, title, onClose }) {
     const trapRef = useFocusTrap(true);
 
     const shareUrl = `${window.location.origin}/clock/${clockId}`;
-    const embedCode = `<iframe src="${shareUrl}/embed" width="100%" height="560" frameborder="0" style="border:0;" title="${title.replace(/"/g, "&quot;")}"></iframe>`;
+    const embedCode = `<iframe src="${shareUrl}/embed" width="100%" height="560" frameborder="0" style="border:0;" title="${title.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}"></iframe>`;
 
     useEffect(() => {
         const handleEsc = (e) => {

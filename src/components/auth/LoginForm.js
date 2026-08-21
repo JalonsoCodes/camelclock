@@ -71,7 +71,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
             </button>
 
             <p className="auth-switch">
-                New to CamelClocks?{" "}
+                New to CamelClock?{" "}
                 {onSwitchMode ? (
                     <button className="auth-switch-link" type="button" onClick={onSwitchMode}>
                         Create an account
