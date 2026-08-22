@@ -3,7 +3,7 @@
 import { useState } from "react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
-import { supabase } from "@/lib/supabase/client";
+import { createTemplate, deleteTemplate, updateTemplate } from "@/app/admin/templates/actions";
 import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
 import { validateClock } from "@/utils/validation";
 
@@ -21,7 +21,6 @@ const EMPTY_TEMPLATE = {
     secondary_colour: "#8E652C",
     celebration_type: "spit",
     template_sort_order: 100,
-    status: "live",
 };
 
 function TemplateEditor({ template, onSave, onDelete }) {
@@ -44,6 +43,7 @@ function TemplateEditor({ template, onSave, onDelete }) {
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState("");
     const [confirmDelete, setConfirmDelete] = useState(false);
+    const [deleteError, setDeleteError] = useState("");
 
     const update = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));
 
@@ -73,27 +73,33 @@ function TemplateEditor({ template, onSave, onDelete }) {
             targetDate.setFullYear(currentYear + 1);
         }
 
-        const { error } = await supabase
-            .from("clocks")
-            .update({
-                title: fields.title,
-                target_at: targetDate.toISOString(),
-                intro_text: fields.intro_text,
-                celebration_message: fields.celebration_message,
-                primary_colour: fields.primary_colour,
-                secondary_colour: fields.secondary_colour,
-                template_sort_order: fields.template_sort_order,
-            })
-            .eq("id", template.id);
+        const { data, error } = await updateTemplate(template.id, {
+            title: fields.title,
+            target_at: targetDate.toISOString(),
+            intro_text: fields.intro_text,
+            celebration_message: fields.celebration_message,
+            primary_colour: fields.primary_colour,
+            secondary_colour: fields.secondary_colour,
+            template_sort_order: fields.template_sort_order,
+        });
 
         setSaving(false);
-        setStatus(error ? "Failed to save" : "Saved!");
-        if (!error) setTimeout(() => setStatus(""), 2000);
+        setStatus(error ? (error ?? "Failed to save") : "Saved!");
+        if (!error && data) {
+            onSave?.(data);
+            setTimeout(() => setStatus(""), 2000);
+        }
     };
 
     const handleDelete = async () => {
-        const { error } = await supabase.from("clocks").delete().eq("id", template.id);
-        if (!error) onDelete(template.id);
+        setDeleteError("");
+        const { error } = await deleteTemplate(template.id);
+        if (error) {
+            setDeleteError(error);
+            setConfirmDelete(false);
+        } else {
+            onDelete(template.id);
+        }
     };
 
     return (
@@ -273,6 +279,7 @@ function TemplateEditor({ template, onSave, onDelete }) {
                 </div>
 
                 {status && <p className="admin-template-status">{status}</p>}
+                {deleteError && <p className="admin-template-status">{deleteError}</p>}
             </div>
 
             {confirmDelete && (
@@ -289,6 +296,7 @@ function TemplateEditor({ template, onSave, onDelete }) {
 export default function AdminTemplates({ templates: initialTemplates }) {
     const [templates, setTemplates] = useState(initialTemplates);
     const [adding, setAdding] = useState(false);
+    const [addError, setAddError] = useState("");
 
     const handleDelete = (id) => {
         setTemplates((prev) => prev.filter((t) => t.id !== id));
@@ -296,16 +304,16 @@ export default function AdminTemplates({ templates: initialTemplates }) {
 
     const handleAdd = async () => {
         setAdding(true);
+        setAddError("");
 
-        const { data, error } = await supabase.from("clocks").insert([{
-            ...EMPTY_TEMPLATE,
-            user_id: null,
-        }]).select();
+        const { data, error } = await createTemplate(EMPTY_TEMPLATE);
 
         setAdding(false);
 
-        if (!error && data?.[0]) {
-            setTemplates((prev) => [...prev, data[0]]);
+        if (error) {
+            setAddError(error);
+        } else if (data) {
+            setTemplates((prev) => [...prev, data]);
         }
     };
 
@@ -317,6 +325,8 @@ export default function AdminTemplates({ templates: initialTemplates }) {
                     {adding ? "Adding..." : "+ New Template"}
                 </button>
             </div>
+
+            {addError && <p className="admin-template-status">{addError}</p>}
 
             {templates.length === 0 ? (
                 <p className="admin-empty">No templates yet. Add one to get started.</p>

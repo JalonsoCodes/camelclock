@@ -26,12 +26,14 @@ export default function ClockCard({ clock, onDeleted }) {
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [toggling, setToggling] = useState(false);
+    const [toggleError, setToggleError] = useState("");
 
     const target = new Date(clock.target_at);
     const status = getStatus(clock);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
     const handleTogglePublish = async () => {
+        setToggleError("");
         setToggling(true);
         const newStatus = status === "draft" ? "live" : "draft";
         const { error } = await supabase
@@ -40,7 +42,10 @@ export default function ClockCard({ clock, onDeleted }) {
             .eq("id", clock.id);
         setToggling(false);
 
-        if (!error) {
+        if (error) {
+            console.error("Error updating clock status:", error);
+            setToggleError(`Failed to ${newStatus === "live" ? "publish" : "unpublish"}. Please try again.`);
+        } else {
             onDeleted();
         }
     };
@@ -112,6 +117,8 @@ export default function ClockCard({ clock, onDeleted }) {
                     )}
                 </button>
             </div>
+
+            {toggleError && <p className="card-error">{toggleError}</p>}
 
             {confirmOpen && (
                 <ConfirmDialog

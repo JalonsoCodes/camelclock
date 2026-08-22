@@ -11,11 +11,13 @@ export default function TemplateCard({ template }) {
     const [authOpen, setAuthOpen] = useState(false);
     const [copying, setCopying] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [addError, setAddError] = useState("");
 
     const target = new Date(template.target_at);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
     const handleAdd = async () => {
+        setAddError("");
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
@@ -40,6 +42,7 @@ export default function TemplateCard({ template }) {
 
         if (error) {
             console.error("Error copying template:", error);
+            setAddError("Failed to add this clock. Please try again.");
             return;
         }
 
@@ -72,9 +75,11 @@ export default function TemplateCard({ template }) {
                 {copied ? "ADDED!" : copying ? "ADDING..." : "+ ADD TO MY CLOCKS"}
             </button>
 
+            {addError && <p className="card-error">{addError}</p>}
+
             {authOpen && (
                 <AuthModal
-                    mode="login"
+                    mode="signup"
                     onClose={() => setAuthOpen(false)}
                     onSuccess={() => { setAuthOpen(false); handleAdd(); }}
                 />

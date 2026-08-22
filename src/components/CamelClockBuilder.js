@@ -62,9 +62,11 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     useEffect(() => {
         const handleKeyDown = (e) => {
+            if (!e.key) return;
             if (e.key.toLowerCase() !== "r" || e.metaKey || e.ctrlKey || e.altKey) return;
             const target = e.target;
             if (target && (target.tagName === "INPUT" || target.tagName === "SELECT" || target.tagName === "TEXTAREA")) return;
+            if (document.querySelector(".auth-modal-overlay, .share-dialog-overlay")) return;
             randomiseColours();
         };
         window.addEventListener("keydown", handleKeyDown);
@@ -132,10 +134,14 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             return false;
         }
 
+        const isNew = !effectiveId;
         const payload = { ...buildPayload(values), user_id: user.id };
+        if (!isNew) {
+            // Preserve the clock's current publish state — only new clocks start as drafts
+            delete payload.status;
+        }
 
         try {
-            const isNew = !effectiveId;
             const { data, error } = isNew
                 ? await supabase.from("clocks").insert([payload]).select()
                 : await supabase.from("clocks").update(payload).eq("id", effectiveId).select();
@@ -467,7 +473,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
             {authModalOpen && (
                 <AuthModal
-                    mode="login"
+                    mode="signup"
                     onClose={() => setAuthModalOpen(false)}
                     onSuccess={() => {
                         setAuthModalOpen(false);

@@ -31,17 +31,17 @@ export default function ClockViewer({ clock, isOwner: initialOwner }) {
     const [isOwner, setIsOwner] = useState(initialOwner);
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === "SIGNED_OUT") {
                 setIsOwner(false);
                 setEditing(false);
-            } else if (event === "SIGNED_IN") {
-                setIsOwner(true);
+            } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+                setIsOwner(!!session?.user && session.user.id === clock.user_id);
             }
         });
 
         return () => subscription.unsubscribe();
-    }, []);
+    }, [clock.user_id]);
 
     const target = new Date(clock.target_at);
 

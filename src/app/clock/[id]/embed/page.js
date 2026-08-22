@@ -9,11 +9,15 @@ export default async function EmbedPage({ params }) {
     const { id } = await params;
     const supabase = await createClient();
 
-    const { data: clock } = await supabase
+    const { data: clock, error } = await supabase
         .from("clocks")
         .select("*")
         .eq("id", id)
         .maybeSingle();
+
+    if (error) {
+        console.error(`Failed to load embed clock ${id}:`, error.message);
+    }
 
     if (!clock) {
         notFound();

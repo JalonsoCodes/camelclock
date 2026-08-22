@@ -13,6 +13,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const [open, setOpen] = useState(false);
     const [authOpen, setAuthOpen] = useState(false);
+    const [authMode, setAuthMode] = useState("signup");
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
 
@@ -24,11 +25,14 @@ export default function Navbar() {
             const u = data.user ?? null;
             setUser(u);
             if (u) {
-                const { data: profile } = await supabase
+                const { data: profile, error: profileError } = await supabase
                     .from("profiles")
                     .select("is_admin")
                     .eq("id", u.id)
                     .single();
+                if (profileError) {
+                    console.error("Failed to load profile:", profileError.message);
+                }
                 if (mounted) setIsAdmin(profile?.is_admin ?? false);
             } else {
                 setIsAdmin(false);
@@ -42,11 +46,14 @@ export default function Navbar() {
             const u = session?.user ?? null;
             setUser(u);
             if (u) {
-                const { data: profile } = await supabase
+                const { data: profile, error: profileError } = await supabase
                     .from("profiles")
                     .select("is_admin")
                     .eq("id", u.id)
                     .single();
+                if (profileError) {
+                    console.error("Failed to load profile:", profileError.message);
+                }
                 if (mounted) setIsAdmin(profile?.is_admin ?? false);
             } else {
                 setIsAdmin(false);
@@ -80,6 +87,7 @@ export default function Navbar() {
                 ) : (
                     <>
                         <Link href="/#solutions" onClick={() => setOpen(false)}>Solutions</Link>
+                        <Link href="/#pricing" onClick={() => setOpen(false)}>Pricing</Link>
                     </>
                 )}
             </div>
@@ -106,7 +114,22 @@ export default function Navbar() {
                         </button>
                     </>
                 ) : (
-                    <button className="btn-link" type="button" onClick={() => setAuthOpen(true)}>Sign In</button>
+                    <>
+                        <button
+                            className="btn-link btn-secondary"
+                            type="button"
+                            onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
+                        >
+                            Sign In
+                        </button>
+                        <button
+                            className="btn-link"
+                            type="button"
+                            onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}
+                        >
+                            Create Account
+                        </button>
+                    </>
                 )}
 
                 <button
@@ -123,7 +146,7 @@ export default function Navbar() {
             </div>
 
             {authOpen && (
-                <AuthModal onClose={() => setAuthOpen(false)} onSuccess={() => { setAuthOpen(false); router.push("/dashboard"); }} />
+                <AuthModal mode={authMode} onClose={() => setAuthOpen(false)} onSuccess={() => { setAuthOpen(false); router.push("/dashboard"); }} />
             )}
         </nav>
     );

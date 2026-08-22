@@ -16,21 +16,28 @@ export default async function AdminTemplatesPage() {
         redirect("/login?next=/admin/templates");
     }
 
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("is_admin")
         .eq("id", user.id)
         .single();
 
+    if (profileError) {
+        console.error("Failed to load admin profile:", profileError.message);
+    }
+
     if (!profile?.is_admin) {
         redirect("/dashboard");
     }
 
-    const { data: templates = [] } = await supabase
-        .from("clocks")
+    const { data: templates = [], error: templatesError } = await supabase
+        .from("templates")
         .select("*")
-        .eq("is_template", true)
         .order("template_sort_order");
+
+    if (templatesError) {
+        console.error("Failed to load admin templates:", templatesError.message);
+    }
 
     return (
         <>

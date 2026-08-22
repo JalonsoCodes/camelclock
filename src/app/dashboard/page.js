@@ -15,11 +15,15 @@ export default async function DashboardPage() {
         redirect("/login?next=/dashboard");
     }
 
-    const { data: clocks = [] } = await supabase
+    const { data: clocks = [], error } = await supabase
         .from("clocks")
         .select("*")
         .eq("user_id", user.id)
         .order("target_at", { ascending: true });
+
+    if (error) {
+        console.error("Failed to load dashboard clocks:", error.message);
+    }
 
     return <DashboardView clocks={clocks} />;
 }

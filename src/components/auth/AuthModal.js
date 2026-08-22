@@ -5,7 +5,7 @@ import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import useFocusTrap from "@/hooks/useFocusTrap";
 
-export default function AuthModal({ mode = "login", next = "/dashboard", onSuccess, onClose }) {
+export default function AuthModal({ mode = "signup", next = "/dashboard", onSuccess, onClose }) {
     const [activeMode, setActiveMode] = useState(mode);
     const trapRef = useFocusTrap(true);
 
@@ -29,7 +29,7 @@ export default function AuthModal({ mode = "login", next = "/dashboard", onSucce
                         ✕
                     </button>
                 )}
-                <h2 className="auth-title">{activeMode === "login" ? "SIGN IN" : "SIGN UP"}</h2>
+                <h2 className="auth-title">{activeMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}</h2>
                 <p className="auth-subtitle">
                     {activeMode === "login" ? "Manage your clocks" : "Create your CamelClock account"}
                 </p>
