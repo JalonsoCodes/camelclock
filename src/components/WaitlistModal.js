@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bell, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 
@@ -46,8 +47,11 @@ export default function WaitlistModal({ onClose }) {
 
     return (
         <div className="auth-modal-overlay" onClick={onClose}>
-            <div className="auth-card nbtc" ref={trapRef} onClick={(e) => e.stopPropagation()}>
-                <h2 className="auth-title">JOIN THE WAITLIST</h2>
+            <div className="auth-card nbtc" ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="waitlist-title" onClick={(e) => e.stopPropagation()}>
+                <button className="auth-close-x" type="button" title="Close" onClick={onClose} aria-label="Close">
+                    <X aria-hidden="true" />
+                </button>
+                <h2 className="auth-title" id="waitlist-title">JOIN THE WAITLIST</h2>
                 {joined ? (
                     <>
                         <p className="auth-subtitle">
@@ -55,6 +59,7 @@ export default function WaitlistModal({ onClose }) {
                             launches.
                         </p>
                         <button className="auth-button" type="button" onClick={onClose}>
+                            <X className="button-icon" />
                             CLOSE
                         </button>
                     </>
@@ -81,6 +86,7 @@ export default function WaitlistModal({ onClose }) {
                             type="submit"
                             disabled={loading}
                         >
+                            <Bell className="button-icon" />
                             {loading ? "JOINING..." : "JOIN WAITLIST"}
                         </button>
                     </form>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Bell, UserPlus } from "lucide-react";
 import AuthModal from "./auth/AuthModal";
 import WaitlistModal from "./WaitlistModal";
 
@@ -29,7 +30,7 @@ const FREE_FEATURES = [
     },
     {
         label: "Subtle Watermark",
-        detail: "A small CamelClocks text appears below CamelClocks and links back to us.",
+        detail: "A subtle 'Save to my CamelClocks' link sits under your clock, turning viewers into followers.",
     },
 ];
 
@@ -48,16 +49,16 @@ const COMING_SOON_TIER = {
             detail: "Hype up visitors as they click to trigger live animations like backflips, glowing aura, and particle effects.",
         },
         {
-            label: "Zero CamelClock Watermark",
-            detail: "Remove CamelClock branding across every clock on your account.",
-        },
-        {
             label: "Waitlist + Email Capture",
             detail: "Convert visitor excitement into mailing list subscribers directly inside the widget.",
         },
         {
             label: "Engagement Analytics",
             detail: "Track views, embed sites, boost clicks, and email conversion rates.",
+        },
+        {
+            label: "Zero CamelClock Watermark",
+            detail: "Remove CamelClock branding across every clock on your account.",
         },
     ],
 };
@@ -101,6 +102,7 @@ export default function Pricing() {
                         type="button"
                         onClick={() => setAuthOpen(true)}
                     >
+                        <UserPlus className="button-icon" />
                         Create Account
                     </button>
                 </div>
@@ -113,6 +115,7 @@ export default function Pricing() {
                         type="button"
                         onClick={() => setShowWaitlist(true)}
                     >
+                        <Bell className="button-icon" />
                         Join Waitlist
                     </button>
                 </div>

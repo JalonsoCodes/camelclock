@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function ForgotPasswordForm() {
@@ -53,6 +54,7 @@ export default function ForgotPasswordForm() {
                     {message && <p className="auth-message">{message}</p>}
 
                     <button className="auth-button" type="submit" disabled={loading}>
+                        <Send className="button-icon" />
                         {loading ? "SENDING..." : "SEND RESET LINK"}
                     </button>
                 </form>

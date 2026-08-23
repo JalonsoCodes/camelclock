@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { X } from "lucide-react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import useFocusTrap from "@/hooks/useFocusTrap";
@@ -22,14 +23,17 @@ export default function AuthModal({ mode = "signup", next = "/dashboard", onSucc
             <div
                 className="auth-card nbtc"
                 ref={trapRef}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="auth-modal-title"
                 onClick={(e) => e.stopPropagation()}
             >
                 {onClose && (
-                    <button className="auth-close-x" type="button" onClick={onClose} aria-label="Close">
-                        ✕
+                    <button className="auth-close-x" type="button" title="Close" onClick={onClose} aria-label="Close">
+                        <X aria-hidden="true" />
                     </button>
                 )}
-                <h2 className="auth-title">{activeMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}</h2>
+                <h2 className="auth-title" id="auth-modal-title">{activeMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}</h2>
                 <p className="auth-subtitle">
                     {activeMode === "login" ? "Manage your clocks" : "Create your CamelClock account"}
                 </p>

@@ -1,5 +1,7 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
+
 export default function DashboardError({ error, reset }) {
     return (
         <div className="auth-page">
@@ -7,6 +9,7 @@ export default function DashboardError({ error, reset }) {
                 <h2 className="auth-title">SOMETHING WENT WRONG</h2>
                 <p className="auth-subtitle">We couldn&apos;t load your dashboard.</p>
                 <button className="auth-button" type="button" onClick={reset}>
+                    <RefreshCw className="button-icon" />
                     TRY AGAIN
                 </button>
             </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
     title: "Privacy Policy",
@@ -33,7 +34,7 @@ export default function PrivacyPage() {
                 <h2>7. Contact</h2>
                 <p>For questions about this policy, contact us at: <strong>hello@camelclock.com</strong></p>
 
-                <Link href="/" className="btn-link">&larr; Back to CamelClock</Link>
+                <Link href="/" className="btn-link"><ArrowLeft className="button-icon" />Back to CamelClock</Link>
             </div>
         </main>
     );

@@ -166,3 +166,7 @@
 .watermark:hover {
     opacity: 1;
 }
+
+.watermark[role="button"] {
+    cursor: pointer;
+}

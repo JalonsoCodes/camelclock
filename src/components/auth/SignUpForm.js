@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
@@ -26,7 +27,11 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
 
         setLoading(true);
 
-        const { data, error } = await supabase.auth.signUp({ email, password });
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: `${window.location.origin}/auth/confirm` },
+        });
 
         if (error) {
             setError(error.message);
@@ -93,6 +98,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
             {message && <p className="auth-message">{message}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
+                <UserPlus className="button-icon" />
                 {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
             </button>
 

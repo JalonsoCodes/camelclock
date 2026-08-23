@@ -1,55 +1,69 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
+import { formatClockTime } from "@/utils/clockValues";
 import { supabase } from "@/lib/supabase/client";
 
 export default function TemplateCard({ template }) {
     const router = useRouter();
     const [authOpen, setAuthOpen] = useState(false);
-    const [copying, setCopying] = useState(false);
-    const [copied, setCopied] = useState(false);
-    const [addError, setAddError] = useState("");
-
+    const [addError, setAddError] = useState(false);
+    const pendingSaveRef = useRef(false);
     const target = new Date(template.target_at);
-    const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
+    const time = formatClockTime(target);
 
-    const handleAdd = async () => {
-        setAddError("");
+    const addTemplateClock = async (userId) => {
+        const { data, error } = await supabase
+            .from("clocks")
+            .insert([{
+                title: template.title,
+                target_at: template.target_at,
+                intro_text: template.intro_text,
+                celebration_message: template.celebration_message,
+                primary_colour: template.primary_colour,
+                secondary_colour: template.secondary_colour,
+                celebration_type: template.celebration_type,
+                user_id: userId,
+            }])
+            .select();
+
+        if (error) {
+            console.error("Error saving template:", error.message);
+            setAddError(true);
+            return;
+        }
+
+        router.push(`/clock/${data[0].id}`);
+    };
+
+    /* eslint-disable react-hooks/exhaustive-deps */
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === "SIGNED_IN" && pendingSaveRef.current) {
+                pendingSaveRef.current = false;
+                supabase.auth.getUser().then(({ data: { user } }) => {
+                    if (user) addTemplateClock(user.id);
+                });
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, []);
+    /* eslint-enable react-hooks/exhaustive-deps */
+
+    const handleSaveClick = async () => {
+        setAddError(false);
         const { data: { user } } = await supabase.auth.getUser();
 
         if (!user) {
+            pendingSaveRef.current = true;
             setAuthOpen(true);
             return;
         }
 
-        setCopying(true);
-
-        const { data, error } = await supabase.from("clocks").insert([{
-            title: template.title,
-            target_at: template.target_at,
-            intro_text: template.intro_text,
-            celebration_message: template.celebration_message,
-            primary_colour: template.primary_colour,
-            secondary_colour: template.secondary_colour,
-            celebration_type: template.celebration_type,
-            user_id: user.id,
-        }]).select();
-
-        setCopying(false);
-
-        if (error) {
-            console.error("Error copying template:", error);
-            setAddError("Failed to add this clock. Please try again.");
-            return;
-        }
-
-        setCopied(true);
-        setTimeout(() => {
-            router.push(`/clock/${data[0].id}`);
-        }, 800);
+        await addTemplateClock(user.id);
     };
 
     return (
@@ -64,24 +78,17 @@ export default function TemplateCard({ template }) {
                 primaryColour={template.primary_colour}
                 secondaryColour={template.secondary_colour}
                 celebrationType={template.celebration_type}
+                showWatermark
+                onSaveClick={handleSaveClick}
             />
-            <button
-                className="template-add-button"
-                type="button"
-                onClick={handleAdd}
-                disabled={copying || copied}
-                style={{ backgroundColor: template.primary_colour }}
-            >
-                {copied ? "ADDED!" : copying ? "ADDING..." : "+ ADD TO MY CLOCKS"}
-            </button>
-
-            {addError && <p className="card-error">{addError}</p>}
-
+            {addError && (
+                <p className="card-error">Couldn&apos;t save this clock. Please try again.</p>
+            )}
             {authOpen && (
                 <AuthModal
                     mode="signup"
-                    onClose={() => setAuthOpen(false)}
-                    onSuccess={() => { setAuthOpen(false); handleAdd(); }}
+                    onClose={() => { setAuthOpen(false); pendingSaveRef.current = false; }}
+                    onSuccess={() => setAuthOpen(false)}
                 />
             )}
         </div>

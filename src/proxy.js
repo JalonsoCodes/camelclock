@@ -3,7 +3,7 @@ import { updateSession } from "@/lib/supabase/session";
 
 const protectedPaths = ["/dashboard", "/new", "/admin"];
 
-export async function middleware(request) {
+export async function proxy(request) {
   const { supabaseResponse, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;

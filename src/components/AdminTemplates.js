@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import { createTemplate, deleteTemplate, updateTemplate } from "@/app/admin/templates/actions";
@@ -271,9 +272,11 @@ function TemplateEditor({ template, onSave, onDelete }) {
 
                 <div className="admin-template-actions">
                     <button className="admin-save-button nbtc" type="button" onClick={handleSave} disabled={saving}>
+                        <Save className="button-icon" />
                         {saving ? "Saving..." : "Save"}
                     </button>
                     <button className="admin-delete-button nbtc" type="button" onClick={() => setConfirmDelete(true)}>
+                        <Trash2 className="button-icon" />
                         Delete
                     </button>
                 </div>
@@ -322,7 +325,8 @@ export default function AdminTemplates({ templates: initialTemplates }) {
             <div className="admin-header">
                 <h1>Template Manager</h1>
                 <button className="share-button nbtc" type="button" onClick={handleAdd} disabled={adding}>
-                    {adding ? "Adding..." : "+ New Template"}
+                    <Plus className="button-icon" />
+                    {adding ? "Adding..." : "New Template"}
                 </button>
             </div>
 

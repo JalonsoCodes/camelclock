@@ -34,7 +34,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className={pixelatedFont.variable}>
+      <body className={pixelatedFont.variable} suppressHydrationWarning>
         <div className="page-container">
           {children}
         </div>

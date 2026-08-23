@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { LogIn, LogOut, Plus, UserPlus } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
@@ -97,10 +98,11 @@ export default function Navbar() {
 
                 {user ? (
                     <>
-                        <Link href="/new" className="btn-link" onClick={() => setOpen(false)}>+ New</Link>
+                        <Link href="/new" className="btn-link" title="Create a new countdown clock" onClick={() => setOpen(false)}><Plus className="button-icon" />New</Link>
                         <button
                             className="sign-out-button"
                             type="button"
+                            title="Sign out of CamelClocks"
                             onClick={async () => {
                                 await supabase.auth.signOut();
                                 if (pathname.startsWith("/clock/")) {
@@ -110,6 +112,7 @@ export default function Navbar() {
                                 }
                             }}
                         >
+                            <LogOut className="button-icon" />
                             Sign out
                         </button>
                     </>
@@ -118,15 +121,19 @@ export default function Navbar() {
                         <button
                             className="btn-link btn-secondary"
                             type="button"
+                            title="Log in to your account"
                             onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
                         >
+                            <LogIn className="button-icon" />
                             Sign In
                         </button>
                         <button
                             className="btn-link"
                             type="button"
+                            title="Sign up for a free account"
                             onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}
                         >
+                            <UserPlus className="button-icon" />
                             Create Account
                         </button>
                     </>
@@ -136,6 +143,7 @@ export default function Navbar() {
                     className="hamburger"
                     type="button"
                     aria-label="Toggle menu"
+                    title="Toggle menu"
                     aria-expanded={open}
                     onClick={() => setOpen((o) => !o)}
                 >

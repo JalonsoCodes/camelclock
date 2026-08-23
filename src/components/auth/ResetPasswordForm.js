@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function ResetPasswordForm() {
@@ -118,6 +119,7 @@ export default function ResetPasswordForm() {
                     {error && <p className="auth-error">{error}</p>}
 
                     <button className="auth-button" type="submit" disabled={loading}>
+                        <KeyRound className="button-icon" />
                         {loading ? "SAVING..." : "UPDATE PASSWORD"}
                     </button>
                 </form>

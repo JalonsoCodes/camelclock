@@ -1,0 +1,100 @@
+import { ImageResponse } from "next/og";
+import { createClient } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
+
+export const size = { width: 1200, height: 630 };
+export const contentType = "image/png";
+export const alt = "CamelClock countdown";
+
+async function getClock(id) {
+    try {
+        const supabase = await createClient();
+        const { data: clock } = await supabase
+            .from("clocks")
+            .select("title, intro_text, celebration_message, primary_colour, secondary_colour, status")
+            .eq("id", id)
+            .maybeSingle();
+        return clock ?? null;
+    } catch {
+        return null;
+    }
+}
+
+export default async function Image({ params }) {
+    const { id } = await params;
+    const clock = await getClock(id);
+    const shareable = clock && clock.status === "live";
+
+    const title = shareable && clock.title ? clock.title.slice(0, 80) : null;
+    const intro = shareable && clock.intro_text ? clock.intro_text : null;
+    const background =
+        (shareable && clock.primary_colour) || "#DBB279";
+    const accent = (shareable && clock.secondary_colour) || "#8E652C";
+
+    return new ImageResponse(
+        (
+            <div
+                style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    backgroundColor: background,
+                    padding: 48,
+                }}
+            >
+                <div
+                    style={{
+                        width: "100%",
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: 32,
+                        border: "12px solid #111111",
+                        boxShadow: "0 0 0 8px #ffffff",
+                        padding: 64,
+                    }}
+                >
+                    <div
+                        style={{
+                            display: "flex",
+                            fontSize: intro ? 56 : 0,
+                            color: "#111111",
+                            letterSpacing: 4,
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        {intro}
+                    </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            fontSize: title ? 88 : 72,
+                            fontWeight: 700,
+                            color: "#111111",
+                            textAlign: "center",
+                            maxWidth: 960,
+                        }}
+                    >
+                        {title ?? "Create a CamelClock"}
+                    </div>
+                    <div
+                        style={{
+                            display: "flex",
+                            fontSize: 40,
+                            color: accent,
+                        }}
+                    >
+                        camelclocks.com
+                    </div>
+                </div>
+            </div>
+        ),
+        size
+    );
+}

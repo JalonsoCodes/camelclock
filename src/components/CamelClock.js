@@ -2,6 +2,7 @@
 
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
+import { RotateCcw } from "lucide-react";
 import { drawCamel, drawGrid, drawWearables } from "@/utils/drawing";
 import { camelTemplate, celebrationFrames, celebrationFrameDurationMs } from "@/utils/grids";
 import { getConfiguredTarget, getNextTarget } from "@/utils/time";
@@ -91,7 +92,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, ref }) {
+export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, saveHref, saved, onSaveClick, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -337,16 +338,34 @@ export default function CamelClock({ title, month, day, time, introText, celebra
 
             {phase === "celebrated" && (
                 <button className={styles.replayButton} onClick={handleReplay}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <polyline points="1 4 1 10 7 10" />
-                        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
-                    </svg>
+                    <RotateCcw aria-hidden="true" />
                     Replay completion animation
                 </button>
             )}
 
             {showWatermark && (
-                <Link href="/" className={styles.watermark}>Powered by CamelClock</Link>
+                saveHref ? (
+                    <a className={styles.watermark} href={saveHref} target="_top">
+                        Save to my CamelClocks
+                    </a>
+                ) : onSaveClick ? (
+                    <a
+                        className={styles.watermark}
+                        role="button"
+                        tabIndex={0}
+                        onClick={(e) => { e.preventDefault(); onSaveClick(); }}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                onSaveClick();
+                            }
+                        }}
+                    >
+                        {saved ? "Saved to my CamelClocks \u2713" : "Save to my CamelClocks"}
+                    </a>
+                ) : (
+                    <Link href="/" className={styles.watermark}>Powered by CamelClock</Link>
+                )
             )}
         </div>
     );

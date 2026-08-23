@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 
 export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
@@ -67,6 +68,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
             {error && <p className="auth-error">{error}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
+                <LogIn className="button-icon" />
                 {loading ? "SIGNING IN..." : "SIGN IN"}
             </button>
 

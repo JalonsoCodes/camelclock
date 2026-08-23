@@ -5,8 +5,24 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-export default async function EmbedPage({ params }) {
+const VALID_THEMES = ["dark", "transparent"];
+
+function noFlashScript(embedTheme) {
+    let script = 'document.body.classList.add("embed-mode");';
+    if (embedTheme === "dark") {
+        script += 'document.documentElement.classList.add("dark");';
+    }
+    if (embedTheme === "transparent") {
+        script += 'document.body.classList.add("embed-transparent");';
+    }
+    return script;
+}
+
+export default async function EmbedPage({ params, searchParams }) {
     const { id } = await params;
+    const { theme } = await searchParams;
+    const embedTheme = VALID_THEMES.includes(theme) ? theme : "light";
+
     const supabase = await createClient();
 
     const { data: clock, error } = await supabase
@@ -27,12 +43,26 @@ export default async function EmbedPage({ params }) {
         notFound();
     }
 
+    if (!clock.allow_embed) {
+        return (
+            <main className="public-clock">
+                <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme) }} />
+                <EmbedMode theme={embedTheme} />
+                <div className="embed-disabled-card nbtc">
+                    <p>This CamelClock&apos;s owner has disabled embedding.</p>
+                    <a href={`/clock/${id}`} target="_top" className="btn-link">VIEW IT ON CAMELCLOCKS</a>
+                </div>
+            </main>
+        );
+    }
+
     const target = new Date(clock.target_at);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
     return (
         <main className="public-clock">
-            <EmbedMode />
+            <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme) }} />
+            <EmbedMode theme={embedTheme} />
             <div className="public-clock-card nbtc">
                 <CamelClock
                     title={clock.title}
@@ -45,6 +75,7 @@ export default async function EmbedPage({ params }) {
                     secondaryColour={clock.secondary_colour}
                     boosts={clock.wearables || []}
                     showWatermark
+                    saveHref={`/clock/${id}`}
                 />
             </div>
         </main>

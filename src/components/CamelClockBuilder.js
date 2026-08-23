@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { Keyboard, Play, Save, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
 import AuthModal from "./auth/AuthModal";
@@ -22,7 +23,7 @@ function hslToHex(h, s, l) {
 
 const PENDING_KEY = "camelclocks.pending";
 
-export default function CamelClockBuilder({ initialValues = null, clockId = null, onSaved = null }) {
+export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create" }) {
     const router = useRouter();
     const clockRef = useRef(null);
     const autoSavedRef = useRef(false);
@@ -157,12 +158,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             }
 
             if (isNew) {
-                setStatusMessage("Clock saved! Redirecting to dashboard...");
-                setTimeout(() => router.push("/dashboard"), 1000);
-            } else {
+                setStatusMessage("Clock saved!");
                 setSavedClockId(savedId);
-                setStatusMessage("Saved successfully!");
-                onSaved?.();
+            } else {
+                router.push(`/clock/${savedId}`);
             }
         } catch (error) {
             console.error("Error saving clock:", error);
@@ -193,7 +192,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         await performSave(pending);
     };
 
-    useEffect(() => {
+    const resumePendingIfPresent = () => {
         if (initialValues || autoSavedRef.current) return;
         if (typeof window === "undefined" || window.location.pathname !== "/new") return;
 
@@ -206,10 +205,26 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         if (!pending) return;
 
         autoSavedRef.current = true;
-        // Restore and save any pending clock from before auth — must run once on mount
-        // eslint-disable-next-line react-hooks/set-state-in-effect
+        // Restore and save any pending clock from before auth
         restoreAndSave(pending);
+    };
+
+    /* eslint-disable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+    useEffect(() => {
         // initialValues is stable; run-once mount behavior is intentional
+        resumePendingIfPresent();
+    }, []);
+    /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
+
+    useEffect(() => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === "SIGNED_IN") {
+                resumePendingIfPresent();
+            }
+        });
+
+        return () => subscription.unsubscribe();
+        // Auto-save the stashed design the moment a session arrives, whichever tab completes sign-in
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -346,14 +361,8 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </label>
                 </div>
 
-                <button className="randomise-button" type="button" onClick={randomiseColours}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <polyline points="16 3 21 3 21 8" />
-                        <line x1="4" y1="20" x2="21" y2="3" />
-                        <polyline points="21 16 21 21 16 21" />
-                        <line x1="15" y1="15" x2="21" y2="21" />
-                        <line x1="4" y1="4" x2="9" y2="9" />
-                    </svg>
+                <button className="randomise-button" type="button" title="Randomise the colour palette" onClick={randomiseColours}>
+                    <Shuffle aria-hidden="true" />
                     <span className="randomise-text">
                         {"Randomise colours".split("").map((char, i) => (
                             <span key={i} className="randomise-char" style={{ animationDelay: `${i * 0.08}s` }}>
@@ -363,14 +372,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </span>
                     <span className="randomise-hint">
                         <kbd>
-                            <svg className="keyboard-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                <rect x="2" y="6" width="20" height="12" rx="2" />
-                                <line x1="6" y1="10" x2="6" y2="10" />
-                                <line x1="10" y1="10" x2="10" y2="10" />
-                                <line x1="14" y1="10" x2="14" y2="10" />
-                                <line x1="18" y1="10" x2="18" y2="10" />
-                                <line x1="6" y1="14" x2="18" y2="14" />
-                            </svg>
+                            <Keyboard className="keyboard-icon" aria-hidden="true" />
                             r
                         </kbd>
                     </span>
@@ -407,10 +409,8 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                             />
                         </label>
 
-                        <button className="preview-button" type="button" onClick={() => clockRef.current?.preview()}>
-                            <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
-                                <polygon points="6 3 20 12 6 21 6 3" />
-                            </svg>
+                        <button className="preview-button" type="button" title="Preview the finished countdown" onClick={() => clockRef.current?.preview()}>
+                            <Play fill="currentColor" strokeWidth={0} aria-hidden="true" />
                             Preview completion
                         </button>
 
@@ -460,8 +460,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 </details>
 
                 <button
-                    className="share-button nbtc" type="submit" disabled={isSaving}>
-                    {isSaving ? "Saving..." : (effectiveId ? "Save changes" : "Create")}
+                    className="share-button nbtc" type="submit" disabled={isSaving}
+                    title={effectiveId ? "Save your changes" : "Create your clock"}>
+                    <Save className="button-icon" />
+                    {isSaving ? "Saving..." : (effectiveId ? "Save changes" : createLabel)}
                 </button>
 
                 {statusMessage && (
@@ -483,7 +485,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             )}
 
             {savedClockId && (
-                <ShareDialog clockId={savedClockId} title={title} onClose={() => setSavedClockId(null)} />
+                <ShareDialog clockId={savedClockId} title={title} isOwner allowEmbed onClose={() => setSavedClockId(null)} />
             )}
         </div>
     );

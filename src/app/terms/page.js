@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 export const metadata = {
     title: "Terms of Service",
@@ -39,7 +40,7 @@ export default function TermsPage() {
                 <h2>9. Contact</h2>
                 <p>For questions about these terms, contact us at: <strong>hello@camelclock.com</strong></p>
 
-                <Link href="/" className="btn-link">&larr; Back to CamelClock</Link>
+                <Link href="/" className="btn-link"><ArrowLeft className="button-icon" />Back to CamelClock</Link>
             </div>
         </main>
     );

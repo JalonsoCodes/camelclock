@@ -48,6 +48,16 @@ export async function generateMetadata({ params }) {
             description: clock.title
                 ? `Countdown to ${clock.title} — created on CamelClock`
                 : fallbackMetadata.description,
+            openGraph: {
+                title: clock.title ?? "Clock",
+                description: `Countdown to ${clock.title} — created on CamelClock`,
+                type: "website",
+            },
+            twitter: {
+                card: "summary_large_image",
+                title: clock.title ?? "Clock",
+                description: `Countdown to ${clock.title} — created on CamelClock`,
+            },
         };
     } catch (error) {
         console.error(`Failed to load metadata for clock ${id}:`, error.message);
