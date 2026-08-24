@@ -6,6 +6,8 @@ import { EyeOff, Pencil, Rocket, Share2, Trash2, X } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import ShareDialog from "./ShareDialog";
+import WaitlistModal from "./WaitlistModal";
+import { checkLiveLimit, MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
 import { supabase } from "@/lib/supabase/client";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -30,6 +32,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
     const [toggling, setToggling] = useState(false);
     const [toggleError, setToggleError] = useState("");
     const [shareOpen, setShareOpen] = useState(false);
+    const [proOpen, setProOpen] = useState(false);
 
     const target = new Date(clock.target_at);
     const status = getStatus(clock);
@@ -39,6 +42,20 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
         setToggleError("");
         setToggling(true);
         const newStatus = status === "draft" ? "live" : "draft";
+
+        if (newStatus === "live") {
+            const check = await checkLiveLimit();
+            if (!check.ok) {
+                setToggling(false);
+                if (check.reason === "limit") {
+                    setProOpen(true);
+                } else {
+                    setToggleError(check.error);
+                }
+                return;
+            }
+        }
+
         const { error } = await supabase
             .from("clocks")
             .update({ status: newStatus })
@@ -73,17 +90,6 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
 
     return (
         <div className={`clock-card nbtc status-${status}${followed ? " followed-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
-            {followed && (
-                <button
-                    className="followed-unfollow nbtc"
-                    type="button"
-                    title="Stop following this clock"
-                    aria-label={`Stop following ${clock.title}`}
-                    onClick={onUnfollow}
-                >
-                    <X size={16} aria-hidden="true" />
-                </button>
-            )}
             <Link href={`/clock/${clock.id}`} className="clock-card-link">
                 <CamelClock
                     title={clock.title}
@@ -105,6 +111,19 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
                     </span>
                 </div>
             </Link>
+
+            {followed && (
+                <button
+                    className="unfollow-button nbtc"
+                    type="button"
+                    title="Stop following this clock"
+                    aria-label={`Stop following ${clock.title}`}
+                    onClick={onUnfollow}
+                >
+                    <X className="button-icon" aria-hidden="true" />
+                    UNFOLLOW
+                </button>
+            )}
 
             {owned && (
                 <div className="card-actions">
@@ -157,6 +176,15 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
             )}
 
             {toggleError && <p className="card-error">{toggleError}</p>}
+
+            {proOpen && (
+                <WaitlistModal
+                    heading="YOU'VE HIT THE FREE LIMIT"
+                    subline={`Free covers ${MAX_LIVE_CLOCKS} live CamelClocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
+                    highlightFeature="Unlimited Active CamelClocks"
+                    onClose={() => setProOpen(false)}
+                />
+            )}
 
             {confirmOpen && (
                 <ConfirmDialog

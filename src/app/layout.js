@@ -8,18 +8,21 @@ const pixelatedFont = Press_Start_2P({
   variable: "--pixelated-font",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
+
 export const metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: "CamelClock — Countdown & Waitlist",
-    template: "%s | CamelClock",
+    default: "CamelClocks — Countdown & Waitlist",
+    template: "%s | CamelClocks",
   },
   description:
     "Create beautiful, embeddable countdown clocks with pixel-art camels. Perfect for product launches, sales, and events.",
   openGraph: {
-    title: "CamelClock — Countdown & Waitlist",
+    title: "CamelClocks — Countdown & Waitlist",
     description:
       "Create beautiful, embeddable countdown clocks with pixel-art camels.",
-    siteName: "CamelClock",
+    siteName: "CamelClocks",
     type: "website",
   },
 };

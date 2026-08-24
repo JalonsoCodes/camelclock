@@ -32,7 +32,7 @@ export default function TermsPage() {
                 <p>CamelClock is provided &ldquo;as is&rdquo; without warranties of any kind. We are not liable for any damages arising from your use of the service.</p>
 
                 <h2>7. Termination</h2>
-                <p>We may suspend or terminate your account if you violate these terms. You may delete your account at any time by contacting us.</p>
+                <p>We may suspend or terminate your account if you violate these terms. You may delete your account at any time from the Settings page.</p>
 
                 <h2>8. Changes to These Terms</h2>
                 <p>We may update these terms from time to time. Continued use of the service after changes constitutes acceptance of the updated terms.</p>

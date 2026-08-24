@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
-import AdminTemplates from "@/components/AdminTemplates";
+import AdminShowcases from "@/components/AdminShowcases";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminTemplatesPage() {
+export default async function AdminShowcasesPage() {
     const supabase = await createClient();
 
     const {
@@ -13,7 +13,7 @@ export default async function AdminTemplatesPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/login?next=/admin/templates");
+        redirect("/login?next=/admin/showcases");
     }
 
     const { data: profile, error: profileError } = await supabase
@@ -30,19 +30,19 @@ export default async function AdminTemplatesPage() {
         redirect("/dashboard");
     }
 
-    const { data: templates = [], error: templatesError } = await supabase
-        .from("templates")
+    const { data: showcases = [], error: showcasesError } = await supabase
+        .from("showcases")
         .select("*")
-        .order("template_sort_order");
+        .order("target_at");
 
-    if (templatesError) {
-        console.error("Failed to load admin templates:", templatesError.message);
+    if (showcasesError) {
+        console.error("Failed to load showcases:", showcasesError.message);
     }
 
     return (
         <>
             <Navbar />
-            <AdminTemplates templates={templates} />
+            <AdminShowcases showcases={showcases} />
         </>
     );
 }

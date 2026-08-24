@@ -30,38 +30,36 @@ const FREE_FEATURES = [
     },
     {
         label: "Subtle Watermark",
-        detail: "A subtle 'Save to my CamelClocks' link sits under your clock, turning viewers into followers.",
+        detail: "A subtle 'Powered by CamelClock' mark sits under your clock, and a follow icon on the camel turns viewers into followers.",
     },
 ];
 
-const COMING_SOON_TIER = {
-    features: [
-        {
-            label: "Unlimited Active CamelClocks",
-            detail: "Keep as many live embeds running as you need.",
-        },
-        {
-            label: "Full Wearables Closet",
-            detail: "Access all premium cosmetics, hats, and seasonal gear.",
-        },
-        {
-            label: "Interactive Boosts",
-            detail: "Hype up visitors as they click to trigger live animations like backflips, glowing aura, and particle effects.",
-        },
-        {
-            label: "Waitlist + Email Capture",
-            detail: "Convert visitor excitement into mailing list subscribers directly inside the widget.",
-        },
-        {
-            label: "Engagement Analytics",
-            detail: "Track views, embed sites, boost clicks, and email conversion rates.",
-        },
-        {
-            label: "Zero CamelClock Watermark",
-            detail: "Remove CamelClock branding across every clock on your account.",
-        },
-    ],
-};
+export const PRO_FEATURES = [
+    {
+        label: "Unlimited Active CamelClocks",
+        detail: "Keep as many live embeds running as you need.",
+    },
+    {
+        label: "Full Wearables Closet",
+        detail: "Access all premium cosmetics, hats, and seasonal gear.",
+    },
+    {
+        label: "Interactive Boosts",
+        detail: "Hype up visitors as they click to trigger live animations like backflips, glowing aura, and particle effects.",
+    },
+    {
+        label: "Waitlist + Email Capture",
+        detail: "Convert visitor excitement into mailing list subscribers directly inside the widget.",
+    },
+    {
+        label: "Engagement Analytics",
+        detail: "Track views, embed sites, boost clicks, and email conversion rates.",
+    },
+    {
+        label: "Zero CamelClock Branding",
+        detail: "Remove CamelClock branding across every clock on your account. Your follow icon stays \u2014 it works for you.",
+    },
+];
 
 function FeatureList({ features }) {
     return (
@@ -109,7 +107,7 @@ export default function Pricing() {
 
                 <div className="pricing-card nbtc pricing-pro">
                     <span className="pricing-badge">COMING SOON</span>
-                    <FeatureList features={COMING_SOON_TIER.features} />
+                    <FeatureList features={PRO_FEATURES} />
                     <button
                         className="pricing-button"
                         type="button"

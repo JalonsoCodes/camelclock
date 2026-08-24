@@ -1,6 +1,6 @@
 import { eyeOne, eyeTwo, eyeThree, eyeFour, wearables } from "@/utils/grids";
 
-export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000") {
+export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000", ctaState = null) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -111,10 +111,56 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
         }
     }
 
-    drawGrid(canvas, newCamel, scale, primaryColour, secondaryColour, pixelDark);
+    const iconColour =
+        ctaState === "hover" || ctaState === "active"
+            ? pixelDark
+            : ctaState === "idle"
+                ? isLightColour(pixelDark)
+                    ? lightenHex(primaryColour, 0.35)
+                    : darkenHex(primaryColour, 0.35)
+                : primaryColour;
+
+    drawGrid(canvas, newCamel, scale, primaryColour, secondaryColour, pixelDark, iconColour);
 }
 
-export function drawGrid(canvas, grid, scale, primaryColour, secondaryColour, pixelDark = "#000000") {
+export function darkenHex(hex, amount) {
+    const clean = hex.replace("#", "");
+    if (clean.length !== 6) return hex;
+
+    const num = parseInt(clean, 16);
+    const r = Math.round(((num >> 16) & 255) * (1 - amount));
+    const g = Math.round(((num >> 8) & 255) * (1 - amount));
+    const b = Math.round((num & 255) * (1 - amount));
+
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
+export function lightenHex(hex, amount) {
+    const clean = hex.replace("#", "");
+    if (clean.length !== 6) return hex;
+
+    const num = parseInt(clean, 16);
+    const r = Math.round(((num >> 16) & 255) + (255 - ((num >> 16) & 255)) * amount);
+    const g = Math.round(((num >> 8) & 255) + (255 - ((num >> 8) & 255)) * amount);
+    const b = Math.round((num & 255) + (255 - (num & 255)) * amount);
+
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`;
+}
+
+function isLightColour(hex) {
+    const clean = hex.replace("#", "");
+    if (clean.length !== 6) return false;
+
+    const num = parseInt(clean, 16);
+    const luminance =
+        (((num >> 16) & 255) * 0.299 +
+        ((num >> 8) & 255) * 0.587 +
+        (num & 255) * 0.114) / 255;
+
+    return luminance > 0.5;
+}
+
+export function drawGrid(canvas, grid, scale, primaryColour, secondaryColour, pixelDark = "#000000", iconColour = null) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
@@ -130,6 +176,8 @@ export function drawGrid(canvas, grid, scale, primaryColour, secondaryColour, pi
                 ctx.fillStyle = secondaryColour;
             } else if (colourIndex === 4) {
                 ctx.fillStyle = "#525129";
+            } else if (colourIndex === 9 && iconColour) {
+                ctx.fillStyle = iconColour;
             } else {
                 continue;
             }

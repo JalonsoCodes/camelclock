@@ -15,11 +15,24 @@ export default async function DashboardPage() {
         redirect("/login?next=/dashboard");
     }
 
-    const { data: clocks = [], error } = await supabase
+    const { data: showcaseRows = [] } = await supabase
+        .from("showcases")
+        .select("clock_id")
+        .not("clock_id", "is", null);
+
+    const showcaseIds = showcaseRows.map((row) => row.clock_id);
+
+    let clocksQuery = supabase
         .from("clocks")
         .select("*")
         .eq("user_id", user.id)
         .order("target_at", { ascending: true });
+
+    if (showcaseIds.length > 0) {
+        clocksQuery = clocksQuery.not("id", "in", `(${showcaseIds.join(",")})`);
+    }
+
+    const { data: clocks = [], error } = await clocksQuery;
 
     if (error) {
         console.error("Failed to load dashboard clocks:", error.message);

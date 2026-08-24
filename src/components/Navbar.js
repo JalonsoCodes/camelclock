@@ -3,10 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
-import { LogIn, LogOut, Plus, UserPlus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+    ChevronDown,
+    LogIn,
+    LogOut,
+    Plus,
+    Rocket,
+    Settings as SettingsIcon,
+    UserPlus,
+} from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./auth/AuthModal";
+import WaitlistModal from "./WaitlistModal";
+import { MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
 import { supabase } from "@/lib/supabase/client";
 
 export default function Navbar() {
@@ -17,6 +27,60 @@ export default function Navbar() {
     const [authMode, setAuthMode] = useState("signup");
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
+    const [liveCount, setLiveCount] = useState(null);
+    const [proOpen, setProOpen] = useState(false);
+    const [accountOpen, setAccountOpen] = useState(false);
+    const accountRef = useRef(null);
+
+    useEffect(() => {
+        if (!accountOpen) return;
+
+        const handlePointerDown = (e) => {
+            if (accountRef.current && !accountRef.current.contains(e.target)) {
+                setAccountOpen(false);
+            }
+        };
+        const handleKey = (e) => {
+            if (e.key === "Escape") setAccountOpen(false);
+        };
+
+        document.addEventListener("mousedown", handlePointerDown);
+        document.addEventListener("keydown", handleKey);
+        return () => {
+            document.removeEventListener("mousedown", handlePointerDown);
+            document.removeEventListener("keydown", handleKey);
+        };
+    }, [accountOpen]);
+
+    const handleSignOut = async () => {
+        setAccountOpen(false);
+        await supabase.auth.signOut();
+        if (pathname.startsWith("/clock/")) {
+            router.refresh();
+        } else {
+            router.push("/");
+        }
+    };
+
+    useEffect(() => {
+        let mounted = true;
+
+        if (!user) return;
+
+        supabase
+            .rpc("count_my_live_clocks")
+            .then(({ data: count, error }) => {
+                if (!mounted) return;
+                if (error) {
+                    console.error("Failed to count live clocks:", error.message);
+                    setLiveCount(null);
+                } else {
+                    setLiveCount(count ?? 0);
+                }
+            });
+
+        return () => { mounted = false; };
+    }, [user, pathname]);
 
     useEffect(() => {
         let mounted = true;
@@ -83,7 +147,7 @@ export default function Navbar() {
                 {user ? (
                     <>
                         <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>Dashboard</Link>
-                        {isAdmin && <Link href="/admin/templates" className={pathname === "/admin/templates" ? "nav-active" : ""} onClick={() => setOpen(false)}>Templates</Link>}
+                        {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>Showcases</Link>}
                     </>
                 ) : (
                     <>
@@ -96,25 +160,47 @@ export default function Navbar() {
             <div className="navbar-content">
                 <ThemeToggle />
 
+                {user && liveCount !== null && (
+                    <button
+                        className="nav-live-pill"
+                        type="button"
+                        title={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks \u2014 Pro lifts the cap`}
+                        aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks. See what Pro unlocks.`}
+                        onClick={() => setProOpen(true)}
+                    >
+                        <Rocket className="button-icon" />
+                        {liveCount}/{MAX_LIVE_CLOCKS}
+                    </button>
+                )}
+
                 {user ? (
                     <>
                         <Link href="/new" className="btn-link" title="Create a new countdown clock" onClick={() => setOpen(false)}><Plus className="button-icon" />New</Link>
-                        <button
-                            className="sign-out-button"
-                            type="button"
-                            title="Sign out of CamelClocks"
-                            onClick={async () => {
-                                await supabase.auth.signOut();
-                                if (pathname.startsWith("/clock/")) {
-                                    router.refresh();
-                                } else {
-                                    router.push("/");
-                                }
-                            }}
-                        >
-                            <LogOut className="button-icon" />
-                            Sign out
-                        </button>
+                        <div className="account-menu" ref={accountRef}>
+                            <button
+                                className="account-trigger"
+                                type="button"
+                                title="Account options"
+                                aria-haspopup="true"
+                                aria-expanded={accountOpen}
+                                onClick={() => setAccountOpen((o) => !o)}
+                            >
+                                Account
+                                <ChevronDown className="button-icon account-chevron" aria-hidden={accountOpen ? "true" : undefined} />
+                            </button>
+                            {accountOpen && (
+                                <div className="account-dropdown nbtc">
+                                    <Link href="/settings" onClick={() => setAccountOpen(false)}>
+                                        <SettingsIcon className="button-icon" />
+                                        Settings
+                                    </Link>
+                                    <button type="button" onClick={handleSignOut}>
+                                        <LogOut className="button-icon" />
+                                        Sign out
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </>
                 ) : (
                     <>
@@ -155,6 +241,10 @@ export default function Navbar() {
 
             {authOpen && (
                 <AuthModal mode={authMode} onClose={() => setAuthOpen(false)} onSuccess={() => { setAuthOpen(false); router.push("/dashboard"); }} />
+            )}
+
+            {proOpen && (
+                <WaitlistModal onClose={() => setProOpen(false)} />
             )}
         </nav>
     );

@@ -1,11 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bell, X } from "lucide-react";
+import { BarChart3, Bell, Check, EyeOff, Infinity as InfinityIcon, Mail, Shirt, X, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
+import { PRO_FEATURES } from "./Pricing";
 
-export default function WaitlistModal({ onClose }) {
+const FEATURE_ICONS = {
+    "Unlimited Active CamelClocks": InfinityIcon,
+    "Full Wearables Closet": Shirt,
+    "Interactive Boosts": Zap,
+    "Waitlist + Email Capture": Mail,
+    "Engagement Analytics": BarChart3,
+    "Zero CamelClock Branding": EyeOff,
+};
+
+export default function WaitlistModal({
+    onClose,
+    heading = "CAMELCLOCKS PRO IS COMING",
+    subline = "Be first in line for early access to CamelClock Pro.",
+    highlightFeature = null,
+}) {
     const trapRef = useFocusTrap(true);
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
@@ -34,11 +49,11 @@ export default function WaitlistModal({ onClose }) {
 
         if (insertError) {
             if (insertError.code === "23505") {
-                setError("That email is already registered.");
-            } else {
-                console.error("Failed to join waitlist:", insertError.message);
-                setError("Something went wrong. Please try again.");
+                setJoined(true);
+                return;
             }
+            console.error("Failed to join waitlist:", insertError.message);
+            setError("Something went wrong. Please try again.");
             return;
         }
 
@@ -51,7 +66,7 @@ export default function WaitlistModal({ onClose }) {
                 <button className="auth-close-x" type="button" title="Close" onClick={onClose} aria-label="Close">
                     <X aria-hidden="true" />
                 </button>
-                <h2 className="auth-title" id="waitlist-title">JOIN THE WAITLIST</h2>
+                <h2 className="auth-title" id="waitlist-title">{heading}</h2>
                 {joined ? (
                     <>
                         <p className="auth-subtitle">
@@ -65,9 +80,18 @@ export default function WaitlistModal({ onClose }) {
                     </>
                 ) : (
                     <form className="waitlist-form" onSubmit={handleSubmit}>
-                        <p className="auth-subtitle">
-                            Be first in line for early access to CamelClock Pro.
-                        </p>
+                        <ul className="waitlist-features">
+                            {PRO_FEATURES.map((feature) => (
+                                <li key={feature.label} className={feature.label === highlightFeature ? "highlighted" : ""}>
+                                    {(() => {
+                                        const Icon = FEATURE_ICONS[feature.label] ?? Bell;
+                                        return <span className="waitlist-feature-icon"><Icon aria-hidden="true" /></span>;
+                                    })()}
+                                    {feature.label}
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="auth-subtitle">{subline}</p>
                         <label className="auth-label">
                             EMAIL
                             <input
@@ -86,7 +110,7 @@ export default function WaitlistModal({ onClose }) {
                             type="submit"
                             disabled={loading}
                         >
-                            <Bell className="button-icon" />
+                            {joined ? <Check className="button-icon" /> : <Bell className="button-icon" />}
                             {loading ? "JOINING..." : "JOIN WAITLIST"}
                         </button>
                     </form>

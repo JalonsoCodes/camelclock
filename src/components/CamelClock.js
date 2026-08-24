@@ -92,7 +92,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, saveHref, saved, onSaveClick, ref }) {
+export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, watermarkExternal = false, showCta = false, ctaActive = false, onCtaClick = null, ctaHref = null, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -110,6 +110,7 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     const [phase, setPhase] = useState("counting");
     const [frameIndex, setFrameIndex] = useState(celebrationFrames.length - 1);
     const [isPreview, setIsPreview] = useState(false);
+    const [ctaHover, setCtaHover] = useState(false);
 
     useEffect(() => {
         phaseRef.current = phase;
@@ -258,13 +259,14 @@ export default function CamelClock({ title, month, day, time, introText, celebra
         } else {
             const levelNumbers = levels.map(l => l.level);
 
-            drawCamel(canvas, template, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark);
+            const ctaState = !showCta ? null : ctaActive ? "active" : ctaHover ? "hover" : "idle";
+            drawCamel(canvas, template, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark, ctaState);
         }
 
         if (!celebrating && boosts.length > 0) {
             drawWearables(canvas, boosts, calculatedScale);
         }
-    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, boosts]);
+    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, boosts, showCta, ctaActive, ctaHover]);
 
     const startPreview = () => {
         setIsPreview(true);
@@ -294,6 +296,33 @@ export default function CamelClock({ title, month, day, time, introText, celebra
             <div className={styles.wrapper}>
                 <div className={styles.canvasWrap}>
                     <canvas ref={canvasRef} style={{ imageRendering: "pixelated", width: "100%", display: "block" }} />
+                    {showCta && phase === "counting" && (
+                        ctaHref ? (
+                            <a
+                                className={`${styles.ctaOverlay} pressable`}
+                                href={ctaHref}
+                                target="_top"
+                                title="View and follow this CamelClock"
+                                aria-label="View and follow this CamelClock"
+                                onMouseEnter={() => setCtaHover(true)}
+                                onMouseLeave={() => setCtaHover(false)}
+                                onFocus={() => setCtaHover(true)}
+                                onBlur={() => setCtaHover(false)}
+                            />
+                        ) : (
+                            <button
+                                className={styles.ctaOverlay}
+                                type="button"
+                                title={ctaActive ? "Unfollow this CamelClock" : "Follow this CamelClock"}
+                                aria-label={ctaActive ? "Unfollow this CamelClock" : "Follow this CamelClock"}
+                                onClick={onCtaClick}
+                                onMouseEnter={() => setCtaHover(true)}
+                                onMouseLeave={() => setCtaHover(false)}
+                                onFocus={() => setCtaHover(true)}
+                                onBlur={() => setCtaHover(false)}
+                            />
+                        )
+                    )}
                     {phase === "celebrated" && celebrationMessage && (
                         <div className={styles.completionMessage}>{celebrationMessage}</div>
                     )}
@@ -344,28 +373,13 @@ export default function CamelClock({ title, month, day, time, introText, celebra
             )}
 
             {showWatermark && (
-                saveHref ? (
-                    <a className={styles.watermark} href={saveHref} target="_top">
-                        Save to my CamelClocks
-                    </a>
-                ) : onSaveClick ? (
-                    <a
-                        className={styles.watermark}
-                        role="button"
-                        tabIndex={0}
-                        onClick={(e) => { e.preventDefault(); onSaveClick(); }}
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                                e.preventDefault();
-                                onSaveClick();
-                            }
-                        }}
-                    >
-                        {saved ? "Saved to my CamelClocks \u2713" : "Save to my CamelClocks"}
-                    </a>
-                ) : (
-                    <Link href="/" className={styles.watermark}>Powered by CamelClock</Link>
-                )
+                <Link
+                    href="/"
+                    className={styles.watermark}
+                    {...(watermarkExternal ? { target: "_top" } : {})}
+                >
+                    Powered by CamelClock
+                </Link>
             )}
         </div>
     );

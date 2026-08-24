@@ -75,7 +75,9 @@ export default async function EmbedPage({ params, searchParams }) {
                     secondaryColour={clock.secondary_colour}
                     boosts={clock.wearables || []}
                     showWatermark
-                    saveHref={`/clock/${id}`}
+                    watermarkExternal
+                    showCta
+                    ctaHref={`/clock/${id}`}
                 />
             </div>
         </main>

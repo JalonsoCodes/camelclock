@@ -17,7 +17,7 @@ export default function ConfirmForm() {
 
         supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
             if (error) {
-                setStatus("This confirmation link is invalid or has expired.");
+                setStatus("This confirmation link is invalid, expired, or has already been used.");
             } else {
                 setStatus("Email confirmed! Redirecting...");
                 setTimeout(() => {
@@ -33,7 +33,7 @@ export default function ConfirmForm() {
             <div className="auth-card nbtc">
                 <h2 className="auth-title">EMAIL CONFIRMATION</h2>
                 <p className="auth-subtitle">{status}</p>
-                {status.includes("Invalid") || status.includes("expired") ? (
+                {status.includes("Invalid") || status.includes("expired") || status.includes("used") ? (
                     <p className="auth-back">
                         <a href="/login">← Back to sign in</a>
                     </p>

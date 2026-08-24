@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Keyboard, Play, Save, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
-import ShareDialog from "./ShareDialog";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
 import { wearables as wearableData } from "@/utils/grids";
@@ -37,7 +36,6 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? "#8E652C");
     const [isSaving, setIsSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
-    const [savedClockId, setSavedClockId] = useState(null);
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [createdId, setCreatedId] = useState(null);
     const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? []);
@@ -158,8 +156,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
             }
 
             if (isNew) {
-                setStatusMessage("Clock saved!");
-                setSavedClockId(savedId);
+                router.push(`/clock/${savedId}?created=1`);
             } else {
                 router.push(`/clock/${savedId}`);
             }
@@ -482,10 +479,6 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, wearables: selectedWearables });
                     }}
                 />
-            )}
-
-            {savedClockId && (
-                <ShareDialog clockId={savedClockId} title={title} isOwner allowEmbed onClose={() => setSavedClockId(null)} />
             )}
         </div>
     );

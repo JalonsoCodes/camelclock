@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
+const HEX_PATTERN = /^#[0-9A-Fa-f]{6}$/;
+
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "CamelClock countdown";
@@ -29,8 +31,9 @@ export default async function Image({ params }) {
     const title = shareable && clock.title ? clock.title.slice(0, 80) : null;
     const intro = shareable && clock.intro_text ? clock.intro_text : null;
     const background =
-        (shareable && clock.primary_colour) || "#DBB279";
-    const accent = (shareable && clock.secondary_colour) || "#8E652C";
+        (shareable && HEX_PATTERN.test(clock.primary_colour ?? "") && clock.primary_colour) || "#DBB279";
+    const accent =
+        (shareable && HEX_PATTERN.test(clock.secondary_colour ?? "") && clock.secondary_colour) || "#8E652C";
 
     return new ImageResponse(
         (

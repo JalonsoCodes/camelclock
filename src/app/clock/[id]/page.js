@@ -65,8 +65,9 @@ export async function generateMetadata({ params }) {
     }
 }
 
-export default async function ClockPage({ params }) {
+export default async function ClockPage({ params, searchParams }) {
     const { id } = await params;
+    const { created } = await searchParams;
 
     const [clock, user] = await Promise.all([getClock(id), getCurrentUser()]);
 
@@ -84,7 +85,7 @@ export default async function ClockPage({ params }) {
         <>
             <Navbar />
             <main className="live-clock">
-                <ClockViewer clock={clock} isOwner={isOwner} />
+                <ClockViewer clock={clock} isOwner={isOwner} justCreated={created === "1"} />
             </main>
         </>
     );

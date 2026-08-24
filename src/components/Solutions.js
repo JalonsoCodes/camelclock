@@ -1,26 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
-import TemplateCard from "./TemplateCard";
+import ShowcaseCard from "./ShowcaseCard";
 
 export default async function Solutions() {
     const supabase = await createClient();
 
-    const { data: templates, error } = await supabase
-        .from("templates")
+    const { data: showcases, error } = await supabase
+        .from("showcases")
         .select("*")
-        .order("template_sort_order");
+        .order("target_at");
 
     if (error) {
-        console.error("Failed to load templates:", error.message);
+        console.error("Failed to load showcases:", error.message);
     }
 
-    if (!templates || templates.length === 0) return null;
+    const linked = (showcases ?? []).filter((showcase) => showcase.clock_id);
+
+    if (linked.length === 0) return null;
 
     return (
         <section id="solutions">
             <h2>One CamelClock, every occasion</h2>
             <div className="solutions-grid">
-                {templates.map((template) => (
-                    <TemplateCard key={template.id} template={template} />
+                {linked.map((showcase) => (
+                    <ShowcaseCard key={showcase.id} showcase={showcase} />
                 ))}
             </div>
         </section>
