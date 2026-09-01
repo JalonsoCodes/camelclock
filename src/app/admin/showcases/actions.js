@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { validateClock } from "@/utils/validation";
-import { wearables } from "@/utils/grids";
 
 const SHOWCASE_FIELDS = [
     "title",
@@ -14,6 +13,7 @@ const SHOWCASE_FIELDS = [
     "secondary_colour",
     "celebration_type",
     "wearables",
+    "sort_order",
 ];
 
 const CELEBRATION_TYPES = ["spit"];
@@ -75,47 +75,7 @@ async function requireAdmin() {
         throw new Error("Forbidden");
     }
 
-    return { supabase, userId: user.id };
-}
-
-async function upsertShowcaseClock(supabase, userId, clockId, fields) {
-    const clockPayload = {
-        title: fields.title,
-        target_at: fields.target_at,
-        intro_text: fields.intro_text,
-        celebration_message: fields.celebration_message,
-        primary_colour: fields.primary_colour,
-        secondary_colour: fields.secondary_colour,
-        celebration_type: fields.celebration_type ?? "spit",
-        wearables: fields.wearables ?? [],
-        status: "live",
-    };
-
-    if (clockId) {
-        const { data, error } = await supabase
-            .from("clocks")
-            .update(clockPayload)
-            .eq("id", clockId)
-            .select()
-            .maybeSingle();
-
-        if (!error && data) {
-            return data.id;
-        }
-        console.warn("Showcase clock relink required:", error?.message ?? "linked clock is missing");
-    }
-
-    const { data: created, error: insertError } = await supabase
-        .from("clocks")
-        .insert([{ ...clockPayload, user_id: userId }])
-        .select()
-        .single();
-
-    if (insertError) {
-        throw new Error(insertError.message);
-    }
-
-    return created.id;
+    return { supabase };
 }
 
 export async function createShowcase(values) {
@@ -127,9 +87,18 @@ export async function createShowcase(values) {
             return { error: validationError };
         }
 
+        const { data: maxRow } = await supabase
+            .from("showcases")
+            .select("sort_order")
+            .order("sort_order", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        const nextOrder = (maxRow?.sort_order ?? -1) + 1;
+
         const { data, error } = await supabase
             .from("showcases")
-            .insert([pickFields(values)])
+            .insert([{ ...pickFields(values), sort_order: nextOrder }])
             .select()
             .single();
         if (error) {
@@ -137,6 +106,7 @@ export async function createShowcase(values) {
             return { error: "Failed to create showcase." };
         }
         revalidatePath("/admin/showcases");
+        revalidatePath("/");
         return { data };
     } catch (error) {
         console.error("createShowcase:", error);
@@ -146,26 +116,16 @@ export async function createShowcase(values) {
 
 export async function updateShowcase(id, values) {
     try {
-        const { supabase, userId } = await requireAdmin();
+        const { supabase } = await requireAdmin();
 
         const validationError = validateShowcasePayload(values);
         if (validationError) {
             return { error: validationError };
         }
 
-        const { data: existing, error: fetchError } = await supabase
-            .from("showcases")
-            .select("clock_id")
-            .eq("id", id)
-            .maybeSingle();
-        if (fetchError || !existing) {
-            return { error: "Failed to save." };
-        }
-
-        const updates = pickFields(values);
         const { data, error } = await supabase
             .from("showcases")
-            .update(updates)
+            .update(pickFields(values))
             .eq("id", id)
             .select()
             .single();
@@ -173,25 +133,9 @@ export async function updateShowcase(id, values) {
             return { error: "Failed to save." };
         }
 
-        let final = data;
-        let createdClock = false;
-        const newClockId = await upsertShowcaseClock(supabase, userId, existing.clock_id, updates);
-        if (newClockId !== existing.clock_id) {
-            createdClock = true;
-            const { data: relinked, error: relinkError } = await supabase
-                .from("showcases")
-                .update({ clock_id: newClockId })
-                .eq("id", id)
-                .select()
-                .single();
-            if (!relinkError && relinked) {
-                final = relinked;
-            }
-        }
-
         revalidatePath("/admin/showcases");
         revalidatePath("/");
-        return { data: final, createdClock };
+        return { data };
     } catch (error) {
         console.error("updateShowcase:", error);
         const message = error?.message ?? "";
@@ -205,16 +149,6 @@ export async function updateShowcase(id, values) {
 export async function deleteShowcase(id) {
     try {
         const { supabase } = await requireAdmin();
-
-        const { data: existing } = await supabase
-            .from("showcases")
-            .select("clock_id")
-            .eq("id", id)
-            .maybeSingle();
-
-        if (existing?.clock_id) {
-            await supabase.from("clocks").delete().eq("id", existing.clock_id);
-        }
 
         const { error } = await supabase.from("showcases").delete().eq("id", id);
         if (error) {
@@ -230,5 +164,37 @@ export async function deleteShowcase(id) {
             return { error: "You are not authorized to do that." };
         }
         return { error: "Failed to delete. Please try again." };
+    }
+}
+
+export async function reorderShowcases(orderedIds) {
+    try {
+        const { supabase } = await requireAdmin();
+
+        if (!Array.isArray(orderedIds) || orderedIds.some((id) => typeof id !== "string")) {
+            return { error: "Invalid order." };
+        }
+
+        for (let i = 0; i < orderedIds.length; i++) {
+            const { error } = await supabase
+                .from("showcases")
+                .update({ sort_order: i })
+                .eq("id", orderedIds[i]);
+            if (error) {
+                console.error("reorderShowcases update:", error);
+                return { error: "Failed to reorder." };
+            }
+        }
+
+        revalidatePath("/admin/showcases");
+        revalidatePath("/");
+        return { ok: true };
+    } catch (error) {
+        console.error("reorderShowcases:", error);
+        const message = error?.message ?? "";
+        if (message === "Unauthorized" || message === "Forbidden") {
+            return { error: "You are not authorized to do that." };
+        }
+        return { error: "Failed to reorder. Please try again." };
     }
 }

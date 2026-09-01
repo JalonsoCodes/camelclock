@@ -33,7 +33,7 @@ export default async function AdminShowcasesPage() {
     const { data: showcases = [], error: showcasesError } = await supabase
         .from("showcases")
         .select("*")
-        .order("target_at");
+        .order("sort_order");
 
     if (showcasesError) {
         console.error("Failed to load showcases:", showcasesError.message);

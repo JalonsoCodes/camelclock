@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Check, X } from "lucide-react";
 import useFocusTrap from "@/hooks/useFocusTrap";
 
@@ -25,7 +26,7 @@ export default function ConfirmDialog({
         return () => document.removeEventListener("keydown", handleEsc);
     }, [onCancel, busy]);
 
-    return (
+    return createPortal(
         <div className="auth-modal-overlay" onClick={busy ? undefined : onCancel}>
             <div className="auth-card nbtc" ref={trapRef} role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close-x" type="button" title="Close" onClick={onCancel} disabled={busy} aria-label="Close">
@@ -58,6 +59,7 @@ export default function ConfirmDialog({
                     </button>
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

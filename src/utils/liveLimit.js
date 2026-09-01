@@ -10,10 +10,14 @@ export async function checkLiveLimit() {
         return { ok: false, reason: "auth", error: "You need to be signed in." };
     }
 
-    const { data: count, error } = await supabase.rpc("count_my_live_clocks");
+    let { data: count, error } = await supabase.rpc("count_my_live_clocks");
+
+    if (error && /jwt.*future/i.test(error.message)) {
+        await supabase.auth.getSession();
+        ({ data: count, error } = await supabase.rpc("count_my_live_clocks"));
+    }
 
     if (error) {
-        console.error("Failed to count live clocks:", error.message);
         return { ok: false, reason: "error", error: "Couldn't check your live clock count. Please try again." };
     }
 

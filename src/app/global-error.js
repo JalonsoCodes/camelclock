@@ -1,19 +1,12 @@
 "use client";
 
 import { RefreshCw } from "lucide-react";
-import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
-
-const pixelatedFont = Press_Start_2P({
-    weight: "400",
-    subsets: ["latin"],
-    variable: "--pixelated-font",
-});
 
 export default function GlobalError({ reset }) {
     return (
         <html lang="en">
-            <body className={pixelatedFont.variable} suppressHydrationWarning>
+            <body suppressHydrationWarning>
                 <div className="auth-page">
                     <div className="auth-card nbtc">
                         <h2 className="auth-title">SOMETHING WENT WRONG</h2>

@@ -1,0 +1,142 @@
+/* ── Scroll animation container ── */
+.scroll-container {
+    height: 900vh;
+    position: relative;
+}
+
+.scroll-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── CamelClock (phase 4-6) ── */
+.clock-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    z-index: 3;
+    pointer-events: none;
+}
+
+.pre-reveal-text {
+    font-size: 2rem;
+    font-weight: 800;
+    text-align: center;
+    color: var(--primary-colour);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.pre-reveal-accent {
+    color: var(--secondary-colour);
+}
+
+.scroll-clock-wrapper {
+    width: 50%;
+    max-width: 50rem;
+}
+
+/* ── Builder overlay (phase 6 end → real builder) ── */
+.builder-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 2.0rem;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.builder-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.builder-overlay .camel-builder {
+    width: 100%;
+    max-width: 120rem;
+}
+
+/* ── Scrollbar hidden during animation (grid freeze handled by body::before) ── */
+body.scroll-anim-active {
+    scrollbar-width: none;
+}
+
+body.scroll-anim-active::-webkit-scrollbar {
+    display: none;
+}
+
+/* ── Locked state: builder becomes the page ── */
+.scroll-container.locked {
+    height: auto;
+}
+
+.scroll-container.locked .scroll-sticky {
+    position: static;
+    height: auto;
+    overflow: visible;
+}
+
+.scroll-container.locked .clock-layer {
+    display: none;
+}
+
+.scroll-container.locked .builder-overlay {
+    position: relative;
+    inset: auto;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2.0rem;
+    padding-top: 12rem;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.scroll-container.locked .builder-overlay .canvas-wrapper {
+    opacity: 1;
+}
+
+.scroll-container.locked .builder-overlay .camel-builder-form {
+    opacity: 1;
+}
+
+.scroll-container.locked .scroll-clock-wrapper {
+    display: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .scroll-container {
+        height: 780vh;
+    }
+
+    .scroll-clock-wrapper {
+        width: 70%;
+    }
+
+    .scroll-container.locked .builder-overlay {
+        padding-top: 10rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .scroll-container {
+        height: 700vh;
+    }
+
+    .scroll-clock-wrapper {
+        width: 85%;
+    }
+
+    .scroll-container.locked .builder-overlay {
+        padding-top: 9rem;
+    }
+}

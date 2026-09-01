@@ -22,7 +22,7 @@ function hslToHex(h, s, l) {
 
 const PENDING_KEY = "camelclocks.pending";
 
-export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create" }) {
+export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create", canvasRef = null }) {
     const router = useRouter();
     const clockRef = useRef(null);
     const autoSavedRef = useRef(false);
@@ -227,7 +227,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     return (
         <div className="camel-builder">
-            <div className="canvas-wrapper nbtc">
+            <div className="canvas-wrapper nbtc" ref={canvasRef}>
                 <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" boosts={selectedWearables} />
             </div>
 

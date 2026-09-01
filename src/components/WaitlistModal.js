@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { BarChart3, Bell, Check, EyeOff, Infinity as InfinityIcon, Mail, Shirt, X, Zap } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
@@ -60,7 +61,7 @@ export default function WaitlistModal({
         setJoined(true);
     };
 
-    return (
+    return createPortal(
         <div className="auth-modal-overlay" onClick={onClose}>
             <div className="auth-card nbtc" ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="waitlist-title" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close-x" type="button" title="Close" onClick={onClose} aria-label="Close">
@@ -116,6 +117,7 @@ export default function WaitlistModal({
                     </form>
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

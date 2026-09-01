@@ -3,8 +3,8 @@
 import { useEffect, useImperativeHandle, useRef, useState } from "react";
 import Link from "next/link";
 import { RotateCcw } from "lucide-react";
-import { drawCamel, drawGrid, drawWearables } from "@/utils/drawing";
-import { camelTemplate, celebrationFrames, celebrationFrameDurationMs } from "@/utils/grids";
+import { drawCamel, drawGrid, drawWearables, buildCamelGrid } from "@/utils/drawing";
+import { camelTemplate, celebrationFrames, celebrationFrameDurationMs, wearables } from "@/utils/grids";
 import { getConfiguredTarget, getNextTarget } from "@/utils/time";
 import styles from "./CamelClock.module.css";
 
@@ -92,10 +92,13 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, watermarkExternal = false, showCta = false, ctaActive = false, onCtaClick = null, ctaHref = null, ref }) {
+export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, watermarkExternal = false, showCta = false, ctaActive = false, onCtaClick = null, ctaHref = null, revealProgress, wearableRevealProgress, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
+    const revealPixelsRef = useRef(null);
+    const wearableRevealPixelsRef = useRef(null);
+    const revealActiveRef = useRef(false);
     const [levels, setLevels] = useState([
         { level: 0 }, 
         { level: 0 }, 
@@ -115,6 +118,11 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     useEffect(() => {
         phaseRef.current = phase;
     }, [phase]);
+
+    useEffect(() => {
+        revealActiveRef.current = revealProgress != null && revealProgress > 0 && revealProgress < 1;
+        if (revealProgress === 0) revealPixelsRef.current = null;
+    }, [revealProgress]);
 
     useEffect(() => {
         const observer = new MutationObserver(() => setThemeToken((t) => t + 1));
@@ -159,7 +167,9 @@ export default function CamelClock({ title, month, day, time, introText, celebra
         };
 
         tick();
-        timer = setInterval(tick, 250);
+        timer = setInterval(() => {
+            if (!revealActiveRef.current) tick();
+        }, 250);
         return () => clearInterval(timer);
     }, [month, day, time]);
 
@@ -252,6 +262,103 @@ export default function CamelClock({ title, month, day, time, introText, celebra
             ctx.stroke();
 
             ctx.setLineDash([]);
+
+            const revealAction = revealProgress != null ? revealProgress : 1;
+            const revealActive = revealProgress != null && revealProgress < 1;
+            const wearablesActive = (wearableRevealProgress != null && wearableRevealProgress < 1 && boosts.length > 0);
+            if ((revealActive || wearablesActive) && !celebrating) {
+                const levelNumbers = levels.map(l => l.level);
+                const grid = buildCamelGrid(template, levelNumbers, eyeFrame);
+                const sig = `${levelNumbers.join(",")}|${eyeFrame}`;
+
+                let fillPixels = revealPixelsRef.current;
+
+                if (!fillPixels || fillPixels.sig !== sig) {
+                    fillPixels = [];
+                    for (let r = 0; r < grid.length; r++) {
+                        for (let c = 0; c < grid[0].length; c++) {
+                            const val = grid[r][c];
+                            if (val !== 0 && val !== 1) fillPixels.push([r, c, val]);
+                        }
+                    }
+                    const shuffle = (arr) => {
+                        for (let i = arr.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [arr[i], arr[j]] = [arr[j], arr[i]];
+                        }
+                        return arr;
+                    };
+                    revealPixelsRef.current = { sig, pixels: shuffle(fillPixels) };
+                    fillPixels = revealPixelsRef.current;
+                }
+                fillPixels = fillPixels.pixels;
+
+                for (let r = 0; r < grid.length; r++) {
+                    for (let c = 0; c < grid[0].length; c++) {
+                        if (grid[r][c] === 1) {
+                            ctx.fillStyle = pixelDark;
+                            ctx.fillRect(c * calculatedScale, r * calculatedScale, calculatedScale, calculatedScale);
+                        }
+                    }
+                }
+
+                const count = Math.floor(fillPixels.length * revealAction);
+                for (let i = 0; i < count; i++) {
+                    const [r, c, val] = fillPixels[i];
+                    const currentVal = grid[r]?.[c];
+                    if (currentVal === 0 || currentVal === 1 || currentVal === undefined) continue;
+                    if (val === 2) ctx.fillStyle = primaryColour;
+                    else if (val === 3) ctx.fillStyle = secondaryColour;
+                    else if (val === 9) ctx.fillStyle = primaryColour;
+                    else ctx.fillStyle = primaryColour;
+                    ctx.fillRect(c * calculatedScale, r * calculatedScale, calculatedScale, calculatedScale);
+                }
+
+                if (boosts.length > 0) {
+                    let wearablePixels = wearableRevealPixelsRef.current;
+                    if (!wearablePixels) {
+                        const bgColour = getComputedStyle(document.documentElement).getPropertyValue("--card-colour").trim() || "#ffffff";
+                        const wearableMap = wearables;
+                        wearablePixels = [];
+                        for (const boostId of boosts) {
+                            const wearable = wearableMap[boostId];
+                            if (!wearable) continue;
+                            const { grid: wgrid, colours } = wearable;
+                            const wpositions = wearable.positions || [wearable.anchor, wearable.mirrorAnchor].filter(Boolean);
+                            for (const pos of wpositions) {
+                                for (let r = 0; r < wgrid.length; r++) {
+                                    for (let c = 0; c < wgrid[r].length; c++) {
+                                        const idx = wgrid[r][c];
+                                        if (idx === 0) continue;
+                                        let fill = idx === 100 ? bgColour : colours[idx];
+                                        if (!fill) continue;
+                                        wearablePixels.push([pos.row + r, pos.col + c, fill]);
+                                    }
+                                }
+                            }
+                        }
+                        const shuffle = (arr) => {
+                            for (let i = arr.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [arr[i], arr[j]] = [arr[j], arr[i]];
+                            }
+                            return arr;
+                        };
+                        wearableRevealPixelsRef.current = shuffle(wearablePixels);
+                        wearablePixels = wearableRevealPixelsRef.current;
+                    }
+
+                    const wReveal = wearableRevealProgress != null ? wearableRevealProgress : 1;
+                    const wCount = Math.floor(wearablePixels.length * wReveal);
+                    for (let i = 0; i < wCount; i++) {
+                        const [r, c, fill] = wearablePixels[i];
+                        ctx.clearRect(c * calculatedScale, r * calculatedScale, calculatedScale, calculatedScale);
+                        ctx.fillStyle = fill;
+                        ctx.fillRect(c * calculatedScale, r * calculatedScale, calculatedScale, calculatedScale);
+                    }
+                }
+                return;
+            }
         }
 
         if (celebrating) {
@@ -266,7 +373,7 @@ export default function CamelClock({ title, month, day, time, introText, celebra
         if (!celebrating && boosts.length > 0) {
             drawWearables(canvas, boosts, calculatedScale);
         }
-    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, boosts, showCta, ctaActive, ctaHover]);
+    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, boosts, showCta, ctaActive, ctaHover, revealProgress, wearableRevealProgress]);
 
     const startPreview = () => {
         setIsPreview(true);
@@ -289,8 +396,10 @@ export default function CamelClock({ title, month, day, time, introText, celebra
     const totalWidthOfHumps = humpWidth * numHumps;
     const startCol = 22 + (50 - totalWidthOfHumps) / 2;
 
+    const revealT = revealProgress != null ? Math.max(0, Math.min(1, revealProgress)) : 1;
+
     return (
-        <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": displayScale }}>
+        <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": displayScale, "--reveal": revealT }}>
             <h2 className={styles.clockTitle}>{title}</h2>
             
             <div className={styles.wrapper}>

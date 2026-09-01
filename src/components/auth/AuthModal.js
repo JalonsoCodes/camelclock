@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
@@ -18,7 +19,7 @@ export default function AuthModal({ mode = "signup", next = "/dashboard", onSucc
         return () => document.removeEventListener("keydown", handleEsc);
     }, [onClose]);
 
-    return (
+    return createPortal(
         <div className="auth-modal-overlay" onClick={onClose}>
             <div
                 className="auth-card nbtc"
@@ -52,6 +53,7 @@ export default function AuthModal({ mode = "signup", next = "/dashboard", onSucc
                     />
                 )}
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }

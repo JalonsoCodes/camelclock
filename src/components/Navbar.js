@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
     ChevronDown,
     LogIn,
@@ -62,22 +62,59 @@ export default function Navbar() {
         }
     };
 
+    const handleSectionNav = useCallback((e, id) => {
+        e.preventDefault();
+        setOpen(false);
+        if (pathname !== "/") {
+            router.push(`/?section=${id}`);
+            return;
+        }
+        const target = document.getElementById(id);
+        if (!target) return;
+
+        // The animated hero is 900vh tall and collapses to auto-height once the
+        // scroll animation locks, which shifts every section below it. Native
+        // hash navigation targets the pre-lock offset and overshoots, so we
+        // force the lock first (jumping the hero to its end) and then scroll to
+        // the section from the now-stable layout.
+        const scrollToTarget = () => {
+            const navEl = document.querySelector(".navbar");
+            const offset = navEl ? navEl.getBoundingClientRect().height : 0;
+            const top = target.getBoundingClientRect().top + window.scrollY - offset;
+            window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+        };
+
+        const container = document.querySelector(".scroll-container");
+        if (container && !container.classList.contains("locked")) {
+            const rect = container.getBoundingClientRect();
+            const endY = rect.top + window.scrollY + rect.height - window.innerHeight;
+            window.scrollTo({ top: endY, behavior: "instant" });
+            requestAnimationFrame(() => requestAnimationFrame(scrollToTarget));
+        } else {
+            scrollToTarget();
+        }
+    }, [pathname, router]);
+
     useEffect(() => {
         let mounted = true;
 
         if (!user) return;
 
-        supabase
-            .rpc("count_my_live_clocks")
-            .then(({ data: count, error }) => {
-                if (!mounted) return;
-                if (error) {
-                    console.error("Failed to count live clocks:", error.message);
-                    setLiveCount(null);
-                } else {
-                    setLiveCount(count ?? 0);
-                }
-            });
+        const fetchCount = async (retried = false) => {
+            const { data: count, error } = await supabase.rpc("count_my_live_clocks");
+            if (!mounted) return;
+            if (error && !retried && /jwt.*future/i.test(error.message)) {
+                await supabase.auth.getSession();
+                return fetchCount(true);
+            }
+            if (error) {
+                setLiveCount(null);
+            } else {
+                setLiveCount(count ?? 0);
+            }
+        };
+
+        fetchCount();
 
         return () => { mounted = false; };
     }, [user, pathname]);
@@ -148,11 +185,37 @@ export default function Navbar() {
                     <>
                         <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>Dashboard</Link>
                         {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>Showcases</Link>}
+                        {liveCount !== null && (
+                            <button
+                                className="nav-live-pill mobile-only"
+                                type="button"
+                                title={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks \u2014 Pro lifts the cap`}
+                                aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks. See what Pro unlocks.`}
+                                onClick={() => { setProOpen(true); setOpen(false); }}
+                            >
+                                <Rocket className="button-icon" />
+                                {liveCount}/{MAX_LIVE_CLOCKS}
+                            </button>
+                        )}
+                        <Link href="/new" className="btn-link mobile-only" onClick={() => setOpen(false)}><Plus className="button-icon" />New Clock</Link>
+                        <Link href="/settings" className="btn-link mobile-only" onClick={() => setOpen(false)}><SettingsIcon className="button-icon" />Settings</Link>
+                        <button type="button" className="btn-link mobile-only" onClick={() => { handleSignOut(); setOpen(false); }}>
+                            <LogOut className="button-icon" />
+                            Sign out
+                        </button>
                     </>
                 ) : (
                     <>
-                        <Link href="/#solutions" onClick={() => setOpen(false)}>Solutions</Link>
-                        <Link href="/#pricing" onClick={() => setOpen(false)}>Pricing</Link>
+                        <a href="#features" onClick={(e) => handleSectionNav(e, "features")}>Features</a>
+                        <a href="#pricing" onClick={(e) => handleSectionNav(e, "pricing")}>Pricing</a>
+                        <button className="btn-link btn-secondary mobile-only" type="button" onClick={() => { setAuthMode("login"); setAuthOpen(true); setOpen(false); }}>
+                            <LogIn className="button-icon" />
+                            Sign In
+                        </button>
+                        <button className="btn-link mobile-only" type="button" onClick={() => { setAuthMode("signup"); setAuthOpen(true); setOpen(false); }}>
+                            <UserPlus className="button-icon" />
+                            Create Account
+                        </button>
                     </>
                 )}
             </div>

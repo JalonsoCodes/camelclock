@@ -11,7 +11,8 @@
 }
 
 .clockTitle {
-    color: var(--clock-secondary);
+    color: color-mix(in srgb, var(--fg-colour) calc((1 - var(--reveal, 1)) * 100%), var(--clock-secondary));
+    transition: color 0.2s ease;
     font-size: calc(var(--clock-scale) * 4.2px);
     word-break: break-word;
     text-align: center;
@@ -73,7 +74,8 @@
     top: 50%;
     transform: translateX(-100%) translateY(-50%); 
     font-size: calc(var(--clock-scale) * 2px);
-    color: var(--clock-secondary);
+    color: color-mix(in srgb, var(--fg-colour) calc((1 - var(--reveal, 1)) * 100%), var(--clock-secondary));
+    transition: color 0.2s ease;
     text-shadow: calc(var(--clock-scale) * 0.25px) calc(var(--clock-scale) * 0.25px) black;
     width: min-content;
     text-align: right;
@@ -91,7 +93,8 @@
 }
 
 .value {
-    color: var(--clock-primary);
+    color: color-mix(in srgb, var(--fg-colour) calc((1 - var(--reveal, 1)) * 100%), var(--clock-primary));
+    transition: color 0.2s ease;
     font-size: calc(var(--clock-scale) * 4.2px);
     font-weight: bold;
     line-height: calc(var(--clock-scale) * 5px);

@@ -1,0 +1,7 @@
+# Netlify builds Next.js 16 automatically via the OpenNext adapter.
+# The @netlify/plugin-nextjs runtime auto-installs; do NOT manually pin it
+# (pinning opts you out of auto-updates). Keep this file minimal.
+
+[build]
+  command = "npm run build"
+  publish = ".next"

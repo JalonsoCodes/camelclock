@@ -42,24 +42,17 @@ export async function deleteAccount(confirmation) {
 
     const admin = createAdminClient();
 
-    const { data: ownedClocks } = await admin
-        .from("clocks")
-        .select("id")
-        .eq("user_id", user.id);
-    const ownedIds = (ownedClocks ?? []).map((clock) => clock.id);
-
-    if (ownedIds.length > 0) {
-        const { data: showcased } = await admin
-            .from("showcases")
-            .select("id")
-            .in("clock_id", ownedIds);
-        if ((showcased ?? []).length > 0) {
-            return { error: "This account manages landing-page showcases. Remove those first." };
-        }
+    const { error: followsError } = await admin.from("follows").delete().eq("user_id", user.id);
+    if (followsError) {
+        console.error("deleteAccount: failed to delete follows:", followsError.message);
+        return { error: "Failed to clean up your data. Please try again." };
     }
 
-    await admin.from("follows").delete().eq("user_id", user.id);
-    await admin.from("clocks").delete().eq("user_id", user.id);
+    const { error: clocksError } = await admin.from("clocks").delete().eq("user_id", user.id);
+    if (clocksError) {
+        console.error("deleteAccount: failed to delete clocks:", clocksError.message);
+        return { error: "Failed to delete your clocks. Please try again." };
+    }
 
     const { error } = await admin.auth.admin.deleteUser(user.id);
     if (error) {

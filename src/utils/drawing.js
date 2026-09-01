@@ -1,12 +1,7 @@
 import { eyeOne, eyeTwo, eyeThree, eyeFour, wearables } from "@/utils/grids";
 
-export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000", ctaState = null) {
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.imageSmoothingEnabled = false;
-
+export function buildCamelGrid(template, levelNumbers, eyeFrame) {
     const newCamel = template.map(row => [...row]);
-    // Shifted startRow to 60 to allow 60-pixel tall humps to build upwards
     const startRow = 60;
     const numHumps = levelNumbers.length;
     const humpWidth = numHumps ** 2 - 11 * numHumps + 40;
@@ -31,7 +26,7 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
 
             const leftCols = new Array(levelNum);
             leftCols[0] = topStart;
-            
+
             const maxRow1Start = topStart - 1;
 
             for (let y = 1; y < levelNum; y++) {
@@ -40,13 +35,13 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
                 } else {
                     const progress = y / (levelNum - 1);
                     const curveFactor = Math.sin(progress * (Math.PI / 2));
-                    
+
                     let col = Math.round(topStart - (topStart - baseStart) * curveFactor);
-                    
+
                     if (y === 1) {
                         col = Math.min(col, maxRow1Start);
                     }
-                    
+
                     leftCols[y] = col;
                 }
             }
@@ -64,7 +59,6 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
                 const rightCol = (humpWidth - 1) - leftCol;
 
                 for (let x = leftCol + 1; x < rightCol; x++) {
-                    // Left 1px shadow except on bottom row
                     if (x === leftCol + 1 && y < levelNum - 1) {
                         tempHump[y][x] = 3;
                     } else {
@@ -104,12 +98,21 @@ export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, prima
     const eyeFrames = [eyeOne, eyeTwo, eyeThree, eyeFour];
     const currentEye = eyeFrames[eyeFrame];
 
-    // Eyes shifted down by +36 rows (13 + 36 = 49)
     for (let r = 0; r < 2; r++) {
         for (let c = 0; c < 2; c++) {
             newCamel[49 + r][9 + c] = currentEye[r][c];
         }
     }
+
+    return newCamel;
+}
+
+export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000", ctaState = null) {
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+
+    const newCamel = buildCamelGrid(template, levelNumbers, eyeFrame);
 
     const iconColour =
         ctaState === "hover" || ctaState === "active"

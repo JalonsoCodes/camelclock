@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Play, Plus, Save, Shuffle, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Play, Plus, Save, Shuffle, Trash2 } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
-import { createShowcase, deleteShowcase, updateShowcase } from "@/app/admin/showcases/actions";
+import { createShowcase, deleteShowcase, reorderShowcases, updateShowcase } from "@/app/admin/showcases/actions";
 import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
 import { validateClock } from "@/utils/validation";
 import { wearables as wearableData } from "@/utils/grids";
@@ -27,13 +27,13 @@ const EMPTY_SHOWCASE = {
 
 const SHEET_COLUMNS = [
     ["PREVIEW", "col-preview"],
+    ["ORDER", "col-order"],
     ["TITLE", "col-title"],
     ["TARGET", "col-target"],
     ["LABEL", "col-label"],
     ["COMPLETION MESSAGE", "col-message"],
     ["COLOURS", "col-colours"],
     ["WEARABLES", "col-wearables"],
-    ["LIVE CLOCK", "col-clock"],
     ["ACTIONS", "col-actions"],
 ];
 
@@ -79,7 +79,7 @@ function HexColourInput({ idPrefix, value, onChange }) {
     );
 }
 
-function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
+function ShowcaseRow({ showcase, onSave, onRequestDelete, onMoveUp, onMoveDown, isFirst, isLast, reordering }) {
     const clockRef = useRef(null);
     const [fields, setFields] = useState({
         title: showcase.title ?? "",
@@ -89,7 +89,6 @@ function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
         secondary_colour: showcase.secondary_colour ?? "#8E652C",
         wearables: showcase.wearables ?? [],
     });
-    const [linkedClockId, setLinkedClockId] = useState(showcase.clock_id ?? null);
 
     const target = new Date(showcase.target_at);
     const [month, setMonth] = useState(target.getMonth());
@@ -148,7 +147,7 @@ function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
             targetDate.setFullYear(target.getFullYear() + 1);
         }
 
-        const { data, error, createdClock } = await updateShowcase(showcase.id, {
+        const { data, error } = await updateShowcase(showcase.id, {
             title: fields.title,
             target_at: targetDate.toISOString(),
             intro_text: fields.intro_text,
@@ -165,10 +164,7 @@ function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
             return;
         }
 
-        if (data?.clock_id) {
-            setLinkedClockId(data.clock_id);
-        }
-        setStatus(createdClock ? "Saved! Clock created." : "Saved!");
+        setStatus("Saved!");
         onSave?.(data);
         setTimeout(() => setStatus(""), 2000);
     };
@@ -199,6 +195,32 @@ function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
                     <Play fill="currentColor" strokeWidth={0} aria-hidden="true" />
                     Preview completion
                 </button>
+            </td>
+
+            <td className="col-order">
+                <label className="cell-label">ORDER</label>
+                <div className="order-controls">
+                    <button
+                        className="order-arrow nbtc"
+                        type="button"
+                        title="Move up"
+                        aria-label="Move up"
+                        onClick={onMoveUp}
+                        disabled={isFirst || reordering}
+                    >
+                        <ArrowUp aria-hidden="true" />
+                    </button>
+                    <button
+                        className="order-arrow nbtc"
+                        type="button"
+                        title="Move down"
+                        aria-label="Move down"
+                        onClick={onMoveDown}
+                        disabled={isLast || reordering}
+                    >
+                        <ArrowDown aria-hidden="true" />
+                    </button>
+                </div>
             </td>
 
             <td className="col-title">
@@ -309,23 +331,6 @@ function ShowcaseRow({ showcase, onSave, onRequestDelete }) {
                 ))}
             </td>
 
-            <td className="col-clock">
-                <label className="cell-label">CLOCK</label>
-                {linkedClockId ? (
-                    <a
-                        href={`/clock/${linkedClockId}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Open the live showcase clock"
-                        className="nbtc pressable admin-open-button"
-                    >
-                        OPEN
-                    </a>
-                ) : (
-                    <p className="admin-clock-hint">Created on first save.</p>
-                )}
-            </td>
-
             <td className="col-actions cell-actions">
                 <button className="admin-save-button nbtc" type="button" onClick={handleSave} disabled={saving}>
                     <Save className="button-icon" />
@@ -352,6 +357,7 @@ export default function AdminShowcases({ showcases: initialShowcases }) {
     const [pendingDeleteId, setPendingDeleteId] = useState(null);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
+    const [reordering, setReordering] = useState(false);
 
     const pendingShowcase = showcases.find((s) => s.id === pendingDeleteId);
 
@@ -390,6 +396,24 @@ export default function AdminShowcases({ showcases: initialShowcases }) {
         }
     };
 
+    const moveShowcase = async (index, direction) => {
+        const target = index + direction;
+        if (target < 0 || target >= showcases.length) return;
+
+        const next = [...showcases];
+        [next[index], next[target]] = [next[target], next[index]];
+
+        setReordering(true);
+        setShowcases(next);
+
+        const { error } = await reorderShowcases(next.map((s) => s.id));
+
+        setReordering(false);
+        if (error) {
+            setShowcases((prev) => prev.map((s) => ({ ...s })));
+        }
+    };
+
     return (
         <div className="admin-showcase-page">
             <div className="admin-header">
@@ -416,7 +440,7 @@ export default function AdminShowcases({ showcases: initialShowcases }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {showcases.map((showcase) => (
+                            {showcases.map((showcase, index) => (
                                 <ShowcaseRow
                                     key={showcase.id}
                                     showcase={showcase}
@@ -424,6 +448,11 @@ export default function AdminShowcases({ showcases: initialShowcases }) {
                                         setShowcases((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
                                     }}
                                     onRequestDelete={setPendingDeleteId}
+                                    onMoveUp={() => moveShowcase(index, -1)}
+                                    onMoveDown={() => moveShowcase(index, 1)}
+                                    isFirst={index === 0}
+                                    isLast={index === showcases.length - 1}
+                                    reordering={reordering}
                                 />
                             ))}
                         </tbody>
@@ -433,11 +462,7 @@ export default function AdminShowcases({ showcases: initialShowcases }) {
 
             {pendingDeleteId && (
                 <ConfirmDialog
-                    message={
-                        pendingShowcase?.clock_id
-                            ? `Delete "${pendingShowcase.title}" and its live clock? This cannot be undone.`
-                            : `Delete "${pendingShowcase?.title}"? This cannot be undone.`
-                    }
+                    message={`Delete "${pendingShowcase?.title}"? This cannot be undone.`}
                     onConfirm={confirmDelete}
                     onCancel={() => setPendingDeleteId(null)}
                 />
