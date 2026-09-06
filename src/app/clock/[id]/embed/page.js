@@ -5,14 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const VALID_THEMES = ["dark", "transparent"];
+const VALID_THEMES = ["dark"];
+const VALID_CARDS = ["transparent"];
 
-function noFlashScript(embedTheme) {
+function noFlashScript(embedTheme, embedCard) {
     let script = 'document.body.classList.add("embed-mode");';
     if (embedTheme === "dark") {
         script += 'document.documentElement.classList.add("dark");';
     }
-    if (embedTheme === "transparent") {
+    if (embedCard === "transparent") {
         script += 'document.body.classList.add("embed-transparent");';
     }
     return script;
@@ -20,8 +21,11 @@ function noFlashScript(embedTheme) {
 
 export default async function EmbedPage({ params, searchParams }) {
     const { id } = await params;
-    const { theme } = await searchParams;
-    const embedTheme = VALID_THEMES.includes(theme) ? theme : "light";
+    const { theme, card } = await searchParams;
+
+    const legacy = theme === "transparent";
+    const embedTheme = legacy || !VALID_THEMES.includes(theme) ? "light" : theme;
+    const embedCard = legacy ? "transparent" : VALID_CARDS.includes(card) ? card : "card";
 
     const supabase = await createClient();
 
@@ -46,8 +50,8 @@ export default async function EmbedPage({ params, searchParams }) {
     if (!clock.allow_embed) {
         return (
             <main className="public-clock">
-                <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme) }} />
-                <EmbedMode theme={embedTheme} />
+                <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, "card") }} />
+                <EmbedMode theme={embedTheme} card="card" />
                 <div className="embed-disabled-card nbtc">
                     <p>This CamelClock&apos;s owner has disabled embedding.</p>
                     <a href={`/clock/${id}`} target="_top" className="btn-link">VIEW IT ON CAMELCLOCK</a>
@@ -58,8 +62,8 @@ export default async function EmbedPage({ params, searchParams }) {
 
     return (
         <main className="public-clock">
-            <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme) }} />
-            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} />
+            <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, embedCard) }} />
+            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} initialCard={embedCard} />
         </main>
     );
 }

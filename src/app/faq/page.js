@@ -18,14 +18,14 @@ const FAQS = [
     {
         q: "How do I embed my CamelClock on my website?",
         a: [
-            "Open your live clock and press SHARE, then copy the embed code into your site's HTML. The clock is responsive and will fit its container. Hover the embed's top-right corner to switch its style live between LIGHT, DARK and TRANSPARENT without touching your page.",
+            "Open your live clock and press SHARE, then copy the embed code into your site's HTML. The clock is responsive and will fit its container. Hover the embed's top-right corner to switch its theme (LIGHT/DARK) and card style (CARD/TRANSPARENT) live.",
         ],
     },
     {
         q: "Can I embed a CamelClock in Notion?",
         a: [
             "Yes. Open your live clock and press the Notion icon next to the clock (or open SHARE and choose \u201CHOW TO EMBED IN NOTION\u201D), then copy the embed URL.",
-            "In Notion, type /embed and press Enter, paste the URL, then drag a corner of the block to size it. Hover the top-right corner of the embed to change its style on the fly \u2014 use TRANSPARENT so the clock blends with any Notion page. The countdown is live inside Notion while the clock stays published.",
+            "In Notion, type /embed and press Enter, paste the URL, then drag a corner of the block to size it. Hover the top-right corner to switch theme (LIGHT/DARK) and card style (CARD/TRANSPARENT) \u2014 use CARD + DARK to match Notion's dark pages. The countdown is live inside Notion while the clock stays published.",
         ],
     },
     {

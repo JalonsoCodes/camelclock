@@ -1995,6 +1995,7 @@ button:disabled {
 body.embed-mode {
   padding: 0;
   background-image: none;
+  overflow: hidden;
 }
 
 body.embed-mode::before {
@@ -2002,7 +2003,11 @@ body.embed-mode::before {
 }
 
 body.embed-mode.embed-transparent {
-  background-color: transparent;
+  background-color: #ffffff;
+}
+
+.dark body.embed-mode.embed-transparent {
+  background-color: #191919;
 }
 
 body.embed-mode.embed-transparent .public-clock-card {
@@ -2020,12 +2025,19 @@ body.embed-mode.embed-transparent .public-clock-card {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .public-clock:hover .embed-theme-switch,
 .public-clock:focus-within .embed-theme-switch {
   opacity: 1;
   pointer-events: auto;
+}
+
+body.embed-mode .site-footer {
+  display: none;
 }
 
 .admin-showcase-page {
