@@ -1,15 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import LoginForm from "./LoginForm";
 import SignUpForm from "./SignUpForm";
 import useFocusTrap from "@/hooks/useFocusTrap";
 
+const emptySubscribe = () => () => {};
+const getServerSnapshot = () => false;
+
 export default function AuthModal({ mode = "signup", next = "/dashboard", onSuccess, onClose }) {
     const [activeMode, setActiveMode] = useState(mode);
     const trapRef = useFocusTrap(true);
+    const isClient = useSyncExternalStore(
+        emptySubscribe,
+        () => typeof document !== "undefined",
+        getServerSnapshot
+    );
 
     useEffect(() => {
         const handleEsc = (e) => {
@@ -18,6 +26,8 @@ export default function AuthModal({ mode = "signup", next = "/dashboard", onSucc
         document.addEventListener("keydown", handleEsc);
         return () => document.removeEventListener("keydown", handleEsc);
     }, [onClose]);
+
+    if (!isClient) return null;
 
     return createPortal(
         <div className="auth-modal-overlay" onClick={onClose}>

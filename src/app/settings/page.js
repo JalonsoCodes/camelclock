@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
+import Navbar from "@/components/Navbar";
 import SettingsView from "@/components/SettingsView";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-    title: "Settings | CamelClocks",
+    title: "Settings | CamelClock",
 };
 
 export default async function SettingsPage() {
@@ -19,5 +20,12 @@ export default async function SettingsPage() {
         redirect("/login?next=/settings");
     }
 
-    return <SettingsView email={user.email ?? ""} />;
+    return (
+        <>
+            <Navbar />
+            <main>
+                <SettingsView email={user.email ?? ""} emailConfirmed={Boolean(user.email_confirmed_at)} />
+            </main>
+        </>
+    );
 }

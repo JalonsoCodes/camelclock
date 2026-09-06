@@ -8,6 +8,7 @@ import ConfirmDialog from "./ConfirmDialog";
 import ShareDialog from "./ShareDialog";
 import WaitlistModal from "./WaitlistModal";
 import { checkLiveLimit, MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
+import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -69,6 +70,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
             if (newStatus === "live") {
                 setShareOpen(true);
             }
+            refreshLiveCount();
             onDeleted();
         }
     };
@@ -84,6 +86,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
             setDeleteError("Failed to delete. Please try again.");
         } else {
             setConfirmOpen(false);
+            refreshLiveCount();
             onDeleted();
         }
     };
@@ -96,6 +99,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
                     month={target.getMonth()}
                     day={target.getDate()}
                     time={time}
+                    targetAt={clock.target_at}
                     introText={clock.intro_text}
                     celebrationMessage={clock.celebration_message}
                     primaryColour={clock.primary_colour}
@@ -180,8 +184,8 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
             {proOpen && (
                 <WaitlistModal
                     heading="YOU'VE HIT THE FREE LIMIT"
-                    subline={`Free covers ${MAX_LIVE_CLOCKS} live CamelClocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-                    highlightFeature="Unlimited Active CamelClocks"
+subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
+highlightFeature="Unlimited Active Camel Clocks"
                     onClose={() => setProOpen(false)}
                 />
             )}

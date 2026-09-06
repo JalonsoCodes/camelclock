@@ -1,10 +1,22 @@
 "use client";
 
-import { Mail } from "lucide-react";
-import { SiFacebook, SiTelegram, SiWhatsapp, SiX } from "react-icons/si";
+import { useState } from "react";
+import { Check, Link, Mail, MoreHorizontal } from "lucide-react";
+import { SiFacebook, SiNotion, SiTelegram, SiWhatsapp, SiX } from "react-icons/si";
 
-export default function SocialShareRow({ url, title }) {
+export default function SocialShareRow({ url, title, showLabel = true, onNotion = null, onMore = null }) {
+    const [copied, setCopied] = useState(false);
     const encodedUrl = encodeURIComponent(url);
+
+    const copyLink = async () => {
+        try {
+            await navigator.clipboard.writeText(url);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error("Failed to copy:", error);
+        }
+    };
     const text = encodeURIComponent(`${title} ${url}`);
 
     const targets = [
@@ -47,8 +59,17 @@ export default function SocialShareRow({ url, title }) {
 
     return (
         <div className="social-share-block">
-            <span className="share-field-label">SHARE VIA</span>
+            {showLabel && <span className="share-field-label">SHARE VIA</span>}
             <div className="social-share-row">
+                <button
+                    type="button"
+                    className="social-share-button nbtc social-share-button-outline"
+                    onClick={copyLink}
+                    aria-label={copied ? "Link copied" : "Copy link"}
+                    title={copied ? "Link copied" : "Copy link"}
+                >
+                    {copied ? <Check aria-hidden="true" /> : <Link aria-hidden="true" />}
+                </button>
                 {targets.map(({ label, href, external, Icon, colour }) => (
                     <a
                         key={label}
@@ -62,6 +83,29 @@ export default function SocialShareRow({ url, title }) {
                         <Icon aria-hidden="true" />
                     </a>
                 ))}
+                {onNotion && (
+                    <button
+                        type="button"
+                        className="social-share-button nbtc"
+                        style={{ backgroundColor: "#191919" }}
+                        onClick={onNotion}
+                        aria-label="Embed this clock in Notion"
+                        title="Embed this clock in Notion"
+                    >
+                        <SiNotion aria-hidden="true" />
+                    </button>
+                )}
+                {onMore && (
+                    <button
+                        type="button"
+                        className="social-share-button nbtc social-share-button-outline"
+                        onClick={onMore}
+                        aria-label="More share options"
+                        title="More share options"
+                    >
+                        <MoreHorizontal aria-hidden="true" />
+                    </button>
+                )}
             </div>
         </div>
     );

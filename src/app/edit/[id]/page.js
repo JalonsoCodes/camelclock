@@ -1,7 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import CamelClockBuilder from "@/components/CamelClockBuilder";
-import { getClockInitialValues } from "@/utils/clockValues";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -39,7 +38,7 @@ export default async function EditClockPage({ params }) {
             <main className="live-clock">
                 <div className="clock-viewer">
                     <CamelClockBuilder
-                        initialValues={getClockInitialValues(clock)}
+                        initialClock={clock}
                         clockId={id}
                     />
                 </div>

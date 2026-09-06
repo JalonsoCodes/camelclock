@@ -8,6 +8,7 @@ import Navbar from "./Navbar";
 import ClockCard from "./ClockCard";
 import EmptyState from "./EmptyState";
 import { supabase } from "@/lib/supabase/client";
+import EmailConfirmBanner from "./EmailConfirmBanner";
 
 function isExpired(clock, now) {
     return clock.status !== "draft" && new Date(clock.target_at) <= now;
@@ -26,7 +27,7 @@ function getStats(clocks) {
     return { total: clocks.length, drafts, live, expired };
 }
 
-export default function DashboardView({ clocks, followedClocks = [] }) {
+export default function DashboardView({ clocks, followedClocks = [], emailConfirmed = true, userEmail = "" }) {
     const router = useRouter();
     const [upcomingOpen, setUpcomingOpen] = useState(true);
     const [expiredOpen, setExpiredOpen] = useState(true);
@@ -61,6 +62,8 @@ export default function DashboardView({ clocks, followedClocks = [] }) {
     return (
         <main className="dashboard">
             <Navbar />
+
+            {!emailConfirmed && <EmailConfirmBanner email={userEmail} />}
 
             <div className="stats-row">
                 <div className="stat-card nbtc stat-total">

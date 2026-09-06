@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { validatePassword } from "@/utils/passwordValidation";
 
 const PASSWORD_MESSAGES = {
     "New password should be different from the old password.": "Choose a password you haven't used before.",
@@ -10,8 +11,9 @@ const PASSWORD_MESSAGES = {
 };
 
 export async function changePassword(password) {
-    if (typeof password !== "string" || password.length < 8) {
-        return { error: "Password must be at least 8 characters." };
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+        return { error: passwordError };
     }
 
     const supabase = await createClient();
@@ -45,7 +47,7 @@ export async function deleteAccount(confirmation) {
     const { error: followsError } = await admin.from("follows").delete().eq("user_id", user.id);
     if (followsError) {
         console.error("deleteAccount: failed to delete follows:", followsError.message);
-        return { error: "Failed to clean up your data. Please try again." };
+        return { error: "Failed to clean up your data (follows). Please try again." };
     }
 
     const { error: clocksError } = await admin.from("clocks").delete().eq("user_id", user.id);

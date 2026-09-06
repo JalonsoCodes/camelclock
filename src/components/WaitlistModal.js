@@ -8,7 +8,7 @@ import useFocusTrap from "@/hooks/useFocusTrap";
 import { PRO_FEATURES } from "./Pricing";
 
 const FEATURE_ICONS = {
-    "Unlimited Active CamelClocks": InfinityIcon,
+    "Unlimited Active Camel Clocks": InfinityIcon,
     "Full Wearables Closet": Shirt,
     "Interactive Boosts": Zap,
     "Waitlist + Email Capture": Mail,
@@ -18,7 +18,7 @@ const FEATURE_ICONS = {
 
 export default function WaitlistModal({
     onClose,
-    heading = "CAMELCLOCKS PRO IS COMING",
+    heading = "CAMELCLOCK PRO IS COMING",
     subline = "Be first in line for early access to CamelClock Pro.",
     highlightFeature = null,
 }) {

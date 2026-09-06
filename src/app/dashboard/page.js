@@ -51,5 +51,12 @@ export default async function DashboardPage() {
         }
     }
 
-    return <DashboardView clocks={clocks} followedClocks={followedClocks} />;
+    return (
+        <DashboardView
+            clocks={clocks}
+            followedClocks={followedClocks}
+            emailConfirmed={Boolean(user.email_confirmed_at)}
+            userEmail={user.email ?? ""}
+        />
+    );
 }

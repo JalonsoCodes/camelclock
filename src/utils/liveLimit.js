@@ -2,7 +2,7 @@ import { supabase } from "@/lib/supabase/client";
 
 export const MAX_LIVE_CLOCKS = 3;
 
-export const LIVE_LIMIT_MESSAGE = `You've hit the limit of ${MAX_LIVE_CLOCKS} live CamelClocks. Unpublish one to make this live.`;
+export const LIVE_LIMIT_MESSAGE = `You've hit the limit of ${MAX_LIVE_CLOCKS} live Camel Clocks. Unpublish one to make this live.`;
 
 export async function checkLiveLimit() {
     const { data: { user } } = await supabase.auth.getUser();

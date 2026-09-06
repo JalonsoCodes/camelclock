@@ -13,12 +13,12 @@ import WaitlistModal from "./WaitlistModal";
 // ============================================================
 const FREE_FEATURES = [
     {
-        label: "3 Active Live CamelClocks",
+        label: "3 Active Live Camel Clocks",
         detail: "Seamless website embedding and shareable directly links.",
     },
     {
         label: "Unlimited Drafts",
-        detail: "Experiment and design as many personal CamelClocks as you like.",
+        detail: "Experiment and design as many personal Camel Clocks as you like.",
     },
     {
         label: "Core Customisation",
@@ -36,7 +36,7 @@ const FREE_FEATURES = [
 
 export const PRO_FEATURES = [
     {
-        label: "Unlimited Active CamelClocks",
+        label: "Unlimited Active Camel Clocks",
         detail: "Keep as many live embeds running as you need.",
     },
     {

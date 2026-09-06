@@ -17,6 +17,7 @@ import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./auth/AuthModal";
 import WaitlistModal from "./WaitlistModal";
 import { MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
+import { LIVE_COUNT_EVENT } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
 
 export default function Navbar() {
@@ -31,6 +32,7 @@ export default function Navbar() {
     const [proOpen, setProOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
     const accountRef = useRef(null);
+    const fetchLiveCountRef = useRef(null);
 
     useEffect(() => {
         if (!accountOpen) return;
@@ -114,10 +116,17 @@ export default function Navbar() {
             }
         };
 
+        fetchLiveCountRef.current = fetchCount;
         fetchCount();
 
         return () => { mounted = false; };
     }, [user, pathname]);
+
+    useEffect(() => {
+        const handler = () => fetchLiveCountRef.current?.();
+        window.addEventListener(LIVE_COUNT_EVENT, handler);
+        return () => window.removeEventListener(LIVE_COUNT_EVENT, handler);
+    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -183,14 +192,14 @@ export default function Navbar() {
             <div className={`nav-links ${open ? "open" : ""}`}>
                 {user ? (
                     <>
-                        <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>Dashboard</Link>
+                        <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>My CamelClocks</Link>
                         {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>Showcases</Link>}
                         {liveCount !== null && (
                             <button
                                 className="nav-live-pill mobile-only"
                                 type="button"
-                                title={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks \u2014 Pro lifts the cap`}
-                                aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks. See what Pro unlocks.`}
+title={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks \u2014 Pro lifts the cap`}
+aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro unlocks.`}
                                 onClick={() => { setProOpen(true); setOpen(false); }}
                             >
                                 <Rocket className="button-icon" />
@@ -227,8 +236,8 @@ export default function Navbar() {
                     <button
                         className="nav-live-pill"
                         type="button"
-                        title={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks \u2014 Pro lifts the cap`}
-                        aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live CamelClocks. See what Pro unlocks.`}
+                        title={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks \u2014 Pro lifts the cap`}
+                        aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro unlocks.`}
                         onClick={() => setProOpen(true)}
                     >
                         <Rocket className="button-icon" />

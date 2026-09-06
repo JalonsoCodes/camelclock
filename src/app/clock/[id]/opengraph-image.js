@@ -93,7 +93,7 @@ export default async function Image({ params }) {
                             color: accent,
                         }}
                     >
-                        camelclocks.com
+                        camelclock.com
                     </div>
                 </div>
             </div>

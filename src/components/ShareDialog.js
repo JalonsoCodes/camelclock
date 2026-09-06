@@ -4,11 +4,14 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createPortal } from "react-dom";
 import { Check, Copy, X } from "lucide-react";
+import { SiNotion } from "react-icons/si";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import SocialShareRow from "./SocialShareRow";
 import OptionSlider from "./OptionSlider";
 import WaitlistModal from "./WaitlistModal";
+import EmbedHelpModal from "./EmbedHelpModal";
 import { checkLiveLimit, MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
+import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
 
 export default function ShareDialog({
@@ -31,6 +34,7 @@ export default function ShareDialog({
     const [togglingStatus, setTogglingStatus] = useState(false);
     const [statusError, setStatusError] = useState("");
     const [proOpen, setProOpen] = useState(false);
+    const [embedHelpOpen, setEmbedHelpOpen] = useState(false);
     const trapRef = useFocusTrap(true);
 
     const shareUrl = `${window.location.origin}/clock/${clockId}`;
@@ -121,11 +125,13 @@ export default function ShareDialog({
         }
 
         setCurrentStatus(next);
+        refreshLiveCount();
         router.refresh();
     };
 
     return createPortal(
-        <div className="share-dialog-overlay" onClick={onClose}>
+        <>
+            <div className="share-dialog-overlay" onClick={onClose}>
             <div className="share-dialog nbtc" ref={trapRef} role="dialog" aria-modal="true" aria-labelledby="share-dialog-title" onClick={(e) => e.stopPropagation()}>
                 <button className="auth-close-x" type="button" title="Close" onClick={onClose} aria-label="Close">
                     <X aria-hidden="true" />
@@ -157,8 +163,8 @@ export default function ShareDialog({
                 {proOpen && (
                     <WaitlistModal
                         heading="YOU'VE HIT THE FREE LIMIT"
-                        subline={`Free covers ${MAX_LIVE_CLOCKS} live CamelClocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-                        highlightFeature="Unlimited Active CamelClocks"
+subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
+highlightFeature="Unlimited Active Camel Clocks"
                         onClose={() => setProOpen(false)}
                     />
                 )}
@@ -211,6 +217,17 @@ export default function ShareDialog({
                                         onChange={setEmbedTheme}
                                     />
                                 </div>
+                                <a
+                                    className="notion-help-link"
+                                    href="#embed-help"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        setEmbedHelpOpen(true);
+                                    }}
+                                >
+                                    <SiNotion className="button-icon" aria-hidden="true" />
+                                    HOW TO EMBED IN NOTION
+                                </a>
                             </div>
                         )}
 
@@ -237,7 +254,9 @@ export default function ShareDialog({
                     </>
                 )}
             </div>
-        </div>,
+            </div>
+            {embedHelpOpen && <EmbedHelpModal url={embedSrc} onClose={() => setEmbedHelpOpen(false)} />}
+        </>,
         document.body
     );
 }

@@ -48,14 +48,17 @@ async function getPresets() {
     }
 }
 
-export default async function Home() {
+export default async function Home({ searchParams }) {
   const presets = await getPresets();
+  const params = await searchParams;
+  const section = params?.section ?? null;
+  const locked = section === "features" || section === "pricing";
 
   return (
     <>
       <Navbar />
       <main>
-        <LandingHero presets={presets} />
+        <LandingHero presets={presets} locked={locked} sectionTarget={locked ? section : null} />
         <Features />
         <Pricing />
       </main>

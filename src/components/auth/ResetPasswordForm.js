@@ -1,34 +1,63 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { validatePassword } from "@/utils/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
+
+function getTokenParams(searchParams) {
+    const hashParams = typeof window !== "undefined"
+        ? new URLSearchParams(window.location.hash.slice(1))
+        : new URLSearchParams();
+    return {
+        tokenHash: hashParams.get("token_hash") ?? searchParams.get("token_hash"),
+        tokenType: hashParams.get("type") ?? searchParams.get("type"),
+        code: searchParams.get("code"),
+    };
+}
 
 export default function ResetPasswordForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const code = searchParams.get("code");
+    const { tokenHash, tokenType, code } = getTokenParams(searchParams);
+    const hasLink = Boolean(tokenHash || code);
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const [exchanging, setExchanging] = useState(!!code);
-    const [exchangeError, setExchangeError] = useState(
-        code ? "" : "Invalid or missing reset link."
-    );
+    const [verifying, setVerifying] = useState(false);
+    const [verified, setVerified] = useState(false);
+    const [linkError, setLinkError] = useState(hasLink ? "" : "This reset link is invalid or expired.");
 
-    useEffect(() => {
-        if (!code) return;
+    const handleVerify = async () => {
+        setVerifying(true);
+        setLinkError("");
 
-        supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-            if (error) {
-                setExchangeError("This reset link is invalid or has expired.");
+        const resolve = tokenHash
+            ? supabase.auth.verifyOtp({ token_hash: tokenHash, type: tokenType || "recovery" })
+            : supabase.auth.exchangeCodeForSession(code);
+
+        const { error: verifyError } = await resolve;
+
+        if (verifyError) {
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+            if (session) {
+                setVerified(true);
+            } else {
+                setLinkError("This reset link is invalid, expired, or has already been used.");
             }
-            setExchanging(false);
-        });
-    }, [code]);
+            setVerifying(false);
+            return;
+        }
+
+        setVerified(true);
+        setVerifying(false);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -39,8 +68,9 @@ export default function ResetPasswordForm() {
             return;
         }
 
-        if (password.length < 8) {
-            setError("Password must be at least 8 characters.");
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            setError(passwordError);
             return;
         }
 
@@ -58,22 +88,34 @@ export default function ResetPasswordForm() {
         }
     };
 
-    if (exchanging) {
+    if (hasLink && !verified && !linkError) {
         return (
             <div className="auth-page">
                 <div className="auth-card nbtc">
-                    <p className="auth-subtitle">Verifying reset link...</p>
+                    <h2 className="auth-title">RESET PASSWORD</h2>
+                    <p className="auth-subtitle">
+                        Press the button below to verify this reset link.
+                    </p>
+
+                    <button className="auth-button" type="button" onClick={handleVerify} disabled={verifying}>
+                        <KeyRound className="button-icon" />
+                        {verifying ? "VERIFYING..." : "VERIFY RESET LINK"}
+                    </button>
+
+                    <p className="auth-back">
+                        <a href="/forgot-password">Request a new reset link</a>
+                    </p>
                 </div>
             </div>
         );
     }
 
-    if (exchangeError) {
+    if (linkError) {
         return (
             <div className="auth-page">
                 <div className="auth-card nbtc">
                     <h2 className="auth-title">RESET PASSWORD</h2>
-                    <p className="auth-error">{exchangeError}</p>
+                    <p className="auth-error">{linkError}</p>
                     <p className="auth-back">
                         <a href="/forgot-password">Request a new reset link</a>
                     </p>
@@ -102,6 +144,7 @@ export default function ResetPasswordForm() {
                             autoFocus
                         />
                     </label>
+                    <PasswordRequirements password={password} />
 
                     <label className="auth-label">
                         CONFIRM PASSWORD

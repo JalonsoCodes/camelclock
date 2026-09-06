@@ -92,7 +92,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, watermarkExternal = false, showCta = false, ctaActive = false, onCtaClick = null, ctaHref = null, revealProgress, wearableRevealProgress, ref }) {
+export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, celebrationType, boosts = [], showWatermark = false, watermarkExternal = false, showCta = false, ctaActive = false, onCtaClick = null, ctaHref = null, revealProgress, wearableRevealProgress, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -158,11 +158,15 @@ export default function CamelClock({ title, month, day, time, introText, celebra
         const tick = () => {
             const now = new Date();
             const configuredTarget = getConfiguredTarget(month, day, time, now.getFullYear());
-            const target = configuredTarget <= now ? getNextTarget(month, day, time) : configuredTarget;
+            const target = targetAt ? new Date(targetAt) : (configuredTarget <= now ? getNextTarget(month, day, time) : configuredTarget);
 
             if (phaseRef.current === "counting") {
-                setLevels(getLevels(now, target));
-                setEyeFrame(prev => (prev + 1) % 4);
+                if (now >= target) {
+                    setPhase("celebrating");
+                } else {
+                    setLevels(getLevels(now, target));
+                    setEyeFrame(prev => (prev + 1) % 4);
+                }
             }
         };
 
@@ -171,7 +175,7 @@ export default function CamelClock({ title, month, day, time, introText, celebra
             if (!revealActiveRef.current) tick();
         }, 250);
         return () => clearInterval(timer);
-    }, [month, day, time]);
+    }, [month, day, time, targetAt]);
 
     useEffect(() => {
         if (phase !== "previewing") return;
@@ -200,13 +204,19 @@ export default function CamelClock({ title, month, day, time, introText, celebra
 
         const timeoutId = setTimeout(() => {
             setIsPreview(false);
-            setPhase("counting");
             const now = new Date();
-            setLevels(getLevels(now, getNextTarget(month, day, time)));
+            if (targetAt && now >= new Date(targetAt)) {
+                setPhase("celebrated");
+                return;
+            }
+            setPhase("counting");
+            const configuredTarget = getConfiguredTarget(month, day, time, now.getFullYear());
+            const target = targetAt ? new Date(targetAt) : (configuredTarget <= now ? getNextTarget(month, day, time) : configuredTarget);
+            setLevels(getLevels(now, target));
         }, 2000);
 
         return () => clearTimeout(timeoutId);
-    }, [phase, isPreview, month, day, time]);
+    }, [phase, isPreview, month, day, time, targetAt]);
 
     useEffect(() => {
         if (phase !== "celebrating") return;

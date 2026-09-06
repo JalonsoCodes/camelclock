@@ -4,8 +4,11 @@ import { useState } from "react";
 import { KeyRound, Mail, Trash2 } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
 import { changePassword, deleteAccount } from "@/app/settings/actions";
+import PasswordRequirements from "./PasswordRequirements";
+import { validatePassword } from "@/utils/passwordValidation";
+import EmailConfirmBanner from "./EmailConfirmBanner";
 
-export default function SettingsView({ email }) {
+export default function SettingsView({ email, emailConfirmed = true }) {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [pwStatus, setPwStatus] = useState(null);
@@ -23,8 +26,9 @@ export default function SettingsView({ email }) {
             setPwStatus({ type: "error", text: "Passwords do not match." });
             return;
         }
-        if (password.length < 8) {
-            setPwStatus({ type: "error", text: "Password must be at least 8 characters." });
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            setPwStatus({ type: "error", text: passwordError });
             return;
         }
 
@@ -62,6 +66,8 @@ export default function SettingsView({ email }) {
         <div className="settings-page">
             <h1 className="settings-heading">SETTINGS</h1>
 
+            {!emailConfirmed && <EmailConfirmBanner email={email} />}
+
             <section className="settings-card nbtc">
                 <h2 className="settings-card-title">
                     <KeyRound className="button-icon" />
@@ -80,6 +86,7 @@ export default function SettingsView({ email }) {
                             minLength={8}
                         />
                     </label>
+                    <PasswordRequirements password={password} />
                     <label className="auth-label">
                         CONFIRM NEW PASSWORD
                         <input

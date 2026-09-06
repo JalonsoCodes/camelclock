@@ -3,17 +3,21 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Check, Pencil, Rocket, Share2, UserPlus } from "lucide-react";
+import { Check, Pencil, Rocket, UserPlus } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
+import SocialShareRow from "./SocialShareRow";
+import EmbedHelpModal from "./EmbedHelpModal";
 import AuthModal from "./auth/AuthModal";
 import { formatClockTime } from "@/utils/clockValues";
 import { checkLiveLimit, MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
 import WaitlistModal from "./WaitlistModal";
+import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
 
 export default function ClockViewer({ clock, isOwner: initialOwner, justCreated = false }) {
     const router = useRouter();
+    const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com").replace(/\/+$/, "");
     const [isOwner, setIsOwner] = useState(initialOwner);
     const [statusOverride, setStatusOverride] = useState(null);
     const [publishing, setPublishing] = useState(false);
@@ -26,6 +30,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
     const [following, setFollowing] = useState(false);
     const [followBusy, setFollowBusy] = useState(false);
     const [authPromptOpen, setAuthPromptOpen] = useState(false);
+    const [embedHelpOpen, setEmbedHelpOpen] = useState(false);
     const pendingSaveRef = useRef(false);
 
     useEffect(() => {
@@ -117,6 +122,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
         setShareContext("published");
         setShareGoLive(false);
         setShareOpen(true);
+        refreshLiveCount();
         router.refresh();
     };
 
@@ -200,15 +206,13 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
                             {followBusy ? "..." : following ? "FOLLOWING" : "FOLLOW"}
                         </button>
                     )}
-                    <button
-                        className="clock-share-button nbtc"
-                        type="button"
-                        title="Copy the link or grab the embed code"
-                        onClick={() => { setShareContext("shared"); setShareGoLive(false); setShareOpen(true); }}
-                    >
-                        <Share2 className="button-icon" />
-                        SHARE
-                    </button>
+                    <SocialShareRow
+                        url={`${siteUrl}/clock/${clock.id}`}
+                        title={clock.title}
+                        showLabel={false}
+                        onNotion={() => setEmbedHelpOpen(true)}
+                        onMore={() => { setShareContext("shared"); setShareGoLive(false); setShareOpen(true); }}
+                    />
                 </div>
             )}
             <div className="public-clock-card nbtc">
@@ -223,6 +227,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
                     month={target.getMonth()}
                     day={target.getDate()}
                     time={formatClockTime(target)}
+                    targetAt={clock.target_at}
                     introText={clock.intro_text}
                     celebrationMessage={clock.celebration_message}
                     primaryColour={clock.primary_colour}
@@ -252,11 +257,18 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
                 />
             )}
 
+            {embedHelpOpen && (
+                <EmbedHelpModal
+                    url={`${siteUrl}/clock/${clock.id}/embed`}
+                    onClose={() => setEmbedHelpOpen(false)}
+                />
+            )}
+
             {proOpen && (
                 <WaitlistModal
                     heading="YOU'VE HIT THE FREE LIMIT"
-                    subline={`Free covers ${MAX_LIVE_CLOCKS} live CamelClocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-                    highlightFeature="Unlimited Active CamelClocks"
+subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
+highlightFeature="Unlimited Active Camel Clocks"
                     onClose={() => setProOpen(false)}
                 />
             )}

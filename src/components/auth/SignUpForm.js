@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { validatePassword } from "@/utils/passwordValidation";
+import PasswordRequirements from "@/components/PasswordRequirements";
 
 export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
     const router = useRouter();
@@ -22,6 +24,12 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
 
         if (password !== confirmPassword) {
             setError("Passwords do not match.");
+            return;
+        }
+
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+            setError(passwordError);
             return;
         }
 
@@ -80,6 +88,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
                     autoComplete="new-password"
                 />
             </label>
+            <PasswordRequirements password={password} />
 
             <label className="auth-label">
                 CONFIRM PASSWORD

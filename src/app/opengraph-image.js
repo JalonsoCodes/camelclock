@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = "CamelClocks — pixel-art countdown clocks";
+export const alt = "CamelClock — pixel-art countdown clocks";
 
 export default function Image() {
     return new ImageResponse(
@@ -53,7 +53,7 @@ export default function Image() {
                             letterSpacing: 4,
                         }}
                     >
-                        CAMELCLOCKS
+                        CAMELCLOCK
                     </div>
                     <div
                         style={{
@@ -62,7 +62,7 @@ export default function Image() {
                             color: "#8E652C",
                         }}
                     >
-                        camelclocks.com
+                        camelclock.com
                     </div>
                 </div>
             </div>

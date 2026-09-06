@@ -20,7 +20,7 @@ export default function TermsPage() {
                     <p>By creating an account or using CamelClock, you agree to these Terms of Service. If you do not agree, please do not use the service.</p>
 
                     <h2>2. Account Responsibility</h2>
-                    <p>You are responsible for maintaining the security of your account credentials. You must be at least 16 years old to create an account.</p>
+                    <p>You are responsible for maintaining the security of your account credentials.</p>
 
                     <h2>3. Your Content</h2>
                     <p>You retain full ownership of the clocks and content you create. By using CamelClock, you grant us a limited licence to display your published clocks to visitors via the share link and embed features.</p>

@@ -8,6 +8,7 @@ import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
 import { wearables as wearableData } from "@/utils/grids";
 import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
+import { formatClockTime } from "@/utils/clockValues";
 import { validateClock } from "@/utils/validation";
 
 function hslToHex(h, s, l) {
@@ -20,25 +21,26 @@ function hslToHex(h, s, l) {
     return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
 }
 
-const PENDING_KEY = "camelclocks.pending";
+const PENDING_KEY = "camelClock.pending";
 
-export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create", canvasRef = null }) {
+export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create", canvasRef = null, initialClock = null }) {
     const router = useRouter();
     const clockRef = useRef(null);
     const autoSavedRef = useRef(false);
-    const [title, setTitle] = useState(initialValues?.title ?? "My Amazing Promotion");
-    const [month, setMonth] = useState(initialValues?.month ?? 11);
-    const [day, setDay] = useState(initialValues?.day ?? 25);
-    const [time, setTime] = useState(initialValues?.time ?? "00:00");
-    const [introText, setIntroText] = useState(initialValues?.introText ?? "in");
-    const [celebrationMessage, setCelebrationMessage] = useState(initialValues?.celebrationMessage ?? "TIME IS UP!");
-    const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? "#DBB279");
-    const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? "#8E652C");
+    const initTarget = initialClock ? new Date(initialClock.target_at) : null;
+    const [title, setTitle] = useState(initialValues?.title ?? initialClock?.title ?? "My Amazing Promotion");
+    const [month, setMonth] = useState(initialValues?.month ?? (initTarget ? initTarget.getMonth() : 11));
+    const [day, setDay] = useState(initialValues?.day ?? (initTarget ? initTarget.getDate() : 25));
+    const [time, setTime] = useState(initialValues?.time ?? (initTarget ? formatClockTime(initTarget) : "00:00"));
+    const [introText, setIntroText] = useState(initialValues?.introText ?? initialClock?.intro_text ?? "in");
+    const [celebrationMessage, setCelebrationMessage] = useState(initialValues?.celebrationMessage ?? initialClock?.celebration_message ?? "TIME IS UP!");
+    const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? initialClock?.primary_colour ?? "#DBB279");
+    const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? initialClock?.secondary_colour ?? "#8E652C");
     const [isSaving, setIsSaving] = useState(false);
     const [statusMessage, setStatusMessage] = useState("");
     const [authModalOpen, setAuthModalOpen] = useState(false);
     const [createdId, setCreatedId] = useState(null);
-    const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? []);
+    const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? initialClock?.wearables ?? []);
 
     const effectiveId = clockId ?? createdId;
 
@@ -96,7 +98,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     const stashPending = (values) => {
         try {
-            sessionStorage.setItem(PENDING_KEY, JSON.stringify(values));
+            localStorage.setItem(PENDING_KEY, JSON.stringify({ ...values, payload: buildPayload(values) }));
         } catch {
             // ignore
         }
@@ -104,7 +106,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     const clearPending = () => {
         try {
-            sessionStorage.removeItem(PENDING_KEY);
+            localStorage.removeItem(PENDING_KEY);
         } catch {
             // ignore
         }
@@ -195,7 +197,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
         let pending;
         try {
-            pending = JSON.parse(sessionStorage.getItem(PENDING_KEY) ?? "null");
+            pending = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null");
         } catch {
             pending = null;
         }

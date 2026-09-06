@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ChevronDown } from "lucide-react";
 import CamelClock from "./CamelClock";
 import CamelClockBuilder from "./CamelClockBuilder";
 import "./landing-hero.css";
@@ -20,17 +21,20 @@ const FALLBACK_PRESET = {
     targetAt: new Date(Date.now() + 17 * 86400000).toISOString(),
 };
 
-export default function LandingHero({ presets: rawPresets }) {
+export default function LandingHero({ presets: rawPresets, locked = false, sectionTarget = null }) {
     const presets = (rawPresets && rawPresets.length > 0) ? rawPresets : [FALLBACK_PRESET];
 
     const containerRef = useRef(null);
     const [presetIndex, setPresetIndex] = useState(0);
-    const [builderVisible, setBuilderVisible] = useState(false);
+    const [builderVisible, setBuilderVisible] = useState(locked);
     const [revealProgress, setRevealProgress] = useState(0);
     const [wearableRevealProgress, setWearableRevealProgress] = useState(0);
     const lastProgress = useRef(0);
     const scrollLockedRef = useRef(false);
     const lockRef = useRef(null);
+    const stRef = useRef(null);
+    const guideRef = useRef(null);
+    const keyHandlerRef = useRef(null);
     const canvasRect = useRef(null);
     const canvasReady = useRef(false);
     const [canvasMeasured, setCanvasMeasured] = useState(false);
@@ -63,6 +67,7 @@ export default function LandingHero({ presets: rawPresets }) {
     }, []);
 
     useEffect(() => {
+        if (locked) return;
         if (!canvasReady.current) return;
 
         const canvasRectVal = canvasRect.current;
@@ -163,7 +168,7 @@ export default function LandingHero({ presets: rawPresets }) {
                 });
             };
 
-            ScrollTrigger.create({
+            const st = ScrollTrigger.create({
                 trigger: containerRef.current,
                 start: "top top",
                 end: "bottom bottom",
@@ -220,12 +225,63 @@ export default function LandingHero({ presets: rawPresets }) {
                     if (p >= 0.995) lockHero();
                 },
             });
+            stRef.current = st;
+
+            const phaseSize = 0.30 / numPresets;
+            const spots = [0, 0.249, 0.52];
+            for (let i = 1; i < numPresets - 1; i += 1) {
+                spots.push(0.55 + (i + 0.5) * phaseSize);
+            }
+            spots.push(0.80, 0.995);
+
+            const goToSpot = (p) => {
+                const top = st.start + p * (st.end - st.start);
+                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+            };
+
+            const goNext = () => {
+                const p = st.progress;
+                const nextSpot = spots.find((s) => s > p + 0.001);
+                if (nextSpot != null) goToSpot(nextSpot);
+            };
+
+            const goPrev = () => {
+                const p = st.progress;
+                for (let i = spots.length - 1; i >= 0; i -= 1) {
+                    if (spots[i] < p - 0.001) {
+                        goToSpot(spots[i]);
+                        break;
+                    }
+                }
+            };
+
+            guideRef.current = { goNext, goPrev };
+
+            const onKeyDown = (e) => {
+                if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+                if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
+                const target = e.target;
+                if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
+                if (scrollLockedRef.current) return;
+                if (st.progress >= 1) return;
+                e.preventDefault();
+                if (e.key === "ArrowDown") goNext();
+                else goPrev();
+            };
+            window.addEventListener("keydown", onKeyDown);
+            keyHandlerRef.current = onKeyDown;
         }, containerRef);
 
         lockRef.current = lockHero;
 
         return () => {
             lockRef.current = null;
+            guideRef.current = null;
+            stRef.current = null;
+            if (keyHandlerRef.current) {
+                window.removeEventListener("keydown", keyHandlerRef.current);
+                keyHandlerRef.current = null;
+            }
             if (!scrollLockedRef.current) {
                 ctx.revert();
             }
@@ -233,33 +289,20 @@ export default function LandingHero({ presets: rawPresets }) {
             document.body.classList.remove("show-navbar");
             document.body.classList.remove("locked");
         };
-    }, [canvasMeasured, presets.length]);
+    }, [canvasMeasured, presets.length, locked]);
 
     // Deep-link support for the navbar's in-page section links when arriving
-    // from another page (e.g. /login -> /?section=features). Forces the hero to
-    // lock once ScrollTrigger is ready, then scrolls to the target section.
+    // from another page (e.g. /login -> /?section=features). The hero is already
+    // pre-collapsed via the `locked` prop, so the layout is stable on first paint
+    // and we just scroll the target section into view (offset by the fixed navbar
+    // via CSS `scroll-margin-top`).
     useEffect(() => {
-        const section = new URLSearchParams(window.location.search).get("section");
-        if (!section) return;
-        let raf;
-        const attempt = () => {
-            const container = containerRef.current;
-            const target = document.getElementById(section);
-            if (lockRef.current && container && target) {
-                lockRef.current();
-                requestAnimationFrame(() => requestAnimationFrame(() => {
-                    const navEl = document.querySelector(".navbar");
-                    const offset = navEl ? navEl.getBoundingClientRect().height : 0;
-                    const top = target.getBoundingClientRect().top + window.scrollY - offset;
-                    window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-                }));
-                return;
-            }
-            raf = requestAnimationFrame(attempt);
-        };
-        attempt();
+        if (!locked || !sectionTarget) return;
+        const target = document.getElementById(sectionTarget);
+        if (!target) return;
+        const raf = requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }));
         return () => cancelAnimationFrame(raf);
-    }, []);
+    }, [locked, sectionTarget]);
 
     useEffect(() => {
         if (builderVisible) {
@@ -270,7 +313,7 @@ export default function LandingHero({ presets: rawPresets }) {
     }, [builderVisible]);
 
     return (
-        <section className="scroll-container" ref={containerRef}>
+        <section className={`scroll-container${locked ? " locked" : ""}`} ref={containerRef}>
             <div className="scroll-sticky">
                 <div className="clock-layer">
                     <p className="pre-reveal-text">Your event deserves more than a <span className="pre-reveal-accent">boring timer</span>.</p>
@@ -281,13 +324,24 @@ export default function LandingHero({ presets: rawPresets }) {
 
                 <div className={`builder-overlay${builderVisible ? " visible" : ""}`}>
                     <CamelClockBuilder
-                        key={builderVisible ? `builder-${presets.length - 1}` : "builder-hidden"}
+                        key={builderVisible ? presetIndex : -1}
                         createLabel="Create + Share"
                         initialValues={clockProps}
                         canvasRef={measureRef}
                     />
                 </div>
             </div>
+
+            {!locked && !builderVisible && (
+                <button
+                    type="button"
+                    className="scroll-guide nbtc"
+                    aria-label="Scroll to the next stage"
+                    onClick={() => guideRef.current?.goNext()}
+                >
+                    <ChevronDown aria-hidden="true" />
+                </button>
+            )}
         </section>
     );
 }

@@ -23,7 +23,5 @@ export async function proxy(request) {
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
-  ],
+  matcher: ["/dashboard/:path*", "/new/:path*", "/admin/:path*"],
 };
