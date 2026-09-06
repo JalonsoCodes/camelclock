@@ -72,7 +72,7 @@ export default async function Image({ params }) {
                             fontWeight: 700,
                         }}
                     >
-                        🐪 Countdown to
+                        Countdown to
                     </div>
                     <div
                         style={{

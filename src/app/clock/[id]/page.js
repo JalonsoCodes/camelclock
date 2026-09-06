@@ -46,12 +46,12 @@ export async function generateMetadata({ params }) {
         return {
             title: clock.title ?? "Clock",
             description: clock.title
-                ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
+                ? `Only time will tell — follow the CamelClock countdown to ${clock.title} so you don't miss it.`
                 : fallbackMetadata.description,
             openGraph: {
                 title: clock.title ?? "Clock",
                 description: clock.title
-                    ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
+                    ? `Follow the CamelClock countdown to ${clock.title} so you don't miss it.`
                     : fallbackMetadata.description,
                 type: "website",
             },
@@ -59,7 +59,7 @@ export async function generateMetadata({ params }) {
                 card: "summary_large_image",
                 title: clock.title ?? "Clock",
                 description: clock.title
-                    ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
+                    ? `Follow the CamelClock countdown to ${clock.title} so you don't miss it.`
                     : fallbackMetadata.description,
             },
         };

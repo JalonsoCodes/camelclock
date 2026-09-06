@@ -1,12 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Link, Mail, MoreHorizontal } from "lucide-react";
 import { SiFacebook, SiNotion, SiTelegram, SiWhatsapp, SiX } from "react-icons/si";
 
+function formatTimeLeft(ms) {
+    if (ms <= 0) return null;
+    const totalHours = Math.floor(ms / 3600000);
+    if (totalHours < 1) {
+        const mins = Math.max(1, Math.floor(ms / 60000));
+        return mins === 1 ? "1 minute" : `${mins} minutes`;
+    }
+    if (totalHours < 48) {
+        return totalHours === 1 ? "1 hour" : `${totalHours} hours`;
+    }
+    const days = Math.floor(totalHours / 24);
+    const hours = totalHours % 24;
+    if (days < 14) {
+        const tail = hours > 0 ? ` ${hours} ${hours === 1 ? "hour" : "hours"}` : "";
+        return `${days} ${days === 1 ? "day" : "days"}${tail}`;
+    }
+    return days === 1 ? "1 day" : `${days} days`;
+}
+
 export default function SocialShareRow({ url, title, targetDate = null, showLabel = true, onNotion = null, onMore = null }) {
     const [copied, setCopied] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(null);
     const encodedUrl = encodeURIComponent(url);
+
+    useEffect(() => {
+        if (!targetDate) return;
+        const update = () => setTimeLeft(formatTimeLeft(new Date(targetDate).getTime() - Date.now()));
+        update();
+        const id = setInterval(update, 60000);
+        return () => clearInterval(id);
+    }, [targetDate]);
 
     const copyLink = async () => {
         try {
@@ -18,12 +46,10 @@ export default function SocialShareRow({ url, title, targetDate = null, showLabe
         }
     };
 
-    const when = targetDate
-        ? `, going down ${new Date(targetDate).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}`
-        : "";
-    const message = `🐪 Follow my CamelClock countdown to ${title}${when}! The hype is building — don't miss it 🐪 ${url}`;
+    const lead = timeLeft ? `Only ${timeLeft} until "${title}".` : `Follow the countdown to "${title}".`;
+    const message = `${lead} Follow the CamelClock so you don't miss it! ${url}`;
     const text = encodeURIComponent(message);
-    const cardMessage = encodeURIComponent(`🐪 Countdown to ${title}${when}! ${url}`);
+    const cardMessage = encodeURIComponent(`${lead} Follow the CamelClock so you don't miss it! ${url}`);
 
     const targets = [
         {
@@ -56,7 +82,7 @@ export default function SocialShareRow({ url, title, targetDate = null, showLabe
         },
         {
             label: "Share via Email",
-            href: `mailto:?subject=${encodeURIComponent(`🐪 Countdown to ${title}`)}&body=${encodeURIComponent(message)}`,
+            href: `mailto:?subject=${encodeURIComponent(`Countdown to ${title}`)}&body=${encodeURIComponent(message)}`,
             external: false,
             Icon: Mail,
             colour: "#8E652C",
