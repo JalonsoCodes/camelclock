@@ -1997,6 +1997,10 @@ body.embed-mode {
   background-image: none;
 }
 
+body.embed-mode::before {
+  display: none;
+}
+
 body.embed-mode.embed-transparent {
   background-color: transparent;
 }
