@@ -46,17 +46,21 @@ export async function generateMetadata({ params }) {
         return {
             title: clock.title ?? "Clock",
             description: clock.title
-                ? `Countdown to ${clock.title} — created on CamelClock`
+                ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
                 : fallbackMetadata.description,
             openGraph: {
                 title: clock.title ?? "Clock",
-                description: `Countdown to ${clock.title} — created on CamelClock`,
+                description: clock.title
+                    ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
+                    : fallbackMetadata.description,
                 type: "website",
             },
             twitter: {
                 card: "summary_large_image",
                 title: clock.title ?? "Clock",
-                description: `Countdown to ${clock.title} — created on CamelClock`,
+                description: clock.title
+                    ? `🐪 Follow my CamelClock countdown to ${clock.title}! The hype is building — don't miss it.`
+                    : fallbackMetadata.description,
             },
         };
     } catch (error) {

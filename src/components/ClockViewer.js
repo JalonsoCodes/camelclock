@@ -209,6 +209,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, justCreated 
                     <SocialShareRow
                         url={`${siteUrl}/clock/${clock.id}`}
                         title={clock.title}
+                        targetDate={clock.target_at}
                         showLabel={false}
                         onNotion={() => setEmbedHelpOpen(true)}
                         onMore={() => { setShareContext("shared"); setShareGoLive(false); setShareOpen(true); }}

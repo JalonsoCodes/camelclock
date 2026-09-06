@@ -29,7 +29,6 @@ export default async function Image({ params }) {
     const shareable = clock && clock.status === "live";
 
     const title = shareable && clock.title ? clock.title.slice(0, 80) : null;
-    const intro = shareable && clock.intro_text ? clock.intro_text : null;
     const background =
         (shareable && HEX_PATTERN.test(clock.primary_colour ?? "") && clock.primary_colour) || "#DBB279";
     const accent =
@@ -57,7 +56,7 @@ export default async function Image({ params }) {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: 32,
+                        gap: 28,
                         border: "12px solid #111111",
                         boxShadow: "0 0 0 8px #ffffff",
                         padding: 64,
@@ -66,13 +65,14 @@ export default async function Image({ params }) {
                     <div
                         style={{
                             display: "flex",
-                            fontSize: intro ? 56 : 0,
+                            fontSize: 64,
                             color: "#111111",
-                            letterSpacing: 4,
+                            letterSpacing: 6,
                             textTransform: "uppercase",
+                            fontWeight: 700,
                         }}
                     >
-                        {intro}
+                        🐪 Countdown to
                     </div>
                     <div
                         style={{
@@ -91,9 +91,11 @@ export default async function Image({ params }) {
                             display: "flex",
                             fontSize: 40,
                             color: accent,
+                            fontWeight: 700,
+                            letterSpacing: 2,
                         }}
                     >
-                        camelclock.com
+                        CAMELCLOCK
                     </div>
                 </div>
             </div>

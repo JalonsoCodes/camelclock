@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Check, Link, Mail, MoreHorizontal } from "lucide-react";
 import { SiFacebook, SiNotion, SiTelegram, SiWhatsapp, SiX } from "react-icons/si";
 
-export default function SocialShareRow({ url, title, showLabel = true, onNotion = null, onMore = null }) {
+export default function SocialShareRow({ url, title, targetDate = null, showLabel = true, onNotion = null, onMore = null }) {
     const [copied, setCopied] = useState(false);
     const encodedUrl = encodeURIComponent(url);
 
@@ -17,7 +17,13 @@ export default function SocialShareRow({ url, title, showLabel = true, onNotion 
             console.error("Failed to copy:", error);
         }
     };
-    const text = encodeURIComponent(`${title} ${url}`);
+
+    const when = targetDate
+        ? `, going down ${new Date(targetDate).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" })}`
+        : "";
+    const message = `🐪 Follow my CamelClock countdown to ${title}${when}! The hype is building — don't miss it 🐪 ${url}`;
+    const text = encodeURIComponent(message);
+    const cardMessage = encodeURIComponent(`🐪 Countdown to ${title}${when}! ${url}`);
 
     const targets = [
         {
@@ -36,21 +42,21 @@ export default function SocialShareRow({ url, title, showLabel = true, onNotion 
         },
         {
             label: "Share on X",
-            href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodeURIComponent(title)}`,
+            href: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${cardMessage}`,
             external: true,
             Icon: SiX,
             colour: "#111111",
         },
         {
             label: "Share on Telegram",
-            href: `https://t.me/share/url?url=${encodedUrl}&text=${encodeURIComponent(title)}`,
+            href: `https://t.me/share/url?url=${encodedUrl}&text=${cardMessage}`,
             external: true,
             Icon: SiTelegram,
             colour: "#229ED9",
         },
         {
             label: "Share via Email",
-            href: `mailto:?subject=${encodeURIComponent(title)}&body=${encodedUrl}`,
+            href: `mailto:?subject=${encodeURIComponent(`🐪 Countdown to ${title}`)}&body=${encodeURIComponent(message)}`,
             external: false,
             Icon: Mail,
             colour: "#8E652C",
