@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validatePassword } from "@/utils/passwordValidation";
+import { normalizeUsername, validateUsername } from "@/utils/usernameValidation";
 
 const PASSWORD_MESSAGES = {
     "New password should be different from the old password.": "Choose a password you haven't used before.",
@@ -29,6 +30,34 @@ export async function changePassword(password) {
     }
 
     return { ok: true };
+}
+
+export async function updateUsername(input) {
+    const usernameError = validateUsername(input);
+    if (usernameError) {
+        return { error: usernameError };
+    }
+
+    const username = normalizeUsername(input);
+
+    const supabase = await createClient();
+    const {
+        data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: "You are not signed in." };
+    }
+
+    const { error } = await supabase.from("profiles").update({ username }).eq("id", user.id);
+    if (error) {
+        if (error.code === "23505") {
+            return { error: "That handle is taken." };
+        }
+        console.error("updateUsername:", error.message);
+        return { error: "Could not update your handle. Please try again." };
+    }
+
+    return { ok: true, username };
 }
 
 export async function deleteAccount(confirmation) {

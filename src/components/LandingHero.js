@@ -1,346 +1,318 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import CamelClock from "./CamelClock";
-import CamelClockBuilder from "./CamelClockBuilder";
+import HeroAccordion from "./HeroAccordion";
+import useShowcaseSteps from "@/hooks/useShowcaseSteps";
+import useShowcaseHydrate from "@/hooks/useShowcaseHydrate";
+import useHeroBuild from "@/hooks/useHeroBuild";
+import useHeroSentinels from "@/hooks/useHeroSentinels";
+import { hero as heroCopy } from "@/content/landingCopy";
 import "./landing-hero.css";
 
-gsap.registerPlugin(ScrollTrigger);
+/* The build-up, in the order it can actually happen. Two constraints are baked in
+   rather than left to be discovered:
 
-const FALLBACK_PRESET = {
-    title: "My Amazing Promotion",
-    primaryColour: "#DBB279",
-    secondaryColour: "#8E652C",
-    introText: "in",
-    wearables: [],
-    celebrationMessage: "TIME IS UP!",
-    celebrationType: "spit",
-    targetAt: new Date(Date.now() + 17 * 86400000).toISOString(),
+   - Colours have to land before wearables, because the wearable step is a reveal
+     progress of its own and CamelClock draws one or the other, not both.
+   - Boosts have to land after that, because CamelClock's reveal path early-returns
+     before drawCamelBoost, so anything moving underneath a filling pixel layer
+     would simply be dropped. */
+
+/* Gap between the hand-picked demo effects below, long enough that each lands
+   before the next starts. */
+const DEMO_GAP = 900;
+
+/* Below this width the scroll production is dropped for a plain page. Matches
+   the breakpoint where the two-column hero stops fitting. */
+const SIMPLE_QUERY = "(max-width: 1200px)";
+
+/* The hero is scripted rather than seeded from a row, so its reveal order is
+   spelled out here for the same reason a clock stores boost_order: the meter has
+   to be lifted to a level that actually unlocks what this panel puts on. This is
+   a legal order — every pair spans two categories, which is what
+   shuffleBoostOrder would have drawn. */
+const HERO_BOOST_ORDER = ["pushup", "sparkle", "sun", "jack", "fireworks", "rain", "sandstorm"];
+
+/* Prose lives in src/content/landingCopy.js. What stays here is the behaviour a
+   step carries — which effects it demos, whether it fires the finale — joined to
+   that copy by the step's `id`. That is what lets the copy be reordered or
+   rewritten in one place without ever detaching an animation from the words
+   that sell it.
+
+   `boosts` is one per category, which is all a clock can run: the push-up is the
+   exercise, shine the aura, the sun the weather. It has to stay within one-per-
+   category, which validateBoosts checks on a saved row but nothing checks here.
+
+   `demo` is a demo, not equipment. A visitor who has waited a whole panel to
+   maybe catch one animation is being shown the feature badly, so arriving fires
+   a fixed, hand-picked run immediately — one at a time, in order. Edit the array
+   to change the routine. */
+const STEP_BEHAVIOUR = {
+    alive: {
+        boosts: ["pushup", "shine", "sun"],
+        demo: ["pushup", "sparkle", "shine", "fireworks", "sun", "rain"],
+    },
+    anywhere: { celebrate: true },
 };
 
-export default function LandingHero({ presets: rawPresets, locked = false, sectionTarget = null }) {
-    const presets = (rawPresets && rawPresets.length > 0) ? rawPresets : [FALLBACK_PRESET];
+const HERO_STEPS = heroCopy.steps.map((step) => ({ ...step, ...STEP_BEHAVIOUR[step.id] }));
 
-    const containerRef = useRef(null);
-    const [presetIndex, setPresetIndex] = useState(0);
-    const [builderVisible, setBuilderVisible] = useState(locked);
-    const [revealProgress, setRevealProgress] = useState(0);
-    const [wearableRevealProgress, setWearableRevealProgress] = useState(0);
-    const lastProgress = useRef(0);
-    const scrollLockedRef = useRef(false);
-    const lockRef = useRef(null);
-    const stRef = useRef(null);
-    const guideRef = useRef(null);
-    const keyHandlerRef = useRef(null);
-    const canvasRect = useRef(null);
-    const canvasReady = useRef(false);
-    const [canvasMeasured, setCanvasMeasured] = useState(false);
+/* The hero is a bespoke code-managed camel, not a real CamelClock row. It is not
+   a clock anyone owns or hydrates, so its identity lives here rather than in the
+   database. The date is expressed as month/day/time and rolls to its next
+   occurrence, so the countdown never sits at zero. */
+const HERO_CLOCK = {
+    title: "World Camel Day",
+    month: 5,
+    day: 22,
+    time: "00:00",
+    introText: "in",
+    celebrationMessage: "THE TIME HAS COME!",
+    celebrationType: "spit",
+    primaryColour: "#DBB279",
+    secondaryColour: "#8E652C",
+    wearables: ["top_hat", "gold_chain", "rollerskates"],
+};
 
-    const activePreset = presets[presetIndex] ?? presets[0];
-    const activeTarget = useMemo(() => new Date(activePreset.targetAt), [activePreset]);
+export default function LandingHero() {
+    /* Simple mode is a different structure, not just a stylesheet swap: no
+       pinned stage, no sentinels, no observer, and the features become ordinary
+       sections. Rendering one camel either way makes the choice JS-driven; the
+       media query is the only thing that knows which layout is on screen, and
+       the initial false matches the server render (desktop) before it syncs. */
+    const [simple, setSimple] = useState(false);
 
-    const clockProps = useMemo(() => ({
-        title: activePreset.title,
-        month: activeTarget.getMonth(),
-        day: activeTarget.getDate(),
-        time: `${String(activeTarget.getHours()).padStart(2, "0")}:${String(activeTarget.getMinutes()).padStart(2, "0")}`,
-        introText: activePreset.introText,
-        celebrationMessage: activePreset.celebrationMessage,
-        primaryColour: activePreset.primaryColour,
-        secondaryColour: activePreset.secondaryColour,
-        celebrationType: activePreset.celebrationType,
-        boosts: activePreset.wearables ?? [],
-        revealProgress: presetIndex === 0 ? revealProgress : 1,
-        wearableRevealProgress: presetIndex === 0 ? wearableRevealProgress : 1,
-    }), [activePreset, activeTarget, presetIndex, revealProgress, wearableRevealProgress]);
+    useEffect(() => {
+        const query = window.matchMedia(SIMPLE_QUERY);
+        const sync = () => setSimple(query.matches);
+        sync();
+        query.addEventListener("change", sync);
+        return () => query.removeEventListener("change", sync);
+    }, []);
 
-    const measureRef = useCallback((node) => {
-        if (node) {
-            const rect = node.getBoundingClientRect();
-            canvasRect.current = rect;
-            canvasReady.current = true;
-            setCanvasMeasured(true);
-        }
+    /* The steps ride invisible sentinels rather than the accordion rows, which
+       are pinned and so cannot be measured against the scroll. See the hook. */
+    const { trackRef, count, scrollToStep } = useHeroSentinels(HERO_STEPS.length);
+    const { index, goTo } = useShowcaseSteps(count, trackRef, scrollToStep);
+
+    /* Nothing scrolls the build in simple mode, so every layer is handed over at
+       once: the camel arrives dressed, with its demo boosts equipped and its
+       meter already lifted, and the effects then run on their own cadence. */
+    const buildIndex = simple ? HERO_STEPS.length : index;
+
+    const {
+        colourProgress,
+        wearableRevealProgress,
+        boostsLive,
+        interactive,
+        celebrate,
+        boosts,
+        hydrateFloor,
+    } = useHeroBuild(HERO_STEPS, buildIndex, { wearables: HERO_CLOCK.wearables, boostOrder: HERO_BOOST_ORDER });
+
+    const { camelRef, hydrateCount, level, hydrate } = useShowcaseHydrate({ floor: hydrateFloor });
+
+    useEffect(() => {
+        document.body.classList.add("show-navbar");
+        return () => document.body.classList.remove("show-navbar");
     }, []);
 
     useEffect(() => {
-        if (locked) return;
-        if (!canvasReady.current) return;
-
-        const canvasRectVal = canvasRect.current;
-        const scrollClockEl = containerRef.current?.querySelector(".scroll-clock-wrapper");
-        if (!scrollClockEl) return;
-        const scrollClockRect = scrollClockEl.getBoundingClientRect();
-
-        const canvasCX = canvasRectVal.left + canvasRectVal.width / 2;
-        const canvasCY = canvasRectVal.top + canvasRectVal.height / 2;
-        const clockCX = scrollClockRect.left + scrollClockRect.width / 2;
-        const clockCY = scrollClockRect.top + scrollClockRect.height / 2;
-
-        const targetX = canvasCX - clockCX;
-        const targetY = canvasCY - clockCY;
-        const targetScale = canvasRectVal.width / scrollClockRect.width;
-
-        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-        if (reducedMotion) return;
-
-        document.body.classList.add("scroll-anim-active");
-
-        const numPresets = presets.length;
-
-        let lockHero;
-
-        const ctx = gsap.context(() => {
-            const tl = gsap.timeline({
-                scrollTrigger: {
-                    trigger: containerRef.current,
-                    start: "top top",
-                    end: "bottom bottom",
-                    scrub: 0.5,
-                    pin: ".scroll-sticky",
-                    onLeave: () => {
-                        document.body.classList.remove("scroll-anim-active");
-                    },
-                    onEnterBack: () => {
-                        document.body.classList.add("scroll-anim-active");
-                    },
-                },
-            });
-
-            tl.to(".scroll-clock-wrapper", {
-                    scale: targetScale,
-                    x: targetX,
-                    y: targetY,
-                    duration: 0.12,
-                    ease: "power1.inOut",
-                }, 0.85)
-                .to(".scroll-clock-wrapper", {
-                    opacity: 0,
-                    duration: 0.04,
-                }, 0.96)
-                .to(".builder-overlay", {
-                    opacity: 1,
-                    duration: 0.05,
-                    onStart: () => setBuilderVisible(true),
-                }, 0.96)
-                .fromTo(".builder-overlay .canvas-wrapper",
-                    { opacity: 0 },
-                    { opacity: 1, duration: 0.05 },
-                    0.96
-                )
-                .fromTo(".camel-builder-form",
-                    { opacity: 0 },
-                    { opacity: 1, duration: 0.08 },
-                    0.98
-                )
-
-            lockHero = () => {
-                if (scrollLockedRef.current) return;
-                const container = containerRef.current;
-                if (!container) return;
-                scrollLockedRef.current = true;
-                setBuilderVisible(true);
-                // Preserve the builder's current on-screen position so it doesn't jump
-                // when the pinned animation collapses beneath it.
-                const builderEl = container.querySelector(".camel-builder");
-                const anchoredY = builderEl ? builderEl.getBoundingClientRect().top : null;
-                requestAnimationFrame(() => {
-                    // Clean up GSAP pins/inline styles so the layout collapses cleanly
-                    ctx.revert();
-                    document.body.classList.remove("scroll-anim-active");
-                    // Force builder visible, animation elements hidden
-                    container.classList.add("locked");
-                    const overlay = container.querySelector(".builder-overlay");
-                    const canvasWrapper = container.querySelector(".builder-overlay .canvas-wrapper");
-                    const form = container.querySelector(".camel-builder-form");
-                    if (overlay) overlay.style.opacity = "1";
-                    if (canvasWrapper) canvasWrapper.style.opacity = "1";
-                    if (form) form.style.opacity = "1";
-                    // Re-scroll just enough to keep the builder at its pre-collapse
-                    // vertical position (bypass CSS smooth scroll), avoiding a jump.
-                    if (anchoredY != null && builderEl) {
-                        const newTop = builderEl.getBoundingClientRect().top + window.scrollY;
-                        window.scrollTo({ top: newTop - anchoredY, behavior: "instant" });
-                    }
-                });
-            };
-
-            const st = ScrollTrigger.create({
-                trigger: containerRef.current,
-                start: "top top",
-                end: "bottom bottom",
-                onUpdate: (self) => {
-                    const p = self.progress;
-
-                    // Preset cycling (0.55–0.85)
-                    const phaseStart = 0.55;
-                    const phaseWidth = 0.30;
-                    const phaseSize = phaseWidth / numPresets;
-                    if (p >= phaseStart && p < phaseStart + phaseWidth) {
-                        const idx = Math.min(
-                            Math.floor((p - phaseStart) / phaseSize),
-                            numPresets - 1
-                        );
-                        setPresetIndex(idx);
-                    } else if (p >= phaseStart + phaseWidth) {
-                        setPresetIndex(numPresets - 1);
-                    }
-
-                    // Scroll direction / builder visibility
-                    const scrollingDown = p > lastProgress.current;
-                    lastProgress.current = p;
-
-                    if (!scrollingDown && p < 0.93) {
-                        setBuilderVisible(false);
-                    }
-
-                    // Reveal progress (0.25–0.45 fill, 0.45–0.55 wearables)
-                    if (p <= 0.25) {
-                        setRevealProgress(0);
-                    } else if (p >= 0.45) {
-                        setRevealProgress(1);
-                    } else {
-                        setRevealProgress((p - 0.25) / 0.20);
-                    }
-
-                    if (p <= 0.45) {
-                        setWearableRevealProgress(0);
-                    } else if (p >= 0.55) {
-                        setWearableRevealProgress(1);
-                    } else {
-                        setWearableRevealProgress((p - 0.45) / 0.10);
-                    }
-
-                    // Pre-reveal text fade (0.00–0.25)
-                    const textEl = containerRef.current?.querySelector(".pre-reveal-text");
-                    if (textEl) {
-                        const textOpacity = p <= 0.25 ? Math.max(0, 1 - p / 0.25) : 0;
-                        textEl.style.opacity = String(textOpacity);
-                    }
-
-                    // Lock transition — animation complete, builder becomes the page
-                    if (p >= 0.995) lockHero();
-                },
-            });
-            stRef.current = st;
-
-            const phaseSize = 0.30 / numPresets;
-            const spots = [0, 0.249, 0.52];
-            for (let i = 1; i < numPresets - 1; i += 1) {
-                spots.push(0.55 + (i + 0.5) * phaseSize);
-            }
-            spots.push(0.80, 0.995);
-
-            const goToSpot = (p) => {
-                const top = st.start + p * (st.end - st.start);
-                window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-            };
-
-            const goNext = () => {
-                const p = st.progress;
-                const nextSpot = spots.find((s) => s > p + 0.001);
-                if (nextSpot != null) goToSpot(nextSpot);
-            };
-
-            const goPrev = () => {
-                const p = st.progress;
-                for (let i = spots.length - 1; i >= 0; i -= 1) {
-                    if (spots[i] < p - 0.001) {
-                        goToSpot(spots[i]);
-                        break;
-                    }
-                }
-            };
-
-            guideRef.current = { goNext, goPrev };
-
-            const onKeyDown = (e) => {
-                if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
-                if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) return;
-                const target = e.target;
-                if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable)) return;
-                if (scrollLockedRef.current) return;
-                if (st.progress >= 1) return;
-                e.preventDefault();
-                if (e.key === "ArrowDown") goNext();
-                else goPrev();
-            };
-            window.addEventListener("keydown", onKeyDown);
-            keyHandlerRef.current = onKeyDown;
-        }, containerRef);
-
-        lockRef.current = lockHero;
-
-        return () => {
-            lockRef.current = null;
-            guideRef.current = null;
-            stRef.current = null;
-            if (keyHandlerRef.current) {
-                window.removeEventListener("keydown", keyHandlerRef.current);
-                keyHandlerRef.current = null;
-            }
-            if (!scrollLockedRef.current) {
-                ctx.revert();
-            }
-            document.body.classList.remove("scroll-anim-active");
-            document.body.classList.remove("show-navbar");
-            document.body.classList.remove("locked");
-        };
-    }, [canvasMeasured, presets.length, locked]);
-
-    // Deep-link support for the navbar's in-page section links when arriving
-    // from another page (e.g. /login -> /?section=features). The hero is already
-    // pre-collapsed via the `locked` prop, so the layout is stable on first paint
-    // and we just scroll the target section into view (offset by the fixed navbar
-    // via CSS `scroll-margin-top`).
-    useEffect(() => {
-        if (!locked || !sectionTarget) return;
-        const target = document.getElementById(sectionTarget);
-        if (!target) return;
-        const raf = requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }));
+        const id = window.location.hash.replace("#", "");
+        if (!id) return;
+        const raf = requestAnimationFrame(() => {
+            document.getElementById(id)?.scrollIntoView({ block: "start" });
+        });
         return () => cancelAnimationFrame(raf);
-    }, [locked, sectionTarget]);
+    }, []);
 
+    /* Fire the boosts slide's run the moment it is reached, because the point of
+       the slide is to be seen happening rather than to describe something that
+       might. Timers are tracked and cleared on the way out so a visitor who
+       scrolls back up mid-run isn't left with a boost landing in an empty
+       stage, and the ref re-arms when the step is left so returning replays it.
+       Simple mode has no slides to arrive at — the equipped boosts run on their
+       normal cadence instead. */
     useEffect(() => {
-        if (builderVisible) {
-            document.body.classList.add("show-navbar");
-        } else {
-            document.body.classList.remove("show-navbar");
+        if (simple || !boostsLive) return;
+        /* Flattened across every step that declares a demo, so a second slide can
+           add its own routine later without touching the timing. Index is the
+           position in the run, not the step number. */
+        const run = HERO_STEPS.flatMap((step) => step.demo ?? []);
+        const timers = run.map((id, n) =>
+            setTimeout(() => camelRef.current?.triggerNow(id), n * DEMO_GAP),
+        );
+        return () => timers.forEach(clearTimeout);
+    }, [boostsLive, simple, camelRef]);
+
+    /* Once per arrival, while the finale is on screen. `celebrate` is true for
+       every render the visitor sits on that step, and preview() is not
+       idempotent, so a ref is what actually keeps it to one run — the effect
+       re-arms it on the way out, which is what lets a visitor scroll back up
+       and come down to watch the finale fire again. Simple mode's camel is
+       always fully built, so `celebrate` is permanently on with no arrival to
+       mark; the finale is a scroll reward and is skipped there. */
+    const celebratedRef = useRef(false);
+    useEffect(() => {
+        if (simple || !celebrate) {
+            celebratedRef.current = false;
+            return;
         }
-    }, [builderVisible]);
+        if (celebratedRef.current) return;
+        celebratedRef.current = true;
+        camelRef.current?.preview();
+    }, [celebrate, simple, camelRef]);
+
+    /* Step indices are 1-based, so the intro reads as -1 here: nothing open yet
+       at the top of the page, which is what the accordion shows before the
+       first feature is reached. */
+    const openIndex = index - 1;
+
+    /* A hero CTA can point at a step by its copy `id` (e.g. "#occasion"). Those
+       steps have no DOM id to jump to, so route the click through the same goTo
+       the accordion titles use — it lands on exactly the resting place a clicked
+       title would. Anything else (e.g. "#create", a real section) falls through
+       to the browser's normal anchor scroll. In simple mode the features are
+       real sections carrying those ids, so every CTA is a plain anchor and
+       nothing needs intercepting. */
+    const handleCtaClick = (e, href) => {
+        if (simple) return;
+        const id = href?.startsWith("#") ? href.slice(1) : null;
+        const stepIndex = HERO_STEPS.findIndex((step) => step.id === id);
+        if (stepIndex === -1) return;
+        e.preventDefault();
+        goTo(stepIndex);
+    };
+
+    /* The intro and the camel are built as nodes rather than written inline, so
+       the two layouts can arrange them differently: the desktop grid keeps the
+       copy column whole beside a sticky stage, while simple mode pulls the camel
+       up directly under the headline and pushes the lede and CTAs below it. */
+    const titleNode = (
+        <h1 className="hero-title">
+            {heroCopy.title.map((part) => (
+                <span key={part.text} className={part.tone ? `hero-title-${part.tone}` : undefined}>
+                    {part.text}
+                </span>
+            ))}
+        </h1>
+    );
+
+    const ledeNode = <p className="hero-lede">{heroCopy.lede}</p>;
+
+    const actionsNode = (
+        <div className="hero-actions">
+            <a className="btn-link hero-cta" href={heroCopy.ctaPrimary.href} onClick={(e) => handleCtaClick(e, heroCopy.ctaPrimary.href)}>{heroCopy.ctaPrimary.label}</a>
+            <a className="btn-link btn-secondary" href={heroCopy.ctaSecondary.href} onClick={(e) => handleCtaClick(e, heroCopy.ctaSecondary.href)}>{heroCopy.ctaSecondary.label}</a>
+        </div>
+    );
+
+    /* No step attribute: the observer ignores the stage, so the camel keeps its
+       page-load colours here and the build starts at step 1. */
+    const stageNode = (
+        <div className="hero-stage">
+            <div className="hero-showcase-layer">
+                <CamelClock
+                    title={HERO_CLOCK.title}
+                    month={HERO_CLOCK.month}
+                    day={HERO_CLOCK.day}
+                    time={HERO_CLOCK.time}
+                    introText={HERO_CLOCK.introText}
+                    celebrationMessage={HERO_CLOCK.celebrationMessage}
+                    celebrationType={HERO_CLOCK.celebrationType}
+                    primaryColour={HERO_CLOCK.primaryColour}
+                    secondaryColour={HERO_CLOCK.secondaryColour}
+                    wearables={HERO_CLOCK.wearables}
+                    ref={camelRef}
+                    revealProgress={colourProgress}
+                    wearableRevealProgress={wearableRevealProgress}
+                    boosts={boosts}
+                    hydrateCount={hydrateCount}
+                    level={level}
+                    showWatermark={interactive}
+                    hideWatermarkLink
+                    hideLevelBanner
+                    viewerHydrates={interactive}
+                    onHydrateClick={interactive ? hydrate : null}
+                />
+            </div>
+        </div>
+    );
 
     return (
-        <section className={`scroll-container${locked ? " locked" : ""}`} ref={containerRef}>
-            <div className="scroll-sticky">
-                <div className="clock-layer">
-                    <p className="pre-reveal-text">Your event deserves more than a <span className="pre-reveal-accent">boring timer</span>.</p>
-                    <div className="scroll-clock-wrapper">
-                        <CamelClock {...clockProps} />
+        /* The ref lands on the section itself, not on a wrapper, because the
+           scroll track is the intro plus the sentinels and nothing else. Both
+           consumers query this subtree for their own attributes. In simple mode
+           there are no sentinels to find, so both simply no-op. */
+        <section className={`landing-hero${simple ? " landing-hero--simple" : ""}`} ref={trackRef}>
+            {simple ? (
+                <>
+                    {/* Headline, then the camel — a visitor should see what they
+                        can build straight away. The lede and CTAs follow it so
+                        the demo stays at the top of the page. */}
+                    <div className="hero-intro">{titleNode}</div>
+
+                    {stageNode}
+
+                    <div className="hero-intro-tail">
+                        {ledeNode}
+                        {actionsNode}
                     </div>
-                </div>
 
-                <div className={`builder-overlay${builderVisible ? " visible" : ""}`}>
-                    <CamelClockBuilder
-                        key={builderVisible ? presetIndex : -1}
-                        createLabel="Create + Share"
-                        initialValues={clockProps}
-                        canvasRef={measureRef}
-                    />
-                </div>
-            </div>
+                    {/* Same order and same copy as the accordion, but as ordinary
+                        sections. Each carries its step `id` as the DOM id, which
+                        is what turns a "#occasion" CTA into an anchor jump. */}
+                    <div className="hero-features">
+                        {HERO_STEPS.map((step, i) => (
+                            <section className="hero-feature" id={step.id} key={step.id}>
+                                <span className="hero-feature-count">{String(i + 1).padStart(2, "0")}</span>
+                                <h2 className="hero-feature-title">{step.title}</h2>
+                                <p className="hero-feature-body">{step.body}</p>
+                            </section>
+                        ))}
+                    </div>
+                </>
+            ) : (
+                <>
+                    <div className="hero-intro">
+                        {titleNode}
+                        {ledeNode}
+                        {actionsNode}
+                    </div>
 
-            {!locked && !builderVisible && (
-                <button
-                    type="button"
-                    className="scroll-guide nbtc"
-                    aria-label="Scroll to the next stage"
-                    onClick={() => guideRef.current?.goNext()}
-                >
-                    <ChevronDown aria-hidden="true" />
-                </button>
+                    {stageNode}
+
+                    <div className="hero-copy-track">
+                        {/* Pinned to the same box as the stage and centred the same way,
+                            so the accordion stays level with the camel at any window
+                            height without either needing to know about the other. */}
+                        <div className="hero-copy-pane">
+                            <HeroAccordion
+                                steps={HERO_STEPS}
+                                openIndex={openIndex}
+                                onOpen={goTo}
+                            />
+                        </div>
+
+                        {/* Geometry only, no visual rules at all. One per step, in normal
+                            flow, so useShowcaseSteps can watch the midline band and a
+                            clicked title has something to scroll to. */}
+                        {HERO_STEPS.map((step, i) => (
+                            <div
+                                className="hero-sentinel"
+                                key={step.title}
+                                data-showcase-step={i + 1}
+                            />
+                        ))}
+
+                        {/* Unmeasured, and deliberately so. The pane is sticky within
+                            the track, so it starts releasing as the track's bottom edge
+                            approaches it — without this tail the last panel would be
+                            part-way out from under the reader while still being read. */}
+                        <div className="hero-sentinel-tail" />
+                    </div>
+                </>
             )}
         </section>
     );

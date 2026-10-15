@@ -1,22 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { KeyRound, Mail, Trash2 } from "lucide-react";
+import { AtSign, KeyRound, Mail, Trash2 } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
-import { changePassword, deleteAccount } from "@/app/settings/actions";
+import { changePassword, deleteAccount, updateUsername } from "@/app/settings/actions";
 import PasswordRequirements from "./PasswordRequirements";
 import { validatePassword } from "@/utils/passwordValidation";
+import { validateUsername } from "@/utils/usernameValidation";
 import EmailConfirmBanner from "./EmailConfirmBanner";
 
-export default function SettingsView({ email, emailConfirmed = true }) {
+export default function SettingsView({ email, emailConfirmed = true, username = null }) {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [pwStatus, setPwStatus] = useState(null);
     const [savingPassword, setSavingPassword] = useState(false);
 
+    const [handle, setHandle] = useState(username ?? "");
+    const [hasHandle, setHasHandle] = useState(Boolean(username));
+    const [handleStatus, setHandleStatus] = useState(null);
+    const [savingHandle, setSavingHandle] = useState(false);
+
     const [confirmDelete, setConfirmDelete] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
+
+    const handleHandleSubmit = async (e) => {
+        e.preventDefault();
+        setHandleStatus(null);
+
+        const handleError = validateUsername(handle);
+        if (handleError) {
+            setHandleStatus({ type: "error", text: handleError });
+            return;
+        }
+
+        setSavingHandle(true);
+        const result = await updateUsername(handle);
+        setSavingHandle(false);
+
+        if (result?.ok) {
+            setHasHandle(true);
+            setHandleStatus({ type: "ok", text: `HANDLE SAVED — @${result.username}` });
+        } else {
+            setHandleStatus({ type: "error", text: result?.error ?? "Something went wrong." });
+        }
+    };
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
@@ -105,6 +133,39 @@ export default function SettingsView({ email, emailConfirmed = true }) {
                     <button className="auth-button" type="submit" disabled={savingPassword}>
                         <KeyRound className="button-icon" />
                         {savingPassword ? "SAVING..." : "UPDATE PASSWORD"}
+                    </button>
+                </form>
+            </section>
+
+            <section className="settings-card nbtc">
+                <h2 className="settings-card-title">
+                    <AtSign className="button-icon" />
+                    YOUR HANDLE
+                </h2>
+                <p className="settings-hint">
+                    Your public @handle — signed-in visitors see matching names on hydrate leaderboards.
+                </p>
+                <form className="settings-form" onSubmit={handleHandleSubmit}>
+                    <label className="auth-label">
+                        @HANDLE
+                        <input
+                            className="auth-input nbtc"
+                            type="text"
+                            value={handle}
+                            onChange={(e) => setHandle(e.target.value)}
+                            placeholder="e.g. camel_fan"
+                            minLength={3}
+                            maxLength={20}
+                            required
+                        />
+                    </label>
+                    <p className="settings-hint">3–20 characters: lowercase letters, numbers and underscores.</p>
+                    {handleStatus && (
+                        <p className={handleStatus.type === "ok" ? "settings-ok" : "auth-error"}>{handleStatus.text}</p>
+                    )}
+                    <button className="auth-button" type="submit" disabled={savingHandle}>
+                        <AtSign className="button-icon" />
+                        {savingHandle ? "SAVING..." : hasHandle ? "UPDATE HANDLE" : "SET HANDLE"}
                     </button>
                 </form>
             </section>

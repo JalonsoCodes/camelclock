@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { EyeOff, Pencil, Rocket, Share2, Trash2, X } from "lucide-react";
+import { EyeOff, Pencil, Rocket, Share2, Trash2 } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import ShareDialog from "./ShareDialog";
-import WaitlistModal from "./WaitlistModal";
-import { checkLiveLimit, MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
+import LevelChip from "./LevelChip";
 import { refreshLiveCount } from "@/utils/liveCountEvents";
+import { levelFromCount } from "@/utils/boost";
+import { checkLiveLimit } from "@/utils/liveLimit";
 import { supabase } from "@/lib/supabase/client";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -26,50 +27,67 @@ function getStatus(clock) {
     return "live";
 }
 
-export default function ClockCard({ clock, onDeleted, owned = true, followed = false, onUnfollow = null }) {
+export default function ClockCard({ clock, onDeleted, owned = true, followed = false }) {
     const [deleting, setDeleting] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [toggling, setToggling] = useState(false);
     const [toggleError, setToggleError] = useState("");
     const [shareOpen, setShareOpen] = useState(false);
-    const [proOpen, setProOpen] = useState(false);
 
     const target = new Date(clock.target_at);
     const status = getStatus(clock);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
-    const handleTogglePublish = async () => {
+    // Unpublish needs no limit gate — it only ever removes a live row. Going live is a direct
+    // write through checkLiveLimit() (same gate the viewer uses); the simplified live dialog then
+    // opens so the owner can share or embed straight away.
+    const publishClock = async () => {
+        if (toggling) return;
         setToggleError("");
         setToggling(true);
-        const newStatus = status === "draft" ? "live" : "draft";
 
-        if (newStatus === "live") {
-            const check = await checkLiveLimit();
-            if (!check.ok) {
-                setToggling(false);
-                if (check.reason === "limit") {
-                    setProOpen(true);
-                } else {
-                    setToggleError(check.error);
-                }
-                return;
+        const check = await checkLiveLimit();
+        if (!check.ok) {
+            setToggling(false);
+            if (check.reason === "limit") {
+                setToggleError("Live clock limit reached (3). Unpublish one first.");
+            } else {
+                setToggleError(check.error);
             }
+            return;
         }
 
         const { error } = await supabase
             .from("clocks")
-            .update({ status: newStatus })
+            .update({ status: "live" })
             .eq("id", clock.id);
         setToggling(false);
 
         if (error) {
             console.error("Error updating clock status:", error);
-            setToggleError(`Failed to ${newStatus === "live" ? "publish" : "unpublish"}. Please try again.`);
+            setToggleError("Failed to publish. Please try again.");
         } else {
-            if (newStatus === "live") {
-                setShareOpen(true);
-            }
+            refreshLiveCount();
+            onDeleted();
+            setShareOpen(true);
+        }
+    };
+
+    const handleUnpublish = async () => {
+        setToggleError("");
+        setToggling(true);
+
+        const { error } = await supabase
+            .from("clocks")
+            .update({ status: "draft" })
+            .eq("id", clock.id);
+        setToggling(false);
+
+        if (error) {
+            console.error("Error updating clock status:", error);
+            setToggleError("Failed to unpublish. Please try again.");
+        } else {
             refreshLiveCount();
             onDeleted();
         }
@@ -92,7 +110,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
     };
 
     return (
-        <div className={`clock-card nbtc status-${status}${followed ? " followed-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
+        <div className={`clock-card nbtc status-${status}${followed && !owned ? " followed-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
             <Link href={`/clock/${clock.id}`} className="clock-card-link">
                 <CamelClock
                     title={clock.title}
@@ -105,51 +123,53 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
                     primaryColour={clock.primary_colour}
                     secondaryColour={clock.secondary_colour}
                     celebrationType={clock.celebration_type}
-                    boosts={clock.wearables || []}
+                    wearables={clock.wearables || []}
+                    boosts={clock.boosts || []}
+                    hydrateCount={clock.hydrate_count ?? 0}
+                    level={levelFromCount(clock.hydrate_count ?? 0)}
+                    hideLevelBanner
+                    viewerHydrates={status === "live" && clock.viewer_hydrates === true}
                 />
 
                 <div className="card-meta">
                     <span className="card-date">{formatTarget(clock.target_at)}</span>
+                    {clock.hydrate_count > 0 && (
+                        <span className="card-hydrate-row">
+                            <LevelChip hydrateCount={clock.hydrate_count} />
+                            <span className="card-hydrators">
+                                {clock.hydrate_count} HYDRATIONS · {clock.hydrator_count ?? 0} HYDRATORS
+                                {owned && clock.owner_hydrate_count > 0 && ` · ${clock.owner_hydrate_count} FROM YOU`}
+                            </span>
+                        </span>
+                    )}
                     <span className={`status-badge ${status}`}>
                         {status === "draft" ? "DRAFT" : status === "live" ? "LIVE" : "EXPIRED"}
                     </span>
                 </div>
             </Link>
 
-            {followed && (
-                <button
-                    className="unfollow-button nbtc"
-                    type="button"
-                    title="Stop following this clock"
-                    aria-label={`Stop following ${clock.title}`}
-                    onClick={onUnfollow}
-                >
-                    <X className="button-icon" aria-hidden="true" />
-                    UNFOLLOW
-                </button>
-            )}
-
             {owned && (
                 <div className="card-actions">
                     <Link href={`/edit/${clock.id}`} className="card-action-btn edit-button" title="Edit this clock's design and settings" aria-label="Edit">
                         <Pencil className="button-icon" aria-hidden="true" />
+                        <span className="card-action-label">EDIT</span>
                     </Link>
                     {status === "draft" ? (
                         <button
                             className="card-action-btn publish-button"
                             type="button"
                             title="Make this clock publicly visible"
-                            onClick={handleTogglePublish}
+                            onClick={publishClock}
                             disabled={toggling}
                         >
-                            {toggling ? "..." : <><Rocket className="button-icon" />PUBLISH</>}
+                            <Rocket className="button-icon" />{toggling ? "..." : "PUBLISH"}
                         </button>
                     ) : (
                         <>
                             <button
                                 className="card-action-btn"
                                 type="button"
-                                title="Copy the link or grab the embed code"
+                                title="Copy the link, embed it, or share it"
                                 onClick={() => setShareOpen(true)}
                             >
                                 <Share2 className="button-icon" />SHARE
@@ -158,11 +178,12 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
                                 className="card-action-btn unpublish-button"
                                 type="button"
                                 title="Move this clock back to drafts"
-                                onClick={handleTogglePublish}
+                                onClick={handleUnpublish}
                                 disabled={toggling}
                                 aria-label="Unpublish"
                             >
                                 {toggling ? "..." : <EyeOff className="button-icon" aria-hidden="true" />}
+                                <span className="card-action-label">UNPUBLISH</span>
                             </button>
                         </>
                     )}
@@ -175,20 +196,12 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
                         aria-label="Delete"
                     >
                         {deleting ? "..." : <Trash2 className="button-icon" aria-hidden="true" />}
+                        <span className="card-action-label">DELETE</span>
                     </button>
                 </div>
             )}
 
             {toggleError && <p className="card-error">{toggleError}</p>}
-
-            {proOpen && (
-                <WaitlistModal
-                    heading="YOU'VE HIT THE FREE LIMIT"
-subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-highlightFeature="Unlimited Active Camel Clocks"
-                    onClose={() => setProOpen(false)}
-                />
-            )}
 
             {confirmOpen && (
                 <ConfirmDialog
@@ -202,8 +215,6 @@ highlightFeature="Unlimited Active Camel Clocks"
                 <ShareDialog
                     clockId={clock.id}
                     title={clock.title}
-                    isOwner
-                    allowEmbed={clock.allow_embed}
                     onClose={() => setShareOpen(false)}
                     heading="YOUR CLOCK IS LIVE"
                     subline={`\u201C${clock.title}\u201D is now publicly visible. Share a link or embed it anywhere.`}

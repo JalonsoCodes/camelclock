@@ -1,471 +1,136 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Play, Plus, Save, Shuffle, Trash2 } from "lucide-react";
-import CamelClock from "./CamelClock";
-import ConfirmDialog from "./ConfirmDialog";
-import { createShowcase, deleteShowcase, reorderShowcases, updateShowcase } from "@/app/admin/showcases/actions";
-import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
-import { validateClock } from "@/utils/validation";
-import { wearables as wearableData } from "@/utils/grids";
+import { useState } from "react";
+import Link from "next/link";
+import { ArrowDown, ArrowUp, ExternalLink } from "lucide-react";
+import { reorderShowcases } from "@/app/admin/showcases/actions";
 
-const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-];
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
-const EMPTY_SHOWCASE = {
-    title: "New Showcase",
-    target_at: new Date(new Date().getFullYear() + 1, 0, 1).toISOString(),
-    intro_text: "Ends in:",
-    celebration_message: "TIME IS UP!",
-    primary_colour: "#DBB279",
-    secondary_colour: "#8E652C",
-    celebration_type: "spit",
-    wearables: [],
-};
-
-const SHEET_COLUMNS = [
-    ["PREVIEW", "col-preview"],
-    ["ORDER", "col-order"],
-    ["TITLE", "col-title"],
-    ["TARGET", "col-target"],
-    ["LABEL", "col-label"],
-    ["COMPLETION MESSAGE", "col-message"],
-    ["COLOURS", "col-colours"],
-    ["WEARABLES", "col-wearables"],
-    ["ACTIONS", "col-actions"],
-];
-
-function hslToHex(h, s, l) {
-    s /= 100;
-    l /= 100;
-    const k = (n) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
-    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
+function formatTarget(targetAt) {
+    const d = new Date(targetAt);
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mm = String(d.getMinutes()).padStart(2, "0");
+    return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${hh}:${mm}`;
 }
 
-function HexColourInput({ idPrefix, value, onChange }) {
-    return (
-        <div className="colour-picker-wrapper">
-            <input
-                className="nbtc colour-swatch"
-                type="color"
-                value={value}
-                onChange={(e) => onChange(e.target.value)}
-            />
-            <div className="hex-input-container nbtc">
-                <span className="hex-hash">#</span>
-                <input
-                    className="colour-hex-text"
-                    type="text"
-                    value={undefined}
-                    defaultValue={value.replace('#', '').toUpperCase()}
-                    key={`${idPrefix}-${value}`}
-                    onChange={(e) => {
-                        const cleanValue = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
-                        e.target.value = cleanValue.toUpperCase();
-                        if (cleanValue.length === 6) {
-                            onChange(`#${cleanValue}`);
-                        }
-                    }}
-                    maxLength={7}
-                    onFocus={(e) => e.target.select()}
-                />
-            </div>
-        </div>
-    );
+function byOrder(a, b) {
+    return a.showcase_order - b.showcase_order;
 }
 
-function ShowcaseRow({ showcase, onSave, onRequestDelete, onMoveUp, onMoveDown, isFirst, isLast, reordering }) {
-    const clockRef = useRef(null);
-    const [fields, setFields] = useState({
-        title: showcase.title ?? "",
-        intro_text: showcase.intro_text ?? "",
-        celebration_message: showcase.celebration_message ?? "",
-        primary_colour: showcase.primary_colour ?? "#DBB279",
-        secondary_colour: showcase.secondary_colour ?? "#8E652C",
-        wearables: showcase.wearables ?? [],
-    });
+export default function AdminShowcases({ clocks: initialClocks }) {
+    const [clocks, setClocks] = useState(() => [...initialClocks].sort(byOrder));
+    const [busyId, setBusyId] = useState(null);
+    const [error, setError] = useState("");
 
-    const target = new Date(showcase.target_at);
-    const [month, setMonth] = useState(target.getMonth());
-    const [day, setDay] = useState(target.getDate());
-    const [time, setTime] = useState(
-        `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`
-    );
+    const move = async (clock, direction) => {
+        if (busyId) return;
+        setError("");
 
-    const [saving, setSaving] = useState(false);
-    const [status, setStatus] = useState("");
-
-    const update = (key, value) => setFields((prev) => ({ ...prev, [key]: value }));
-
-    const randomiseColours = () => {
-        const hue = Math.floor(Math.random() * 360);
-        update("primary_colour", hslToHex(hue, 55, 68));
-        const secondaryHue = (hue + 60 + Math.floor(Math.random() * 120)) % 360;
-        update("secondary_colour", hslToHex(secondaryHue, 45, 30));
-    };
-
-    const toggleWearable = (id, cat) => {
-        setFields((prev) => {
-            if (prev.wearables.includes(id)) {
-                return { ...prev, wearables: prev.wearables.filter((wid) => wid !== id) };
-            }
-            return {
-                ...prev,
-                wearables: [...prev.wearables.filter((wid) => wearableData[wid]?.category !== cat), id],
-            };
-        });
-    };
-
-    const handleSave = async () => {
-        setSaving(true);
-        setStatus("");
-
-        const validation = validateClock({
-            title: fields.title,
-            introText: fields.intro_text,
-            celebrationMessage: fields.celebration_message,
-            primaryColour: fields.primary_colour,
-            secondaryColour: fields.secondary_colour,
-            month,
-            day,
-            time,
-            wearables: fields.wearables,
-        });
-        if (!validation.valid) {
-            setStatus(validation.errors[0]);
-            setSaving(false);
-            return;
-        }
-
-        let targetDate = getConfiguredTarget(month, day, time, target.getFullYear());
-        if (targetDate <= new Date()) {
-            targetDate.setFullYear(target.getFullYear() + 1);
-        }
-
-        const { data, error } = await updateShowcase(showcase.id, {
-            title: fields.title,
-            target_at: targetDate.toISOString(),
-            intro_text: fields.intro_text,
-            celebration_message: fields.celebration_message,
-            primary_colour: fields.primary_colour,
-            secondary_colour: fields.secondary_colour,
-            celebration_type: "spit",
-            wearables: fields.wearables,
-        });
-
-        setSaving(false);
-        if (error) {
-            setStatus(error ?? "Failed to save");
-            return;
-        }
-
-        setStatus("Saved!");
-        onSave?.(data);
-        setTimeout(() => setStatus(""), 2000);
-    };
-
-    const categories = {};
-    Object.entries(wearableData).forEach(([id, item]) => {
-        if (!categories[item.category]) categories[item.category] = [];
-        categories[item.category].push({ id, ...item });
-    });
-
-    return (
-        <tr>
-            <td className="col-preview">
-                <CamelClock
-                    ref={clockRef}
-                    title={fields.title}
-                    month={month}
-                    day={day}
-                    time={time}
-                    introText={fields.intro_text}
-                    celebrationMessage={fields.celebration_message}
-                    primaryColour={fields.primary_colour}
-                    secondaryColour={fields.secondary_colour}
-                    celebrationType="spit"
-                    boosts={fields.wearables}
-                />
-                <button className="preview-button" type="button" title="Preview the finished countdown" onClick={() => clockRef.current?.preview()}>
-                    <Play fill="currentColor" strokeWidth={0} aria-hidden="true" />
-                    Preview completion
-                </button>
-            </td>
-
-            <td className="col-order">
-                <label className="cell-label">ORDER</label>
-                <div className="order-controls">
-                    <button
-                        className="order-arrow nbtc"
-                        type="button"
-                        title="Move up"
-                        aria-label="Move up"
-                        onClick={onMoveUp}
-                        disabled={isFirst || reordering}
-                    >
-                        <ArrowUp aria-hidden="true" />
-                    </button>
-                    <button
-                        className="order-arrow nbtc"
-                        type="button"
-                        title="Move down"
-                        aria-label="Move down"
-                        onClick={onMoveDown}
-                        disabled={isLast || reordering}
-                    >
-                        <ArrowDown aria-hidden="true" />
-                    </button>
-                </div>
-            </td>
-
-            <td className="col-title">
-                <label className="cell-label">TITLE</label>
-                <input
-                    className="nbtc"
-                    type="text"
-                    value={fields.title}
-                    maxLength="72"
-                    onChange={(e) => update("title", e.target.value)}
-                    onFocus={(e) => e.target.select()}
-                />
-            </td>
-
-            <td className="col-target">
-                <label className="cell-label">MONTH</label>
-                <select className="nbtc" value={month} onChange={(e) => {
-                    const newMonth = Number(e.target.value);
-                    setMonth(newMonth);
-                    const maxDays = getDaysInMonth(newMonth, target.getFullYear());
-                    setDay((d) => Math.min(d, maxDays));
-                }}>
-                    {MONTH_NAMES.map((name, i) => (
-                        <option key={i} value={i}>{name}</option>
-                    ))}
-                </select>
-
-                <label className="cell-label">DAY</label>
-                <input
-                    className="nbtc"
-                    type="number"
-                    min="1"
-                    max="31"
-                    value={day}
-                    onChange={(e) => setDay(Number(e.target.value))}
-                    onFocus={(e) => e.target.select()}
-                />
-
-                <label className="cell-label">TIME</label>
-                <input
-                    className="nbtc"
-                    type="time"
-                    value={time}
-                    onChange={(e) => setTime(e.target.value)}
-                />
-            </td>
-
-            <td className="col-label">
-                <label className="cell-label">LABEL</label>
-                <input
-                    className="nbtc"
-                    type="text"
-                    value={fields.intro_text}
-                    maxLength="15"
-                    onChange={(e) => update("intro_text", e.target.value)}
-                    onFocus={(e) => e.target.select()}
-                />
-            </td>
-
-            <td className="col-message">
-                <label className="cell-label">COMPLETION MESSAGE</label>
-                <textarea
-                    className="nbtc"
-                    value={fields.celebration_message}
-                    rows="3"
-                    maxLength="140"
-                    placeholder="Shown at the end of the animation"
-                    onChange={(e) => update("celebration_message", e.target.value)}
-                    onFocus={(e) => e.target.select()}
-                />
-            </td>
-
-            <td className="col-colours">
-                <label className="cell-label">PRIMARY</label>
-                <HexColourInput idPrefix={`primary-${showcase.id}`} value={fields.primary_colour} onChange={(v) => update("primary_colour", v)} />
-
-                <label className="cell-label">SECONDARY</label>
-                <HexColourInput idPrefix={`secondary-${showcase.id}`} value={fields.secondary_colour} onChange={(v) => update("secondary_colour", v)} />
-
-                <button className="randomise-button" type="button" title="Randomise the colour palette" onClick={randomiseColours}>
-                    <Shuffle aria-hidden="true" />
-                    Randomise colours
-                </button>
-            </td>
-
-            <td className="col-wearables">
-                <label className="cell-label">WEARABLES</label>
-                {Object.entries(categories).map(([cat, items]) => (
-                    <div key={cat} className="wearables-chip-group">
-                        <span className="wearables-chip-heading">{cat}</span>
-                        <div className="wearables-chip-row">
-                            {items.map((item) => {
-                                const isSelected = fields.wearables.includes(item.id);
-                                return (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className={`wearables-chip${isSelected ? " selected" : ""}`}
-                                        title={`${item.name} (${cat})`}
-                                        onClick={() => toggleWearable(item.id, cat)}
-                                    >
-                                        {isSelected ? "✓" : item.emoji}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                ))}
-            </td>
-
-            <td className="col-actions cell-actions">
-                <button className="admin-save-button nbtc" type="button" onClick={handleSave} disabled={saving}>
-                    <Save className="button-icon" />
-                    {saving ? "Saving..." : "Save"}
-                </button>
-                <button
-                    className="admin-delete-button nbtc"
-                    type="button"
-                    onClick={() => onRequestDelete(showcase.id)}
-                >
-                    <Trash2 className="button-icon" />
-                    Delete
-                </button>
-                {status && <p className="admin-showcase-status">{status}</p>}
-            </td>
-        </tr>
-    );
-}
-
-export default function AdminShowcases({ showcases: initialShowcases }) {
-    const [showcases, setShowcases] = useState(initialShowcases);
-    const [adding, setAdding] = useState(false);
-    const [addError, setAddError] = useState("");
-    const [pendingDeleteId, setPendingDeleteId] = useState(null);
-    const [deleting, setDeleting] = useState(false);
-    const [deleteError, setDeleteError] = useState("");
-    const [reordering, setReordering] = useState(false);
-
-    const pendingShowcase = showcases.find((s) => s.id === pendingDeleteId);
-
-    const handleDelete = (id) => {
-        setShowcases((prev) => prev.filter((s) => s.id !== id));
-    };
-
-    const confirmDelete = async () => {
-        setDeleting(true);
-        setDeleteError("");
-
-        const { error } = await deleteShowcase(pendingDeleteId);
-
-        setDeleting(false);
-        if (error) {
-            setDeleteError(error);
-            setPendingDeleteId(null);
-        } else {
-            handleDelete(pendingDeleteId);
-            setPendingDeleteId(null);
-        }
-    };
-
-    const handleAdd = async () => {
-        setAdding(true);
-        setAddError("");
-
-        const { data, error } = await createShowcase(EMPTY_SHOWCASE);
-
-        setAdding(false);
-
-        if (error) {
-            setAddError(error);
-        } else if (data) {
-            setShowcases((prev) => [...prev, data]);
-        }
-    };
-
-    const moveShowcase = async (index, direction) => {
+        const list = [...clocks];
+        const index = list.findIndex((c) => c.id === clock.id);
         const target = index + direction;
-        if (target < 0 || target >= showcases.length) return;
+        if (index === -1 || target < 0 || target >= list.length) return;
 
-        const next = [...showcases];
-        [next[index], next[target]] = [next[target], next[index]];
+        [list[index], list[target]] = [list[target], list[index]];
 
-        setReordering(true);
-        setShowcases(next);
+        const previous = clocks;
 
-        const { error } = await reorderShowcases(next.map((s) => s.id));
+        setBusyId(clock.id);
+        setClocks(list.map((c, i) => ({ ...c, showcase_order: i })));
 
-        setReordering(false);
-        if (error) {
-            setShowcases((prev) => prev.map((s) => ({ ...s })));
+        const { error: actionError } = await reorderShowcases(list.map((c) => c.id));
+        setBusyId(null);
+
+        if (actionError) {
+            setClocks(previous);
+            setError(actionError);
         }
     };
 
     return (
         <div className="admin-showcase-page">
             <div className="admin-header">
-                <h1>Showcase Manager</h1>
-                <button className="share-button nbtc" type="button" onClick={handleAdd} disabled={adding}>
-                    <Plus className="button-icon" />
-                    {adding ? "Adding..." : "New Showcase"}
-                </button>
+                <h1>Showcase Order</h1>
             </div>
 
-            {addError && <p className="admin-showcase-status">{addError}</p>}
-            {deleteError && <p className="admin-showcase-status">{deleteError}</p>}
+            <p className="admin-showcase-hint">
+                These are the clocks featured on the landing page, in the order they appear. Flag a clock by
+                setting <code>is_showcase = true</code> on its row in the database, then set its order here.
+            </p>
 
-            {showcases.length === 0 ? (
-                <p className="admin-empty">No showcases yet. Add one to get started.</p>
+            {error && <p className="admin-showcase-status">{error}</p>}
+
+            {clocks.length === 0 ? (
+                <p className="admin-empty">
+                    No clocks are flagged as showcases. Set <code>is_showcase = true</code> on a live clock to
+                    feature it.
+                </p>
             ) : (
                 <div className="showcase-sheet nbtc">
                     <table className="showcase-table">
                         <thead>
                             <tr>
-                                {SHEET_COLUMNS.map(([label, colClass]) => (
-                                    <th key={label} className={colClass}>{label}</th>
-                                ))}
+                                <th className="col-order">ORDER</th>
+                                <th className="col-title">CLOCK</th>
+                                <th className="col-target">TARGET</th>
+                                <th className="col-hydrations">HYDRATIONS</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {showcases.map((showcase, index) => (
-                                <ShowcaseRow
-                                    key={showcase.id}
-                                    showcase={showcase}
-                                    onSave={(updated) => {
-                                        setShowcases((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-                                    }}
-                                    onRequestDelete={setPendingDeleteId}
-                                    onMoveUp={() => moveShowcase(index, -1)}
-                                    onMoveDown={() => moveShowcase(index, 1)}
-                                    isFirst={index === 0}
-                                    isLast={index === showcases.length - 1}
-                                    reordering={reordering}
-                                />
-                            ))}
+                            {clocks.map((clock, index) => {
+                                const isFirst = index === 0;
+                                const isLast = index === clocks.length - 1;
+
+                                return (
+                                    <tr key={clock.id}>
+                                        <td className="col-order">
+                                            <div className="order-controls">
+                                                <button
+                                                    className="order-arrow nbtc"
+                                                    type="button"
+                                                    title="Move up"
+                                                    aria-label="Move up"
+                                                    onClick={() => move(clock, -1)}
+                                                    disabled={isFirst || !!busyId}
+                                                >
+                                                    <ArrowUp aria-hidden="true" />
+                                                </button>
+                                                <button
+                                                    className="order-arrow nbtc"
+                                                    type="button"
+                                                    title="Move down"
+                                                    aria-label="Move down"
+                                                    onClick={() => move(clock, 1)}
+                                                    disabled={isLast || !!busyId}
+                                                >
+                                                    <ArrowDown aria-hidden="true" />
+                                                </button>
+                                            </div>
+                                        </td>
+
+                                        <td className="col-title">
+                                            <Link href={`/clock/${clock.id}`} className="pressable admin-showcase-link">
+                                                {clock.title}
+                                                <ExternalLink className="button-icon" aria-hidden="true" />
+                                            </Link>
+                                        </td>
+
+                                        <td className="col-target">
+                                            <span className="admin-clock-hint">{formatTarget(clock.target_at)}</span>
+                                        </td>
+
+                                        <td className="col-hydrations">
+                                            <span className="admin-clock-hint">
+                                                {clock.hydrate_count} &middot; {clock.hydrator_count ?? 0} hydrators
+                                            </span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>
-            )}
-
-            {pendingDeleteId && (
-                <ConfirmDialog
-                    message={`Delete "${pendingShowcase?.title}"? This cannot be undone.`}
-                    onConfirm={confirmDelete}
-                    onCancel={() => setPendingDeleteId(null)}
-                />
             )}
         </div>
     );

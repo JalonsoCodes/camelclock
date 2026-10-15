@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { BarChart3, Bell, Check, EyeOff, Infinity as InfinityIcon, Mail, Shirt, X, Zap } from "lucide-react";
+import { Bell, Check, Infinity as InfinityIcon, Shirt, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import { PRO_FEATURES } from "./Pricing";
@@ -10,10 +10,6 @@ import { PRO_FEATURES } from "./Pricing";
 const FEATURE_ICONS = {
     "Unlimited Active Camel Clocks": InfinityIcon,
     "Full Wearables Closet": Shirt,
-    "Interactive Boosts": Zap,
-    "Waitlist + Email Capture": Mail,
-    "Engagement Analytics": BarChart3,
-    "Zero CamelClock Branding": EyeOff,
 };
 
 export default function WaitlistModal({

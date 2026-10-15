@@ -20,11 +20,21 @@ export default async function SettingsPage() {
         redirect("/login?next=/settings");
     }
 
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle();
+
     return (
         <>
             <Navbar />
             <main>
-                <SettingsView email={user.email ?? ""} emailConfirmed={Boolean(user.email_confirmed_at)} />
+                <SettingsView
+                    email={user.email ?? ""}
+                    emailConfirmed={Boolean(user.email_confirmed_at)}
+                    username={profile?.username ?? null}
+                />
             </main>
         </>
     );

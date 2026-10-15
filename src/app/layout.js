@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Script from "next/script";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
@@ -7,15 +6,15 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CamelClock — Countdown & Waitlist",
+    default: "CamelClock — a countdown with a camel in tow",
     template: "%s | CamelClock",
   },
   description:
-    "Create beautiful, embeddable countdown clocks with pixel-art camels. Perfect for product launches, sales, and events.",
+    "Turn any big day into a friendly pixel camel that counts down the seconds — and lets your crowd tap along. Free to make, easy to share or embed.",
   openGraph: {
-    title: "CamelClock — Countdown & Waitlist",
+    title: "CamelClock — a countdown with a camel in tow",
     description:
-      "Create beautiful, embeddable countdown clocks with pixel-art camels.",
+      "Turn any big day into a friendly pixel camel that counts down the seconds and lets your crowd tap along.",
     siteName: "CamelClock",
     type: "website",
   },
@@ -32,15 +31,19 @@ export default function RootLayout({ children }) {
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      </head>
-      <body suppressHydrationWarning>
-        <Script
+        {/* Plain inline script in <head>, not next/script: beforeInteractive inline scripts
+            are moved to <head> on the server but render a body <script> on the client, so React
+            creates it fresh during hydration and React 19.3 warns. A head script is identical on
+            both sides, adopted on hydration, and still runs before paint to set the theme. */}
+        <script
           id="theme-init"
-          strategy="beforeInteractive"
+          suppressHydrationWarning
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;if(d)document.documentElement.classList.add("dark")}catch(e){}})()`,
           }}
         />
+      </head>
+      <body suppressHydrationWarning>
         <div className="page-container">
           {children}
         </div>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
-import CamelClockBuilder from "@/components/CamelClockBuilder";
+import ClockCreationWizard from "@/components/ClockCreationWizard";
 import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
@@ -21,7 +21,7 @@ export default async function NewClockPage() {
             <Navbar />
             <main>
                 <h2 className="page-heading">NEW CLOCK</h2>
-                <CamelClockBuilder />
+                <ClockCreationWizard />
             </main>
         </>
     );

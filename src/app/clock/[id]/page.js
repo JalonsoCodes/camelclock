@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import ClockViewer from "@/components/ClockViewer";
 import { createClient } from "@/lib/supabase/server";
+import { dailyDropQuota, computeDropLeft } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
@@ -69,9 +70,8 @@ export async function generateMetadata({ params }) {
     }
 }
 
-export default async function ClockPage({ params, searchParams }) {
+export default async function ClockPage({ params }) {
     const { id } = await params;
-    const { created } = await searchParams;
 
     const [clock, user] = await Promise.all([getClock(id), getCurrentUser()]);
 
@@ -85,11 +85,54 @@ export default async function ClockPage({ params, searchParams }) {
         notFound();
     }
 
+    const supabase = await createClient();
+    const entitlements = isOwner
+        ? await (async () => {
+              const { data: uh } = await supabase
+                  .from("user_hydrates")
+                  .select("drop_day, drop_used")
+                  .eq("user_id", user.id)
+                  .maybeSingle();
+              return {
+                  drop: computeDropLeft(uh?.drop_day, uh?.drop_used) ?? dailyDropQuota(),
+              };
+          })()
+        : {};
+
+    const { data: creator } = await supabase.rpc("get_clock_creator", { p_clock_id: clock.id });
+    const creatorUsername = creator?.[0]?.username ?? null;
+
+    // First-run tour. Shown to the owner of EVERY clock until THAT clock has been toured, on a
+    // clock that is either still untouched (< 10 hydrations, so the build steps make sense) or
+    // carries the tutorial poll that marks a tour already in progress — which is what lets it
+    // resume after an abandon.
+    let showTour = false;
+    if (isOwner && clock.tutorial_completed !== true) {
+        if (clock.hydrate_count < 10) {
+            showTour = true;
+        } else {
+            const { data: tp } = await supabase
+                .from("clock_polls")
+                .select("id")
+                .eq("clock_id", clock.id)
+                .eq("tutorial", true)
+                .limit(1)
+                .maybeSingle();
+            showTour = !!tp;
+        }
+    }
+
     return (
         <>
             <Navbar />
             <main className="live-clock">
-                <ClockViewer clock={clock} isOwner={isOwner} justCreated={created === "1"} />
+                <ClockViewer
+                    clock={clock}
+                    isOwner={isOwner}
+                    creatorUsername={creatorUsername}
+                    entitlements={entitlements}
+                    showTour={showTour}
+                />
             </main>
         </>
     );

@@ -34,8 +34,9 @@ export default async function DashboardPage() {
         console.error("Failed to load followed clocks:", followsError.message);
     }
 
-    let followedClocks = [];
     const followedIds = (followedRows ?? []).map((row) => row.clock_id);
+
+    let followedClocks = [];
     if (followedIds.length > 0) {
         const { data, error: followedError } = await supabase
             .from("clocks")

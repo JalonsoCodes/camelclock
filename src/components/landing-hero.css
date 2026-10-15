@@ -1,178 +1,397 @@
-/* ── Scroll animation container ── */
-.scroll-container {
-    height: 900vh;
-    position: relative;
+/* Landing hero. The page itself owns the layout; this file is the hero block
+   only. The showcase carries no card treatment at all — same as
+   /clock/[id]/embed?card=transparent — so the camel sits directly on the page
+   grid instead of inside a second box on top of the first.
+
+   Scroll-driven, no GSAP. The copy column is a stack of tall sentinels with a
+   pinned accordion pane over them, the stage is sticky beside it, and an
+   IntersectionObserver picks the active step.
+
+   Below the desktop breakpoint all of that is dropped: the camel and the
+   features become ordinary stacked content (see .landing-hero--simple), so a
+   phone gets a plain page instead of a squeezed copy of the production.
+
+   The page scrolls freely — no CSS scroll-snap and no JS settling either. A snap
+   was there to stop you skipping a slide; an accordion doesn't skip, it just
+   opens whatever the reader reached, so the only thing that needs protecting is
+   intent, and that is the sentinels' height. */
+
+.landing-hero {
+  padding-top: 4.0rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  /* The intro is its own row so the stage can span the intro *and* the whole
+     track — pinned, it has to travel past every step, not just the first. */
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "copy-intro stage"
+    "copy-track stage";
+  column-gap: 6.0rem;
+  /* Must be start, not center: a stretched grid item has no room to travel. */
+  align-items: start;
 }
 
-.scroll-sticky {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow: hidden;
+.hero-stage {
+  grid-area: stage;
+  position: sticky;
+  top: var(--navbar-clearance);
+  height: calc(100vh - var(--navbar-clearance));
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* Fixed, so the clock can never push the stage taller than the viewport and
+     start clipping under the navbar however tall the camel gets. */
+  overflow: hidden;
+  gap: 2.4rem;
 }
 
-/* ── CamelClock (phase 4-6) ── */
-.clock-layer {
-    position: absolute;
-    inset: 0;
+/* One camel for the whole hero, built up in place rather than swapped per
+   slide, so the stage only ever holds a single clock.
+
+   Capped in vh rather than rem on purpose. CamelClock sizes its canvas from the
+   container's *width*, and on a 124rem landing the stage column is wide enough
+   that the 90x80 template comes out taller than the sticky box — which pushes
+   the top of the clock, its title included, up under the fixed navbar. Binding
+   the width to viewport height keeps the whole clock (camel + title + digital row
+   + the controls below) inside the stage at any window size, which also brings
+   the camel down to roughly the height of the copy beside it. */
+.hero-showcase-layer {
+  width: 100%;
+  max-width: 52vh;
+  min-width: 0;
+  margin-inline: auto;
+}
+
+/* The scroll track. Its height comes entirely from the sentinels and the tail;
+   the pane inside it is sticky and contributes no distance of its own. */
+.hero-copy-track {
+  grid-area: copy-track;
+}
+
+/* Only the tail has no attributes. The sentinels beside it are 68vh each; this
+   just runs the track on past them so the sticky pane is not already releasing
+   while the last panel is being read. */
+.hero-sentinel-tail {
+  height: 60vh;
+}
+
+.hero-intro {
+  grid-area: copy-intro;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-bottom: 8.0rem;
+}
+
+/* Simple mode reorders the intro: the headline stays on its own above the
+   camel, and the lede plus CTAs ride underneath it in this block. It is never
+   rendered in the desktop grid, so it only needs to stack. */
+.hero-intro-tail {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 4.0rem;
+}
+
+.hero-title {
+  font-size: 3.0rem;
+  line-height: 1.45;
+}
+
+.hero-title-green {
+  color: #4caf50;
+}
+
+.hero-title-red {
+  color: #e53935;
+}
+
+.hero-lede {
+  font-weight: normal;
+  font-size: 1.6rem;
+  line-height: 1.6;
+  max-width: 46rem;
+  margin-top: 2.4rem;
+  opacity: 0.8;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.4rem;
+  margin-top: 3.2rem;
+}
+
+.hero-actions .btn-link {
+  font-size: 1.3rem;
+  padding: 1.4rem 2.4rem;
+}
+
+.hero-cta {
+  background-color: var(--primary-colour);
+}
+
+/* The pinned copy column. Same box as the stage, same centring, so the
+   accordion sits level with the camel at every window height. Sticky within
+   .hero-copy-track, whose height comes from the sentinels below it. */
+.hero-copy-pane {
+  position: sticky;
+  top: var(--navbar-clearance);
+  height: calc(100vh - var(--navbar-clearance));
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.hero-accordion {
+  width: 100%;
+  min-width: 0;
+}
+
+.hero-accordion-item {
+  /* The progress fill is absolutely positioned against the item's border, which
+     is why the item needs to be its containing block. */
+  position: relative;
+}
+
+.hero-accordion-item + .hero-accordion-item {
+  border-top: var(--nbtc-border);
+}
+
+/* The divider under a row doubles as that step's progress bar. The border stays
+   as the track, so the line is the same width and in the same place it always
+   was — the fill is the only addition. --p is written straight onto the node by
+   useShowcaseSteps during scroll; see the note there on why that isn't state. */
+.hero-accordion-item + .hero-accordion-item::after {
+  content: "";
+  position: absolute;
+  /* The border lives outside the padding box, so this is what puts the fill on
+     top of the track rather than under it. Matches --nbtc-border's 4px. */
+  top: -4px;
+  left: 0;
+  height: 4px;
+  width: calc(var(--p, 0) * 100%);
+  background-color: var(--primary-colour);
+}
+
+/* Rows are real buttons — the title jumps to its step, and aria-expanded needs
+   something to hang off. That puts them in the shared press rule, where a
+   full-width row would slide 8px on hover, so both the transform and the
+   shadow are opted out for hover and active. The open row's primary colour is
+   the whole hover signal: the list is a nav, and a row that lights up under
+   the cursor competes with the panel that is actually open. */
+.hero-accordion-row,
+.hero-accordion-row:hover,
+.hero-accordion-row:active {
+  transform: none;
+  box-shadow: none;
+  background: none;
+}
+
+.hero-accordion-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.6rem;
+  width: 100%;
+  padding: 1.6rem 0;
+  border: none;
+  text-align: left;
+  color: var(--fg-colour);
+}
+
+.hero-accordion-count {
+  font-size: 1.2rem;
+  letter-spacing: 0.14rem;
+  color: var(--secondary-colour);
+  flex: 0 0 auto;
+}
+
+/* Big enough to read at a glance from the top of the list. The title is the
+   only thing on the row, so it carries the weight the removed "/ 05" did. */
+.hero-accordion-title {
+  font-size: 3.0rem;
+  line-height: 1.3;
+}
+
+/* The open row is the one that is doing something, so it takes the primary
+   colour and the rest stay quiet. */
+.hero-accordion-item.is-open .hero-accordion-title {
+  color: var(--primary-colour);
+}
+
+/* 0fr -> 1fr animates to whatever height the copy needs, which a measured
+   height could not: these are pixel-font paragraphs that reflow on resize and
+   again when the webfont lands. overflow: hidden is what makes the 0fr actually
+   collapse rather than merely shrink the box. */
+.hero-accordion-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s ease;
+}
+
+.hero-accordion-item.is-open .hero-accordion-body {
+  grid-template-rows: 1fr;
+}
+
+.hero-accordion-body-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Press Start 2P only ships weight 400, so font-weight: normal is load-bearing
+   here — a synthesised bold smudges it. This was 1.8rem and genuinely hard to
+   read: the feature copy is the substance of the whole hero, not a caption, so
+   it now sits between the lede and the titles. max-width is kept narrow because
+   the pixel face falls apart past ~40 characters, and the column is only half
+   the page wide anyway. */
+.hero-feature-body {
+  font-weight: normal;
+  font-size: 2.4rem;
+  line-height: 1.6;
+  max-width: 44rem;
+  padding-bottom: 2.4rem;
+}
+
+/* Sentinels are geometry and nothing else — no visual rules by design. Their
+   height is the scroll cost of one section, and there is no snapping to catch a
+   reader who overshoots, so this is the only thing stopping a fast flick from
+   skipping the camel mid-build. 130vh is deliberately more than a viewport: it
+   takes a deliberate scroll to change section, and the pinned pane means the
+   reader is reading the copy in the strip below the camel the whole time. */
+.hero-sentinel {
+  height: 130vh;
+}
+
+/* Simple mode — the structural half. The shell (a plain stack, the camel
+   unstuck, the sentinels gone) is a pure width decision and lives in the ≤1200
+   block below, because the pre-hydration cinematic markup needs the exact same
+   thing. What the class adds is the feature list that replaces the accordion:
+   same order, same copy, as ordinary sections. */
+.hero-features {
+  border-top: var(--nbtc-border);
+}
+
+.hero-feature {
+  padding: 3.2rem 0;
+  /* The navbar is fixed on the landing, so an anchor jump needs to stop clear
+     of it — the step ids double as the hero CTAs' targets. */
+  scroll-margin-top: calc(var(--navbar-clearance) + 2.0rem);
+}
+
+.hero-feature + .hero-feature {
+  border-top: var(--nbtc-border);
+}
+
+.hero-feature-count {
+  display: block;
+  font-size: 1.2rem;
+  letter-spacing: 0.14rem;
+  color: var(--secondary-colour);
+  margin-bottom: 1.2rem;
+}
+
+.hero-feature-title {
+  font-size: 2.8rem;
+  line-height: 1.3;
+}
+
+/* The shared feature-copy rule already sizes the body; the accordion's own
+   bottom padding is what a section doesn't need, since the section supplies the
+   space below it. */
+.hero-feature-body {
+  padding-bottom: 0;
+}
+
+/* Below the desktop width the hero stacks into a plain page: no pinned stage
+   travelling beside the copy, no sentinels, no observer.
+
+   It has to cover two states at once. Once hydrated, this styles the real
+   simple layout. Before hydration — and for a visitor with no JS at all — the
+   server's desktop markup is still on screen, and this is what stops it sitting
+   in a half-width two-column grid with five viewport-tall invisible gaps. The
+   stage's vh height and fixed overflow existed only to keep a pinned strip from
+   clipping, so both go with the pinning; the camel is re-capped by width, since
+   the stage now grows with its content and would otherwise fill an 1100px
+   window. */
+@media (max-width: 1200px) {
+  .landing-hero {
+    /* The navbar is fixed on the landing, so the first thing on the page has to
+       clear it — body padding only reaches the page edge. */
+    padding-top: calc(var(--navbar-clearance) - var(--page-pad-y) + 4.0rem);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3rem;
-    z-index: 3;
-    pointer-events: none;
-}
+    /* The base rule sets align-items: start for the two-column grid. In a flex
+       column that left-aligns every child and sizes it to content, which is what
+       left the camel sitting narrow and off-centre — stretch is the flex
+       equivalent of the grid's full-width spans. */
+    align-items: stretch;
+  }
 
-.pre-reveal-text {
-    font-size: 2rem;
-    font-weight: 800;
-    text-align: center;
-    color: var(--primary-colour);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-}
+  .hero-intro {
+    min-height: auto;
+    padding-bottom: 4.0rem;
+  }
 
-.pre-reveal-accent {
-    color: var(--secondary-colour);
-}
-
-.scroll-clock-wrapper {
-    width: 50%;
-    max-width: 50rem;
-}
-
-/* ── Builder overlay (phase 6 end → real builder) ── */
-.builder-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10;
-    padding: 2.0rem;
-    opacity: 0;
-    pointer-events: none;
-}
-
-.builder-overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.builder-overlay .camel-builder {
-    width: 100%;
-    max-width: 120rem;
-}
-
-/* ── Scrollbar hidden during animation (grid freeze handled by body::before) ── */
-body.scroll-anim-active {
-    scrollbar-width: none;
-}
-
-body.scroll-anim-active::-webkit-scrollbar {
-    display: none;
-}
-
-/* ── Locked state: builder becomes the page ── */
-.scroll-container.locked {
-    height: auto;
-}
-
-.scroll-container.locked .scroll-sticky {
+  .hero-stage {
     position: static;
     height: auto;
     overflow: visible;
-}
+    padding-bottom: 4.0rem;
+  }
 
-.scroll-container.locked .clock-layer {
+  .hero-showcase-layer {
+    max-width: min(46rem, 100%);
+  }
+
+  .hero-copy-pane {
+    position: static;
+    height: auto;
+  }
+
+  .hero-sentinel,
+  .hero-sentinel-tail {
     display: none;
+  }
+
+  /* Everything open, since there is no scroll to open it. The rows still carry
+     their click handler, but hydration and the mode swap land in the same
+     commit, so the fallback-styled track is gone before a click can reach one. */
+  .hero-accordion-body {
+    grid-template-rows: 1fr;
+  }
 }
 
-.scroll-container.locked .builder-overlay {
-    position: relative;
-    inset: auto;
-    align-items: flex-start;
-    justify-content: center;
-    padding: 2.0rem;
-    padding-top: 12rem;
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.scroll-container.locked .builder-overlay .canvas-wrapper {
-    opacity: 1;
-}
-
-.scroll-container.locked .builder-overlay .camel-builder-form {
-    opacity: 1;
-}
-
-.scroll-container.locked .scroll-clock-wrapper {
-    display: none;
-}
-
-/* ── Responsive ── */
 @media (max-width: 768px) {
-    .scroll-container {
-        height: 780vh;
-    }
+  .hero-title {
+    font-size: 2.2rem;
+    line-height: 1.4;
+  }
 
-    .scroll-clock-wrapper {
-        width: 70%;
-    }
+  /* Long-form copy, and the lede with it — the lede was never the problem, but
+     leaving it smaller than the feature bodies it introduces would read as a
+     hierarchy mistake once the feature copy went up. */
+  .hero-lede,
+  .hero-feature-body {
+    font-size: 1.9rem;
+  }
 
-    .scroll-container.locked .builder-overlay {
-        padding-top: 10rem;
-    }
-}
+  .hero-feature-title {
+    font-size: 2.2rem;
+  }
 
-@media (max-width: 480px) {
-    .scroll-container {
-        height: 700vh;
-    }
+  .hero-feature {
+    padding: 2.4rem 0;
+  }
 
-    .scroll-clock-wrapper {
-        width: 85%;
-    }
+  .hero-actions {
+    gap: 1.6rem;
+    margin-top: 2.8rem;
+  }
 
-    .scroll-container.locked .builder-overlay {
-        padding-top: 9rem;
-    }
-}
-
-/* ── Scroll guide arrow (big screens only) ── */
-.scroll-guide {
-    position: fixed;
-    right: 3rem;
-    top: 50%;
-    transform: translateY(-50%);
-    z-index: 60;
-    width: 4.6rem;
-    height: 4.6rem;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    background: transparent;
-    color: var(--fg-colour);
-    opacity: 0.5;
-    transition: opacity 0.2s ease;
-}
-
-.scroll-guide:hover {
-    opacity: 1;
-    transform: translateY(-50%);
-    box-shadow: 8px 8px 0px var(--border-colour);
-}
-
-.scroll-guide svg {
-    width: 2.2rem;
-    height: 2.2rem;
-}
-
-@media (min-width: 900px) and (min-height: 660px) {
-    .scroll-guide {
-        display: flex;
-    }
+  .hero-actions .btn-link {
+    width: 100%;
+    text-align: center;
+  }
 }

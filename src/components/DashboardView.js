@@ -7,7 +7,6 @@ import { ChevronDown } from "lucide-react";
 import Navbar from "./Navbar";
 import ClockCard from "./ClockCard";
 import EmptyState from "./EmptyState";
-import { supabase } from "@/lib/supabase/client";
 import EmailConfirmBanner from "./EmailConfirmBanner";
 
 function isExpired(clock, now) {
@@ -33,26 +32,9 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
     const [expiredOpen, setExpiredOpen] = useState(true);
     const { total, drafts, live, expired } = getStats(clocks);
 
+    const ownIds = new Set(clocks.map((c) => c.id));
     const followedIds = new Set(followedClocks.map((c) => c.id));
-    const allClocks = [...clocks, ...followedClocks];
-
-    const handleUnfollow = async (clockId) => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { error } = await supabase
-            .from("follows")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("clock_id", clockId);
-
-        if (error) {
-            console.error("Failed to unfollow clock:", error.message);
-            return;
-        }
-
-        router.refresh();
-    };
+    const allClocks = [...clocks, ...followedClocks.filter((c) => !ownIds.has(c.id))];
 
     const now = new Date();
     const byDate = (a, b) => new Date(a.target_at) - new Date(b.target_at);
@@ -79,8 +61,8 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                     <span className="stat-label">DRAFTS</span>
                 </div>
                 <div className="stat-card nbtc stat-following">
-                    <span className="stat-value stat-value-following">{followedClocks.length}</span>
-                    <span className="stat-label">FOLLOWING</span>
+                    <span className="stat-value stat-value-following">{followedClocks.filter((c) => !ownIds.has(c.id)).length}</span>
+                    <span className="stat-label">SUPPORTED</span>
                 </div>
                 <div className="stat-card nbtc stat-expired">
                     <span className="stat-value stat-value-expired">{expired}</span>
@@ -112,9 +94,8 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                                         <ClockCard
                                             key={clock.id}
                                             clock={clock}
-                                            owned={!followedIds.has(clock.id)}
+                                            owned={ownIds.has(clock.id)}
                                             followed={followedIds.has(clock.id)}
-                                            onUnfollow={() => handleUnfollow(clock.id)}
                                             onDeleted={() => router.refresh()}
                                         />
                                     ))}
@@ -149,9 +130,8 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                                         <ClockCard
                                             key={clock.id}
                                             clock={clock}
-                                            owned={!followedIds.has(clock.id)}
+                                            owned={ownIds.has(clock.id)}
                                             followed={followedIds.has(clock.id)}
-                                            onUnfollow={() => handleUnfollow(clock.id)}
                                             onDeleted={() => router.refresh()}
                                         />
                                     ))}

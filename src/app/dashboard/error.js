@@ -2,7 +2,7 @@
 
 import { RefreshCw } from "lucide-react";
 
-export default function DashboardError({ error, reset }) {
+export default function DashboardError({ reset }) {
     return (
         <div className="auth-page">
             <div className="auth-card nbtc">

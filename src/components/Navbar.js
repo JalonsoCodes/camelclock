@@ -68,33 +68,10 @@ export default function Navbar() {
         e.preventDefault();
         setOpen(false);
         if (pathname !== "/") {
-            router.push(`/?section=${id}`);
+            router.push(`/#${id}`);
             return;
         }
-        const target = document.getElementById(id);
-        if (!target) return;
-
-        // The animated hero is 900vh tall and collapses to auto-height once the
-        // scroll animation locks, which shifts every section below it. Native
-        // hash navigation targets the pre-lock offset and overshoots, so we
-        // force the lock first (jumping the hero to its end) and then scroll to
-        // the section from the now-stable layout.
-        const scrollToTarget = () => {
-            const navEl = document.querySelector(".navbar");
-            const offset = navEl ? navEl.getBoundingClientRect().height : 0;
-            const top = target.getBoundingClientRect().top + window.scrollY - offset;
-            window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
-        };
-
-        const container = document.querySelector(".scroll-container");
-        if (container && !container.classList.contains("locked")) {
-            const rect = container.getBoundingClientRect();
-            const endY = rect.top + window.scrollY + rect.height - window.innerHeight;
-            window.scrollTo({ top: endY, behavior: "instant" });
-            requestAnimationFrame(() => requestAnimationFrame(scrollToTarget));
-        } else {
-            scrollToTarget();
-        }
+        document.getElementById(id)?.scrollIntoView({ block: "start" });
     }, [pathname, router]);
 
     useEffect(() => {
@@ -215,7 +192,7 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
                     </>
                 ) : (
                     <>
-                        <a href="#features" onClick={(e) => handleSectionNav(e, "features")}>Features</a>
+                        <a href="#create" onClick={(e) => handleSectionNav(e, "create")}>Make a clock</a>
                         <a href="#pricing" onClick={(e) => handleSectionNav(e, "pricing")}>Pricing</a>
                         <button className="btn-link btn-secondary mobile-only" type="button" onClick={() => { setAuthMode("login"); setAuthOpen(true); setOpen(false); }}>
                             <LogIn className="button-icon" />

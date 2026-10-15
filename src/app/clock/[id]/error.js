@@ -2,7 +2,7 @@
 
 import { RefreshCw } from "lucide-react";
 
-export default function ClockError({ error, reset }) {
+export default function ClockError({ reset }) {
     return (
         <div className="auth-page">
             <div className="auth-card nbtc">

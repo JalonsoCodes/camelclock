@@ -1,67 +1,104 @@
 import { createClient } from "@/lib/supabase/server";
 import Navbar from "@/components/Navbar";
 import LandingHero from "@/components/LandingHero";
-import Features from "@/components/Features";
+import ClockCreationWizard from "@/components/ClockCreationWizard";
+import ExampleGrid from "@/components/ExampleGrid";
 import Pricing from "@/components/Pricing";
+import { quickStart } from "@/content/landingCopy";
+import { levelFromCount, unlockedBoostIdsFor } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Create a Countdown Clock",
-  description:
-    "Design and share embeddable countdown clocks with pixel-art camels. Free for personal use.",
+    title: "Create a Countdown Clock",
+    description:
+        "Turn any big day into a friendly pixel camel that counts down the seconds — and lets your crowd tap along. Free to make, easy to share or embed.",
 };
 
-function makeFallbackPresets() {
-    const targetAt = new Date(Date.now() + 17 * 86400000 + 10 * 3600000 + 28 * 60000 + 10 * 1000).toISOString();
+const BRAND_PRIMARY = "#DBB279";
+const BRAND_SECONDARY = "#8E652C";
+
+const SHOWCASE_COLUMNS =
+    "id, title, target_at, intro_text, celebration_message, celebration_type, primary_colour, secondary_colour, wearables, boosts, boost_order, hydrate_count, level, viewer_hydrates";
+
+/* Each fallback pairs effects with the reveal order that actually unlocks them, so the
+       seeded hydrate_count the card sits at has really revealed what it is showing. The
+       order spans two categories per level, matching what shuffleBoostOrder deals. */
+const FALLBACK_ORDER = ["jack", "rain", "sparkle", "sun", "fireworks", "pushup", "sandstorm"];
+
+function makeFallbackClocks() {
+    const target = new Date();
+    target.setDate(target.getDate() + 17);
+    const iso = target.toISOString();
+
     return [
-        { title: "My Amazing Promotion", primaryColour: "#DBB279", secondaryColour: "#8E652C", introText: "in", wearables: [], celebrationMessage: "TIME IS UP!", celebrationType: "spit", targetAt },
-        { title: "Summer Sale", primaryColour: "#FF6B6B", secondaryColour: "#C92A2A", introText: "in", wearables: [], celebrationMessage: "TIME IS UP!", celebrationType: "spit", targetAt },
-        { title: "Grand Opening", primaryColour: "#51CF66", secondaryColour: "#2B8A3E", introText: "in", wearables: [], celebrationMessage: "TIME IS UP!", celebrationType: "spit", targetAt },
-        { title: "Product Launch", primaryColour: "#339AF0", secondaryColour: "#1864AB", introText: "in", wearables: [], celebrationMessage: "TIME IS UP!", celebrationType: "spit", targetAt },
-        { title: "Flash Sale", primaryColour: "#FF922B", secondaryColour: "#D9480F", introText: "in", wearables: [], celebrationMessage: "TIME IS UP!", celebrationType: "spit", targetAt },
-    ];
+        ["00000000-0000-0000-0000-000000000001", "My Amazing Promotion", BRAND_PRIMARY, BRAND_SECONDARY, [{ id: "shine" }, { id: "sun" }], 50],
+        ["00000000-0000-0000-0000-000000000002", "Summer Sale", "#FF6B6B", "#C92A2A", [{ id: "sparkle" }, { id: "rain" }], 50],
+        ["00000000-0000-0000-0000-000000000003", "Grand Opening", "#51CF66", "#2B8A3E", [{ id: "shine" }, { id: "jack" }], 10],
+        ["00000000-0000-0000-0000-000000000004", "Product Launch", "#339AF0", "#1864AB", [{ id: "fireworks" }, { id: "pushup" }], 100],
+        ["00000000-0000-0000-0000-000000000005", "Flash Sale", "#FF922B", "#D9480F", [{ id: "shine" }, { id: "rain" }], 10],
+    ].map(([id, title, primaryColour, secondaryColour, boosts, hydrateCount]) => {
+        const level = levelFromCount(hydrateCount);
+        const unlocked = unlockedBoostIdsFor(FALLBACK_ORDER, level);
+        return {
+            id,
+            title,
+            target_at: iso,
+            intro_text: "in",
+            celebration_message: "TIME IS UP!",
+            celebration_type: "spit",
+            primary_colour: primaryColour,
+            secondary_colour: secondaryColour,
+            wearables: [],
+            boosts: boosts.filter((b) => unlocked.has(b.id)),
+            boost_order: FALLBACK_ORDER,
+            hydrate_count: hydrateCount,
+            level,
+            viewer_hydrates: false,
+            /* No row to link to, so the card must not offer a view/watermark link. */
+            is_fallback: true,
+        };
+    });
 }
 
-async function getPresets() {
+async function getShowcaseClocks() {
     try {
         const supabase = await createClient();
-        const { data: showcases } = await supabase
-            .from("showcases")
-            .select("title, target_at, intro_text, celebration_message, celebration_type, primary_colour, secondary_colour, wearables")
-            .order("sort_order");
+        const { data: clocks, error } = await supabase
+            .from("clocks")
+            .select(SHOWCASE_COLUMNS)
+            .eq("is_showcase", true)
+            .eq("status", "live")
+            .order("showcase_order");
 
-        if (!showcases || showcases.length === 0) return makeFallbackPresets();
+        /* A failed select lands here as null data, which is indistinguishable
+           from an empty table and would quietly serve the hardcoded copy
+           forever. Log it so a schema mismatch is visible rather than silent. */
+        if (error) {
+            console.error("Failed to load showcase clocks:", error.message);
+        }
 
-        return showcases.map((s) => ({
-            title: s.title,
-            primaryColour: s.primary_colour,
-            secondaryColour: s.secondary_colour,
-            introText: s.intro_text,
-            wearables: s.wearables ?? [],
-            celebrationMessage: s.celebration_message,
-            celebrationType: s.celebration_type,
-            targetAt: s.target_at,
-        }));
-    } catch {
-        return makeFallbackPresets();
+        if (!clocks || clocks.length === 0) return makeFallbackClocks();
+
+        return clocks;
+    } catch (error) {
+        console.error("getShowcaseClocks:", error?.message ?? error);
+        return makeFallbackClocks();
     }
 }
 
-export default async function Home({ searchParams }) {
-  const presets = await getPresets();
-  const params = await searchParams;
-  const section = params?.section ?? null;
-  const locked = section === "features" || section === "pricing";
+export default async function Home() {
+    const examples = await getShowcaseClocks();
 
-  return (
-    <>
-      <Navbar />
-      <main>
-        <LandingHero presets={presets} locked={locked} sectionTarget={locked ? section : null} />
-        <Features />
-        <Pricing />
-      </main>
-    </>
-  )
+    return (
+        <>
+            <Navbar />
+            <main className="landing-page">
+                <LandingHero />
+                <ClockCreationWizard heading={quickStart.title} subheading={quickStart.subtitle} />
+                <ExampleGrid clocks={examples} />
+                <Pricing />
+            </main>
+        </>
+    );
 }

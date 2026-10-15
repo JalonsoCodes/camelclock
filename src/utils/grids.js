@@ -843,11 +843,26 @@ export const celebrationFrames = [
 
 export const celebrationFrameDurationMs = 200;
 
+/* Wearables slot in this order, one per category. Keep this list as the single
+   source of truth for picker ordering — the four pickers all render through
+   wearablesByCategory() below. */
+export const WEARABLE_CATEGORIES = ["head", "eyes", "face", "neck", "feet"];
+
+export function wearablesByCategory() {
+    const groups = {};
+    for (const [id, item] of Object.entries(wearables)) {
+        if (!groups[item.category]) groups[item.category] = [];
+        groups[item.category].push({ id, ...item });
+    }
+    return WEARABLE_CATEGORIES.filter((cat) => groups[cat]).map((cat) => [cat, groups[cat]]);
+}
+
 export const wearables = {
     wizard_hat: {
         name: "Wizard Hat",
         emoji: "🧙",
         category: "head",
+        tags: ["halloween", "spooky", "costume"],
         grid: [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 2, 0],
@@ -872,6 +887,7 @@ export const wearables = {
         name: "Top Hat",
         emoji: "🎩",
         category: "head",
+        tags: ["formal", "occasion"],
         grid: [
             [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
             [0, 0, 1, 1, 1, 1, 1, 1, 0, 0],
@@ -889,13 +905,14 @@ export const wearables = {
             [2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
             [0, 2, 2, 2, 2, 2, 2, 2, 2, 0]
         ],
-        colours: { 1: "#333333", 2: "#181818" },
+        colours: { 1: "--wearable-ink", 2: "--wearable-ink-shadow" },
         anchor: { row: 34, col: 7 },
     },
     gold_chain: {
         name: "Gold Chain",
         emoji: "⛓️",
         category: "neck",
+        tags: ["shiny", "legend"],
         grid: [
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 3],
             [0, 0, 0, 0, 0, 0, 0, 0, 0, 2],
@@ -921,6 +938,7 @@ export const wearables = {
         name: "Scarf",
         emoji: "🧣",
         category: "neck",
+        tags: ["winter", "cosy"],
         grid: [
             [0, 0, 0, 0, 0, 0, 0, 0, 1],
             [0, 0, 0, 0, 0, 0, 0, 1, 3],
@@ -948,6 +966,7 @@ export const wearables = {
         name: "Rollerskates",
         emoji: "⛸️",
         category: "feet",
+        tags: ["sport", "fun"],
         grid: [
             [0, 0, 1, 1, 2, 2, 2],
             [0, 1, 2, 2, 2, 2, 2],
@@ -963,5 +982,355 @@ export const wearables = {
             { row: 74, col: 63 },
             { row: 74, col: 70 },
         ],
+    },
+    crown: {
+        name: "Crown",
+        emoji: "👑",
+        category: "head",
+        tags: ["legend", "occasion", "royal"],
+        grid: [
+            [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0],
+            [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+            [2, 3, 2, 2, 2, 3, 2, 2, 2, 3, 2, 0],
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+        ],
+        colours: { 1: "#FFD54F", 2: "#D4AF37", 3: "#8A6A1F" },
+        anchor: { row: 41, col: 4 },
+    },
+    party_hat: {
+        name: "Party Hat",
+        emoji: "🎉",
+        category: "head",
+        tags: ["festive", "celebration", "party"],
+        grid: [
+            [0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 4, 4, 4, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 1, 1, 2, 1, 1, 0, 0, 0],
+            [0, 0, 0, 1, 2, 1, 2, 1, 0, 0, 0],
+            [0, 0, 1, 1, 2, 1, 2, 1, 1, 0, 0],
+            [0, 0, 1, 2, 1, 2, 1, 2, 1, 0, 0],
+            [0, 1, 1, 2, 1, 2, 1, 2, 1, 1, 0],
+            [0, 1, 2, 1, 2, 1, 2, 1, 2, 1, 0],
+            [1, 1, 2, 1, 2, 1, 2, 1, 2, 1, 1],
+            [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+        ],
+        colours: { 1: "#E53935", 2: "#FFFFFF", 3: "#8E1F1C", 4: "#FFD54F" },
+        anchor: { row: 37, col: 6 },
+    },
+    grad_cap: {
+        name: "Grad Cap",
+        emoji: "🎓",
+        category: "head",
+        tags: ["occasion", "milestone"],
+        grid: [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4],
+            [0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+        ],
+        colours: { 1: "--wearable-ink-shadow", 2: "--wearable-ink", 3: "#FFD54F", 4: "--wearable-ink-light" },
+        anchor: { row: 40, col: 4 },
+    },
+    halo: {
+        name: "Halo",
+        emoji: "😇",
+        category: "head",
+        tags: ["spooky", "halloween", "divine"],
+        grid: [
+            [0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+            [0, 0, 2, 1, 0, 0, 0, 0, 1, 2, 0, 0],
+            [0, 0, 2, 1, 0, 0, 0, 0, 1, 2, 0, 0],
+            [0, 0, 2, 1, 1, 1, 1, 1, 1, 2, 0, 0],
+            [0, 0, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0],
+        ],
+        colours: { 1: "#FFF59D", 2: "#FFD54F", 3: "#FFEE58" },
+        anchor: { row: 38, col: 7 },
+    },
+    bowtie: {
+        name: "Bow Tie",
+        emoji: "🎀",
+        category: "neck",
+        tags: ["formal", "occasion"],
+        grid: [
+            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+            [1, 1, 1, 1, 0, 3, 3, 0, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 3, 3, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 0, 3, 3, 0, 1, 1, 1, 1],
+            [1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+        ],
+        colours: { 1: "#E53935", 2: "#8E1F1C", 3: "#B71C1C" },
+        anchor: { row: 55, col: 6 },
+    },
+    gold_medal: {
+        name: "Gold Medal",
+        emoji: "🏅",
+        category: "neck",
+        tags: ["sport", "achievement"],
+        grid: [
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 0, 0, 0, 1, 0],
+            [1, 1, 0, 0, 0, 0, 0, 0, 1, 1],
+            [1, 1, 4, 0, 0, 0, 0, 4, 1, 1],
+            [0, 4, 4, 0, 0, 0, 0, 4, 4, 0],
+            [0, 0, 0, 2, 2, 2, 2, 0, 0, 0],
+            [0, 0, 2, 2, 2, 2, 2, 2, 0, 0],
+            [0, 0, 3, 2, 2, 2, 2, 3, 0, 0],
+            [0, 0, 0, 3, 3, 3, 3, 0, 0, 0],
+        ],
+        colours: { 1: "#E53935", 2: "#FFD54F", 3: "#D4AF37", 4: "#B71C1C" },
+        anchor: { row: 55, col: 6 },
+    },
+    football_boots: {
+        name: "Football Boots",
+        emoji: "👟",
+        category: "feet",
+        tags: ["sport", "exercise"],
+        grid: [
+            [0, 0, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1],
+            [0, 1, 5, 1, 1, 1, 2],
+            [0, 1, 1, 1, 1, 2, 2],
+            [0, 3, 3, 3, 3, 3, 3],
+            [0, 4, 0, 4, 0, 4, 0],
+        ],
+        colours: { 1: "#2F80ED", 2: "#1B5FBF", 3: "#0B2E63", 4: "#0B2E63", 5: "#FFFFFF" },
+        positions: [
+            { row: 74, col: 20 },
+            { row: 74, col: 27 },
+            { row: 74, col: 63 },
+            { row: 74, col: 70 },
+        ],
+    },
+    cowboy_hat: {
+        name: "Cowboy Hat",
+        emoji: "🤠",
+        category: "head",
+        tags: ["western", "costume"],
+        grid: [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0],
+            [0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0],
+            [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2],
+            [2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 0],
+        ],
+        colours: { 1: "#B5793A", 2: "#8A531F" },
+        anchor: { row: 40, col: 3 },
+    },
+    sombrero: {
+        name: "Sombrero",
+        emoji: "👒",
+        category: "head",
+        tags: ["fiesta", "summer", "costume"],
+        grid: [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 0],
+            [0, 0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0],
+            [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3],
+            [0, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 0],
+        ],
+        colours: { 1: "#F4D35E", 2: "#C0392B", 3: "#2A9D8F" },
+        anchor: { row: 39, col: 0 },
+    },
+    rain_boots: {
+        name: "Rain Boots",
+        emoji: "🥾",
+        category: "feet",
+        tags: ["winter", "weather", "cosy"],
+        grid: [
+            [0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1],
+            [0, 1, 1, 1, 1, 1, 2],
+            [0, 3, 3, 3, 3, 3, 3],
+            [100, 100, 3, 3, 3, 100, 100],
+        ],
+        colours: { 1: "#F4C430", 2: "#C69517", 3: "#2E2E2E" },
+        positions: [
+            { row: 72, col: 20 },
+            { row: 72, col: 27 },
+            { row: 72, col: 63 },
+            { row: 72, col: 70 },
+        ],
+    },
+    trainers: {
+        name: "Trainers",
+        emoji: "👟",
+        category: "feet",
+        tags: ["sport", "casual"],
+        grid: [
+            [0, 0, 5, 1, 1, 1, 1],
+            [0, 5, 1, 1, 1, 1, 2],
+            [0, 1, 1, 1, 1, 2, 2],
+            [0, 1, 1, 1, 1, 2, 2],
+            [0, 3, 3, 3, 3, 3, 3],
+            [0, 3, 0, 3, 0, 3, 0],
+        ],
+        colours: { 1: "#E53935", 2: "#B71C1C", 3: "#2B2B2B", 5: "#FDD835" },
+        positions: [
+            { row: 74, col: 20 },
+            { row: 74, col: 27 },
+            { row: 74, col: 63 },
+            { row: 74, col: 70 },
+        ],
+    },
+};
+
+/* Boosts are the ambient effects an owner straps to a clock. There are exactly three
+   categories — exercise, aura, weather — and one effect may run per category, so a
+   clock never runs more than three.
+
+   Every ambient def carries a `category`, a single `cadenceMs`, and either an `anim`
+   (a whole-camel motion; the engine runs one motion at a time) or an `overlay` (cell
+   shading and post-passes; these run concurrently with everything else). There is no
+   `kind` and no per-def trigger table any more: an effect either has a cadence or it
+   is reactive.
+
+   `reactive: true` effects are never offered as a choice and never have a cadence.
+   They exist only to answer something a person did — a hydrate click, a level-up — and
+   validateBoosts rejects them outright.
+
+   Unlock order is deliberately NOT here. A clock's ladder is shuffled once when the
+   clock is created and stored in clocks.boost_order, so two clocks at the same level
+   can have different effects. See shuffleBoostOrder in utils/boost.js. The only
+   fixed rung is `startsUnlocked` (shine, free at level 1). */
+export const BOOSTS = {
+    hop: {
+        id: "hop",
+        name: "Hop",
+        icon: "\u{1F998}",
+        description: "Reacts to a hydration with a little jump.",
+        reactive: true,
+        anim: "hop",
+        frames: 12,
+        durationMs: 640,
+    },
+    legend: {
+        id: "legend",
+        name: "Legend Backflip",
+        icon: "\u{1F451}",
+        description: "Throws a backflip the moment a new level is reached.",
+        reactive: true,
+        anim: "spin",
+        frames: 16,
+        durationMs: 1600,
+        profile: { crouchEnd: 0.08, airEnd: 0.6, bounceEnd: 0.72, crouchDepth: 2, peak: 18, bouncePeak: 5 },
+    },
+    pushup: {
+        id: "pushup",
+        name: "Pressup",
+        icon: "\u{1F4AA}",
+        description: "Drops into a pressup every 12 seconds.",
+        category: "exercise",
+        anim: "pushup",
+        frames: 16,
+        durationMs: 1300,
+        cadenceMs: 12000,
+        profile: { formEnd: 0.3, holdEnd: 0.62, peakRot: 0.1, sink: 1.5, pivotX: 0.33, pivotY: 1.0 },
+    },
+    jack: {
+        id: "jack",
+        name: "Jumping Jacks",
+        icon: "\u{26F9}\uFE0F",
+        description: "Pops through two jumping jacks every 12 seconds.",
+        category: "exercise",
+        anim: "jack",
+        frames: 20,
+        durationMs: 1600,
+        cadenceMs: 12000,
+        profile: { crouchEnd: 0.14, airEnd: 0.5, bounceEnd: 0.75, crouchDepth: 2, peak: 10, bouncePeak: 3, legSplit: 0.68, legSpread: 1.7, reps: 2 },
+    },
+    shine: {
+        id: "shine",
+        name: "Shine",
+        icon: "\u{2728}",
+        description: "Sweeps a shiny highlight across the camel every 10 seconds.",
+        category: "aura",
+        startsUnlocked: true,
+        overlay: "shine",
+        frames: 8,
+        durationMs: 700,
+        cadenceMs: 10000,
+    },
+    sparkle: {
+        id: "sparkle",
+        name: "Sparkle",
+        icon: "\u{1F387}",
+        description: "Twinkles little stars around the camel every 9 seconds.",
+        category: "aura",
+        overlay: "sparkle",
+        frames: 10,
+        durationMs: 900,
+        cadenceMs: 9000,
+    },
+    fireworks: {
+        id: "fireworks",
+        name: "Fireworks",
+        icon: "\u{1F386}",
+        description: "Bursts a spray of coloured sparks over the camel every 16 seconds.",
+        category: "aura",
+        overlay: "fireworks",
+        frames: 14,
+        durationMs: 1500,
+        cadenceMs: 16000,
+        colours: ["#FF5252", "#FFD54F", "#4FC3F7", "#BA68C8", "#4DB6AC", "#FF8A65"],
+    },
+    sun: {
+        id: "sun",
+        name: "Sun Passing Over",
+        icon: "\u{2600}\uFE0F",
+        description: "A sun drifts across the sky above the camel.",
+        category: "weather",
+        overlay: "sun",
+        frames: 40,
+        durationMs: 4000,
+        cadenceMs: 14000,
+        profile: { radius: 3, lift: 0, rayLen: 1.6, shadeRadius: 16, shadeStrength: 0.26 },
+    },
+    rain: {
+        id: "rain",
+        name: "Rain Cloud",
+        icon: "\u{1F327}\uFE0F",
+        description: "Clouds roll in and rain comes pouring down.",
+        category: "weather",
+        overlay: "rain",
+        frames: 45,
+        durationMs: 4500,
+        cadenceMs: 13000,
+        profile: { clouds: 2, cloudWidth: 14, cloudRows: 5, lift: 0, drops: 22, dropLen: 2, dropSpeed: 1 },
+    },
+    sandstorm: {
+        id: "sandstorm",
+        name: "Sandstorm",
+        icon: "\u{1F3DC}\uFE0F",
+        description: "Sand sweeps across and buries the camel, then clears.",
+        category: "weather",
+        overlay: "sandstorm",
+        frames: 55,
+        durationMs: 5500,
+        cadenceMs: 17000,
+        profile: { bands: 3, grains: 34, grainWidth: 3, speed: 1.35, peakAlpha: 0.92 },
     },
 };

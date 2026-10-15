@@ -20,10 +20,29 @@ html {
   --card-colour: white;
   --border-colour: black;
   --pixel-dark: #000000;
+  --water-colour: #4FC3F7;
+  --boost-colour: #ff9800;
+  /* Theme-aware ink for dark wearables (top hat, grad cap…). Relative lightness is
+     preserved in both themes: shadow stays the darker detail, light the lighter one,
+     so shapes keep their form instead of inverting. */
+  --wearable-ink: #2E2E2E;
+  --wearable-ink-shadow: #141414;
+  --wearable-ink-light: #5A5A5A;
   --pixelated-font: "Press Start 2P", "Press Start 2P Fallback";
   /* Page inset shared by body padding and the fixed navbar so both always line up. */
   --page-pad-y: 4.0rem;
-  --page-pad-x: 12.0rem;
+  --page-pad-x: 6.0rem;
+  /* How far down the fixed navbar reaches, so sticky sections can clear it.
+     Derived from --page-pad-y so it stays correct at every breakpoint. */
+  --navbar-clearance: calc(var(--page-pad-y) + 8.0rem);
+  /* Neubrutalist card tokens — single source of truth for the 4px border +
+     8px hard offset shadow and the hover collapse. Components declare their own
+     resting shadow via --nbtc-shadow and NEVER re-declare box-shadow, so the
+     shared :hover collapse always wins (no more buttons sliding instead of pressing). */
+  --nbtc-border: 4px solid var(--border-colour);
+  --nbtc-shadow: 8px 8px 0 var(--border-colour);
+  --nbtc-hover-shadow: 0 0 0;
+  --quick-start-slide: 260ms;
 }
 
 .dark {
@@ -32,6 +51,11 @@ html {
   --card-colour: #1a1d23;
   --border-colour: #8f8f8f;
   --pixel-dark: #e8e8e8;
+  --water-colour: #29B6F6;
+  --boost-colour: #ff9800;
+  --wearable-ink: #D6DAE0;
+  --wearable-ink-shadow: #A6ADB5;
+  --wearable-ink-light: #F2F4F7;
 }
 
 body {
@@ -58,7 +82,7 @@ body::before {
 
 .page-container {
   width: 100%;
-  max-width: 120rem;
+  max-width: 150rem;
   margin: 0 auto;
 }
 
@@ -72,8 +96,8 @@ a:hover {
 }
 
 .nbtc {
-  border: 4px solid var(--border-colour);
-  box-shadow: 8px 8px 0px var(--border-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
 }
 
 button {
@@ -83,8 +107,8 @@ button {
   font-weight: bold;
   cursor: pointer;
   padding: 0.8rem 1.6rem;
-  border: 4px solid var(--border-colour);
-  box-shadow: 8px 8px 0px var(--border-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
 }
 
 /*
@@ -112,8 +136,30 @@ button:hover,
 .social-share-button:hover,
 .card-action-btn:hover {
   transform: translate(8px, 8px);
-  box-shadow: 0px 0px 0px;
+  box-shadow: var(--nbtc-hover-shadow);
   text-decoration: none;
+}
+
+button:disabled,
+.pressable:disabled,
+.btn-link:disabled,
+.account-trigger:disabled,
+.edit-fab:disabled,
+.social-share-button:disabled,
+.card-action-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:disabled:hover,
+.pressable:disabled:hover,
+.btn-link:disabled:hover,
+.account-trigger:disabled:hover,
+.edit-fab:disabled:hover,
+.social-share-button:disabled:hover,
+.card-action-btn:disabled:hover {
+  transform: none;
+  box-shadow: var(--nbtc-shadow);
 }
 
 .btn-link {
@@ -125,8 +171,8 @@ button:hover,
   font-size: 1.0rem;
   font-weight: bold;
   padding: 0.8rem 1.6rem;
-  border: 4px solid var(--border-colour);
-  box-shadow: 8px 8px 0px var(--border-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
   text-decoration: none;
 }
 
@@ -164,7 +210,7 @@ body.show-navbar .navbar {
   right: var(--page-pad-x);
   margin-left: auto;
   margin-right: auto;
-  max-width: 120rem;
+  max-width: 150rem;
   z-index: 1000;
   margin-bottom: 0;
 }
@@ -286,6 +332,7 @@ body.show-navbar .navbar {
 
 .form-group > * {
   flex: 1 1 0%;
+  min-width: 0;
 }
 
 .form-group.three-quarter-split > *:first-child {
@@ -331,6 +378,28 @@ body.show-navbar .navbar {
 
 .camel-builder-form label:focus-within {
   color: var(--secondary-colour);
+}
+
+.time-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+  gap: 0.8rem;
+}
+
+.time-field > input {
+  flex: 1 1 10rem;
+  min-width: 0;
+}
+
+.time-field .option-slider {
+  flex: 0 0 auto;
+  height: 4.8rem;
+}
+
+.time-field .option-slider-button {
+  padding: 0.8rem 1.1rem;
+  font-size: 0.9rem;
 }
 
 .more-options-summary {
@@ -405,6 +474,7 @@ input.colour-swatch::-webkit-color-swatch {
   background-color: var(--card-colour);
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .hex-hash {
@@ -417,6 +487,7 @@ input.colour-swatch::-webkit-color-swatch {
   box-shadow: none;
   width: 100%;
   height: 100%;
+  min-width: 0;
 }
 
 .hex-input-container:focus-within {
@@ -473,6 +544,25 @@ input.colour-swatch::-webkit-color-swatch {
   opacity: 0.8;
 }
 
+.share-dialog-ok {
+  align-self: flex-start;
+  font-size: 1.1rem;
+  padding: 0.8rem 1.6rem;
+}
+
+.share-embed-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+}
+
+.share-embed-button {
+  font-size: 1.05rem;
+  letter-spacing: 0.06em;
+  padding: 1.0rem 1.4rem;
+  justify-content: center;
+}
+
 .share-field {
   display: flex;
   flex-direction: column;
@@ -510,6 +600,32 @@ input.colour-swatch::-webkit-color-swatch {
 .social-share-button-outline {
   background-color: var(--card-colour);
   color: var(--fg-colour);
+}
+
+/* Viewer's compact share block: square brand icons on top, full-width actions stacked beneath
+   (width of the four squares together). */
+.social-share-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: 100%;
+  max-width: 24.4rem;
+  margin-top: 1.2rem;
+}
+
+.social-share-action {
+  width: 100%;
+  min-height: 4.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.8rem;
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  padding: 1.0rem 1.4rem;
 }
 
 .share-embed-toggle {
@@ -666,6 +782,252 @@ input.colour-swatch::-webkit-color-swatch {
   line-height: 1.5;
 }
 
+/* "Embed on your site" modal: a wide two-column sheet — options + code left, a mock
+   webpage rendering the real /clock/[id]/embed iframe right. The mockup themes itself
+   locally (light/dark re-declare the tokens) while the iframe boots its own theme. */
+.embed-site-overlay {
+  align-items: flex-start;
+  overflow-y: auto;
+  padding: 3.2rem 2.4rem;
+}
+
+.embed-site-card {
+  width: 100%;
+  max-width: 120rem;
+  padding: 4.0rem;
+  background-color: var(--card-colour);
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+  position: relative;
+}
+
+.embed-site-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.embed-site-lede {
+  font-size: 1.0rem;
+  font-weight: normal;
+  line-height: 1.6;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.embed-site-layout {
+  display: grid;
+  grid-template-columns: 34rem minmax(0, 1fr);
+  gap: 3.2rem;
+  align-items: start;
+}
+
+.embed-site-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.embed-site-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+  padding: 1.6rem;
+  border: var(--nbtc-border);
+  background: var(--card-colour);
+}
+
+.embed-site-option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.embed-site-option-label {
+  font-size: 1.0rem;
+  color: var(--secondary-colour);
+}
+
+.embed-site-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.embed-site-preview-label {
+  font-size: 1.0rem;
+  color: var(--secondary-colour);
+}
+
+.embed-mockup {
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
+  background: var(--bg-colour);
+  min-width: 0;
+}
+
+.embed-mockup.light {
+  --bg-colour: #ffffff;
+  --fg-colour: #000000;
+  --card-colour: #ffffff;
+  --border-colour: #000000;
+  --secondary-colour: #8E652C;
+  --water-colour: #4FC3F7;
+}
+
+.embed-mockup.dark {
+  --bg-colour: #0f1115;
+  --fg-colour: #e8e8e8;
+  --card-colour: #1a1d23;
+  --border-colour: #8f8f8f;
+  --secondary-colour: #8E652C;
+  --water-colour: #29B6F6;
+}
+
+.embed-mockup-browser {
+  display: flex;
+  flex-direction: column;
+}
+
+.embed-mockup-chrome {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 1.6rem;
+  border-bottom: var(--nbtc-border);
+  background: var(--card-colour);
+}
+
+.embed-mockup-dots {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.embed-mockup-dots i {
+  width: 1.2rem;
+  height: 1.2rem;
+  background: color-mix(in srgb, var(--fg-colour) 60%, transparent);
+}
+
+.embed-mockup-url {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: var(--nbtc-border);
+  background: var(--bg-colour);
+  color: var(--fg-colour);
+  font-size: 1.0rem;
+  padding: 0.8rem 1.2rem;
+}
+
+.embed-mockup-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.6rem;
+}
+
+.embed-mockup-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.embed-mockup-brand {
+  width: 12rem;
+  height: 2.4rem;
+  background: var(--fg-colour);
+}
+
+.embed-mockup-links {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.embed-mockup-links span {
+  width: 7rem;
+  height: 1.2rem;
+  background: color-mix(in srgb, var(--fg-colour) 50%, transparent);
+}
+
+.embed-mockup-post-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.embed-mockup-title {
+  width: 70%;
+  height: 2.2rem;
+  background: var(--fg-colour);
+}
+
+.embed-mockup-meta {
+  width: 38%;
+  height: 1.0rem;
+  background: color-mix(in srgb, var(--fg-colour) 45%, transparent);
+}
+
+/* The camel floats top-right and the article bars wrap the space beside and below it. */
+.embed-mockup-wrapped {
+  margin-top: 0;
+}
+
+.embed-mockup-float {
+  float: right;
+  width: 30rem;
+  max-width: 100%;
+  margin: -0.6rem 0 1.6rem 2.0rem;
+}
+
+/* The embed paints its own card border (and page background), so the frame itself must
+   stay chrome-less or the card shows a doubled border. */
+.embed-mockup-iframe {
+  display: block;
+  width: 100%;
+  height: 38rem;
+  border: none;
+  background: transparent;
+}
+
+/* Inline bars (not a flex row) so the article genuinely wraps around the floated frame,
+   the way body text wraps a newspaper image — to its left and beneath it. */
+.embed-mockup-para {
+  margin-bottom: 1.0rem;
+  font-size: 0;
+  line-height: 0;
+}
+
+.embed-mockup-para i {
+  display: inline-block;
+  height: 1.0rem;
+  margin: 0 0.8rem 0.8rem 0;
+  vertical-align: top;
+  background: color-mix(in srgb, var(--fg-colour) 45%, transparent);
+}
+
+@media (max-width: 1100px) {
+  .embed-site-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .embed-site-card {
+    padding: 2.4rem;
+  }
+
+  .embed-mockup-float {
+    width: 18rem;
+  }
+
+  .embed-mockup-iframe {
+    height: 26rem;
+  }
+}
+
 .public-clock {
   display: flex;
   justify-content: center;
@@ -677,9 +1039,19 @@ input.colour-swatch::-webkit-color-swatch {
 .public-clock-card {
   position: relative;
   width: 100%;
-  max-width: 56rem;
+  max-width: 60rem;
   background-color: var(--card-colour);
   padding: 2.4rem;
+}
+
+/* The creator handle belongs to the card, not the viewer rail, so it stays with
+   the clock on narrow layouts. Reuses .clock-by-avatar and .creator-handle. */
+.card-creator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.0rem;
+  margin-bottom: 1.6rem;
 }
 
 .wearables-section {
@@ -784,6 +1156,25 @@ input.colour-swatch::-webkit-color-swatch {
 
 .wearables-item-name {
   font-size: 1.4rem;
+}
+
+/* The reveal order is dealt once per clock, so the control that re-deals it (showcase sheet only)
+   sits with the picker rather than in the fields above it. */
+.boosts-order-shuffle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1.0rem;
+  font-size: 1.2rem;
+  font-family: inherit;
+  color: var(--fg-colour);
+  background-color: var(--bg-colour);
+  cursor: pointer;
+}
+
+.boosts-order-shuffle .button-icon {
+  width: 1.6rem;
+  height: 1.6rem;
 }
 
 .randomise-button {
@@ -927,58 +1318,251 @@ input.colour-swatch::-webkit-color-swatch {
   height: 1.6rem;
 }
 
-#features {
+/* The shared .page-container runs to 150rem because the viewer and the admin
+   sheet need the width. The landing is a reading page, so it caps well short
+   of that — otherwise the hero clock spans the whole display on a laptop. */
+.landing-page {
+  max-width: 124.0rem;
+  margin: 0 auto;
+}
+
+/* The landing used to get its <h2> weight from body, so every section heading
+   fell back to the 15px UA default. .section-title is the one scale for the
+   landing's section headings, and .section-subtitle carries the long-form copy. */
+#create,
+#pricing {
   margin-top: 12.0rem;
   scroll-margin-top: 16.0rem;
 }
 
-.features-grid {
+.section-title {
+  font-size: 2.4rem;
+  line-height: 1.5;
+  max-width: 78.0rem;
+}
+
+.section-subtitle {
+  margin-top: 1.6rem;
+  font-weight: normal;
+  font-size: 1.4rem;
+  line-height: 1.6;
+  max-width: 68.0rem;
+  opacity: 0.8;
+}
+
+/* Examples grid — the showcase rows that are not the hero, rendered as live
+   clocks. Sits below the quick-start wizard, so the thing you can build comes
+   before the things other people already built. */
+#examples {
+  margin-top: 12.0rem;
+  scroll-margin-top: 16.0rem;
+}
+
+.example-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(min(34.0rem, 100%), 1fr));
   gap: 4.0rem;
   margin-top: 4.0rem;
 }
 
-.feature-card {
-  background-color: var(--card-colour);
-  padding: 3.2rem;
+.example-card {
   display: flex;
   flex-direction: column;
-  gap: 1.6rem;
+  padding: 2.4rem;
+  min-width: 0;
+  /* Solid card fill so the camel reads as a clock on a card, not art floating on
+     the page grid (which is how the hero showcase deliberately reads). */
+  background-color: var(--card-colour);
 }
 
-.feature-icon {
+.example-card-clock {
+  min-height: 34.0rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.example-card-placeholder {
+  width: 100%;
+}
+
+/* The wizard asks one question at a time on the left; the preview sits beside
+   it on the right and sticks, so a step change never scrolls the clock away. */
+.quick-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 60rem);
+  gap: 4.0rem;
+  margin-top: 4.0rem;
+  align-items: start;
+}
+
+/* Matches .canvas-wrapper nbtc — the preview is the same card the builder
+   shows, just pinned while the wizard runs. */
+.quick-start-preview {
+  position: sticky;
+  top: calc(var(--page-pad-y) + 2.0rem);
+  background-color: var(--card-colour);
+}
+
+/* The landing navbar is fixed, so a preview would otherwise pin underneath it. */
+body.show-navbar .quick-start-preview {
+  top: var(--navbar-clearance);
+}
+
+.quick-start-form {
+  max-width: none;
+  gap: 2.4rem;
+}
+
+.quick-start-form .randomise-button {
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+/* Both the incoming and outgoing question live in here at once during a slide,
+   so it has to be the positioning context: the leaving one is absolutely
+   positioned and the incoming one is in flow and defines the height. */
+.quick-start-stage {
+  position: relative;
+  overflow: hidden;
+}
+
+.quick-start-slide {
+  animation: quick-start-in var(--quick-start-slide) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.quick-start-slide.is-leaving {
+  position: absolute;
+  inset: 0;
+  animation: quick-start-out var(--quick-start-slide) cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+/* Entering from the right, leaving to the left — the form reads as being asked,
+   not as being scrolled. Both are transform-only so nothing triggers layout. */
+@keyframes quick-start-in {
+  from {
+    opacity: 0;
+    transform: translateX(6.0rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes quick-start-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(-6.0rem);
+  }
+}
+
+.quick-start-question {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding-bottom: 2.4rem;
+  font-size: 1.2rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.step-panel-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 6.0rem;
-  height: 6.0rem;
+  width: 4.0rem;
+  height: 4.0rem;
   flex-shrink: 0;
-  background: var(--primary-colour);
+  background-color: var(--secondary-colour);
+  color: #ffffff;
   border: 4px solid var(--border-colour);
-  color: #111111;
+  font-size: 1.2rem;
 }
 
-.feature-icon > svg {
-  width: 2.6rem;
-  height: 2.6rem;
+.step-panel-number > svg {
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
-.feature-card h3 {
-  font-size: 1.8rem;
-  margin: 0;
+/* The question is the heading now, so it gets the body scale rather than the
+   label size these elements used to be. */
+.step-panel-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-weight: normal;
+  font-size: 2.4rem;
+  line-height: 1.5;
 }
 
-.feature-card p {
-  font-size: 1.4rem;
-  line-height: 1.6;
-  margin: 0;
-  opacity: 0.85;
+.step-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+  padding: 2.4rem;
+  background-color: var(--card-colour);
+}
+
+/* The preview is the widest thing the wizard ever shows, so it centres rather
+   than stretching a full-bleed canvas across the form. */
+.quick-start-actions {
+  display: flex;
+  align-items: center;
+  gap: 2.4rem;
+}
+
+.quick-start-back {
+  background-color: var(--secondary-colour);
+  color: #ffffff;
+}
+
+.quick-start-next {
+  margin-left: auto;
+  font-size: 1.2rem;
+  padding: 1.2rem 2.4rem;
+}
+
+.quick-start-create {
+  flex: 1;
+  font-size: 1.2rem;
+  padding: 1.2rem 2.4rem;
+}
+
+@media (max-width: 1100px) {
+  /* No room for a sticky sibling this narrow, so the preview drops out of the
+     right column and stacks below the form. */
+  .quick-start {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2.4rem;
+  }
+
+  .quick-start-preview {
+    position: static;
+    max-width: 60rem;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .step-panel-heading {
+    font-size: 1.9rem;
+  }
+
+  /* Paired fields (PRIMARY/SECONDARY colour, MONTH/DAY) have no room side by
+     side once the form column goes full width, so stack them here rather than
+     waiting for the phone breakpoint. */
+  .form-group {
+    flex-direction: column;
+  }
 }
 
 #pricing {
-  margin-top: 12.0rem;
-  scroll-margin-top: 16.0rem;
   --primary-colour: #DBB279;
   --secondary-colour: #8E652C;
 }
@@ -1172,8 +1756,8 @@ input.colour-swatch::-webkit-color-swatch {
   font-size: 1.0rem;
   font-weight: bold;
   padding: 0.8rem 1.6rem;
-  border: 4px solid var(--border-colour);
-  box-shadow: 8px 8px 0px var(--border-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
   text-decoration: none;
 }
 
@@ -1418,21 +2002,6 @@ input.colour-swatch::-webkit-color-swatch {
   gap: 1.6rem;
 }
 
-.unfollow-button {
-  width: 100%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.8rem;
-  background-color: #e53935;
-  color: white;
-  font-size: 1.0rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 1.0rem 1.2rem;
-  min-height: 4.0rem;
-}
-
 .card-action-btn {
   flex: 1;
   display: inline-flex;
@@ -1447,8 +2016,8 @@ input.colour-swatch::-webkit-color-swatch {
   padding: 1.0rem 1.2rem;
   min-height: 4.0rem;
   line-height: 1.5;
-  border: 4px solid var(--border-colour);
-  box-shadow: 8px 8px 0px var(--border-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
   text-decoration: none;
 }
 
@@ -1475,6 +2044,13 @@ input.colour-swatch::-webkit-color-swatch {
   color: black;
   flex: 0 0 auto;
   min-width: 4.0rem;
+}
+
+/* The icon-only card buttons (edit, unpublish, delete) are too tight to carry
+   a word on the desktop grid, so their labels stay hidden until the layout
+   drops to one card per row, where there is room for them. */
+.card-action-label {
+  display: none;
 }
 
 .empty-state {
@@ -1535,6 +2111,8 @@ input.colour-swatch::-webkit-color-swatch {
   background-color: var(--card-colour);
   width: 100%;
   max-width: 44rem;
+  max-height: calc(100vh - 4.8rem);
+  overflow-y: auto;
   padding: 4.0rem;
   display: flex;
   flex-direction: column;
@@ -1651,6 +2229,27 @@ input.colour-swatch::-webkit-color-swatch {
   color: #e53935;
   font-size: 1.2rem;
   text-align: center;
+}
+
+/* Success badge on the "EMAIL CONFIRMED" card. Centre-aligned with the title
+   below it, so it uses auto margins rather than the card's stretch. */
+.confirm-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 6.4rem;
+  height: 6.4rem;
+  margin: 0 auto;
+  background-color: #4caf50;
+  color: #ffffff;
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
+}
+
+.confirm-check svg {
+  width: 3.0rem;
+  height: 3.0rem;
+  stroke-width: 4;
 }
 
 .auth-message {
@@ -1890,7 +2489,8 @@ button:disabled {
 .edit-fab {
   position: absolute;
   top: 1.2rem;
-  right: 1.2rem;
+  left: 1.2rem;
+  right: auto;
   background-color: #9c27b0;
   color: white;
   font-size: 1.0rem;
@@ -1903,27 +2503,93 @@ button:disabled {
   gap: 0.8rem;
 }
 
-.clock-share-row {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.2rem;
-  max-width: 80rem;
-  margin-bottom: 2.0rem;
-}
-
-.clock-share-button {
-  background-color: #2196f3;
+.clock-delete-fab {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  left: auto;
+  background-color: #e11d48;
   color: white;
-  font-size: 1.2rem;
+  font-size: 1.0rem;
   font-weight: bold;
-  cursor: pointer;
-  padding: 1.0rem 2.4rem;
-  min-height: 4.4rem;
-  letter-spacing: 0.05em;
+  padding: 1.0rem 1.2rem;
+  min-height: 4.0rem;
+  line-height: 1.5;
   display: inline-flex;
   align-items: center;
   gap: 0.8rem;
+}
+
+.clock-post-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.post-actions-hydrate {
+  background-color: var(--water-colour);
+  color: white;
+  font-size: 1.5rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  padding: 1.4rem 2.4rem;
+  min-height: 5.6rem;
+  display: inline-flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+  gap: 1.0rem;
+}
+
+.post-actions-hydrate .button-icon {
+  width: 2.0rem;
+  height: 2.0rem;
+}
+
+.post-actions-double {
+  background-color: #ff9800;
+  color: #fff;
+  padding: 0.2rem 0.7rem;
+  border-radius: 0.4rem;
+  font-size: 1.0rem;
+  line-height: 1.4;
+}
+
+.post-actions-hydrate:disabled {
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
+  opacity: 0.5;
+}
+
+.creator-row {
+  display: flex;
+  align-items: center;
+  gap: 1.0rem;
+  font-size: 1.2rem;
+  padding: 0 0.4rem;
+}
+
+.clock-by-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.2rem;
+  height: 3.2rem;
+  flex-shrink: 0;
+  background-color: var(--fg-colour);
+  color: var(--bg-colour);
+  border: var(--nbtc-border);
+}
+
+.creator-handle {
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  font-size: 1.3rem;
 }
 
 .follow-button {
@@ -1949,7 +2615,7 @@ button:disabled {
   display: flex;
   align-items: stretch;
   gap: 1.2rem;
-  max-width: 80rem;
+  max-width: 150rem;
   margin-bottom: 2.0rem;
 }
 
@@ -1971,7 +2637,7 @@ button:disabled {
 
 .draft-banner {
   width: 100%;
-  max-width: 80rem;
+  max-width: 150rem;
   background-color: #f59e0b;
   color: black;
   font-size: 1.2rem;
@@ -2003,11 +2669,7 @@ body.embed-mode::before {
 }
 
 body.embed-mode.embed-transparent {
-  background-color: #ffffff;
-}
-
-.dark body.embed-mode.embed-transparent {
-  background-color: #191919;
+  background-color: transparent;
 }
 
 body.embed-mode.embed-transparent .public-clock-card {
@@ -2017,27 +2679,21 @@ body.embed-mode.embed-transparent .public-clock-card {
   padding: 0;
 }
 
-.embed-theme-switch {
-  position: fixed;
-  top: 1.2rem;
-  right: 1.2rem;
-  z-index: 60;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.public-clock:hover .embed-theme-switch,
-.public-clock:focus-within .embed-theme-switch {
-  opacity: 1;
-  pointer-events: auto;
-}
-
 body.embed-mode .site-footer {
   display: none;
+}
+
+/* Narrow embeds: the fixed rem padding of the page/card would otherwise eat most of a
+   small iframe, shrinking the camel out of proportion with the card. Media queries here
+   track the iframe's own viewport. */
+@media (max-width: 520px) {
+  body.embed-mode .public-clock {
+    padding: 1.6rem;
+  }
+
+  body.embed-mode .public-clock-card {
+    padding: 1.6rem;
+  }
 }
 
 .admin-showcase-page {
@@ -2111,47 +2767,38 @@ body.embed-mode .site-footer {
   margin-top: 0.8rem;
 }
 
-th.col-preview, td.col-preview { width: 42rem; min-width: 42rem; max-width: 42rem; }
 th.col-order,   td.col-order   { width: 14rem; min-width: 14rem; max-width: 14rem; }
-th.col-title,   td.col-title   { width: 36rem; min-width: 36rem; max-width: 36rem; }
-th.col-target,  td.col-target  { width: 22rem; min-width: 22rem; max-width: 22rem; }
-th.col-label,   td.col-label   { width: 20rem; min-width: 20rem; max-width: 20rem; }
-th.col-message, td.col-message { width: 32rem; min-width: 32rem; max-width: 32rem; }
-th.col-colours, td.col-colours { width: 28rem; min-width: 28rem; max-width: 28rem; }
-th.col-wearables, td.col-wearables { width: 34rem; min-width: 34rem; max-width: 34rem; }
-th.col-clock,   td.col-clock   { width: 16rem; min-width: 16rem; max-width: 16rem; }
-th.col-actions, td.col-actions { width: 20rem; min-width: 20rem; }
+th.col-title,   td.col-title   { width: 44rem; min-width: 44rem; max-width: 44rem; }
+th.col-target,  td.col-target  { width: 30rem; min-width: 30rem; max-width: 30rem; }
+th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width: 24rem; }
 
-.showcase-table th:first-child,
-.showcase-table td:first-child {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-  background: var(--bg-colour);
+.showcase-table td {
+  vertical-align: middle;
 }
 
-td.col-preview {
-  text-align: center;
+.admin-showcase-hint {
+  max-width: 90rem;
+  margin: 0 auto 3.2rem;
+  font-size: 1.1rem;
+  line-height: 1.8;
+  opacity: 0.8;
 }
 
-.cell-actions .admin-save-button,
-.cell-actions .admin-delete-button {
-  display: flex;
-  width: 100%;
-  background-color: #4caf50;
-  color: white;
-  font-size: 1.6rem;
+.admin-showcase-hint code,
+.admin-empty code {
+  font-family: monospace;
+  background-color: var(--card-colour);
+  border: 2px solid var(--border-colour);
+  padding: 0.2rem 0.6rem;
+}
+
+.admin-showcase-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.4rem;
   font-weight: bold;
-  padding: 1.2rem;
-  min-height: 4.8rem;
-}
-
-.cell-actions .admin-delete-button {
-  background-color: #e53935;
-}
-
-td.col-actions .admin-showcase-status {
-  margin-top: 0.8rem;
+  color: var(--fg-colour);
 }
 
 .order-controls {
@@ -2176,114 +2823,6 @@ td.col-actions .admin-showcase-status {
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
-}
-
-.cell-label {
-  display: block;
-  font-weight: bold;
-  letter-spacing: 0.05em;
-  opacity: 0.7;
-}
-
-.showcase-table .randomise-button {
-  justify-content: center;
-}
-
-.showcase-table input:not(.colour-swatch):not(.colour-hex-text),
-.showcase-table select,
-.showcase-table textarea {
-  display: block;
-  width: 100%;
-}
-
-.showcase-table input:not(.colour-swatch):not(.colour-hex-text),
-.showcase-table select {
-  font-size: 1.6rem;
-  padding: 1.2rem;
-  height: 4.8rem;
-  background-color: var(--card-colour);
-  color: var(--fg-colour);
-}
-
-.showcase-table textarea {
-  font-size: 1.6rem;
-  padding: 1.2rem;
-  background-color: var(--card-colour);
-  color: var(--fg-colour);
-  resize: vertical;
-}
-
-.showcase-table select:focus,
-.showcase-table textarea:focus,
-.showcase-table input:focus {
-  outline: none;
-  border-color: var(--secondary-colour);
-  box-shadow: 8px 8px 0px var(--secondary-colour);
-}
-
-.showcase-table .colour-swatch {
-  height: 4.8rem;
-}
-
-.wearables-chip-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.wearables-chip-heading {
-  font-weight: bold;
-  text-transform: uppercase;
-  opacity: 0.55;
-  font-size: 1.0rem;
-}
-
-.wearables-chip-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-}
-
-.wearables-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 3.6rem;
-  height: 3.6rem;
-  padding: 0;
-  font-size: 1.9rem;
-  line-height: 1;
-  background: var(--card-colour);
-  border: 3px solid var(--border-colour);
-  box-shadow: none;
-}
-
-.wearables-chip.selected {
-  background: #4caf50;
-  color: #ffffff;
-  font-size: 1.5rem;
-  font-weight: bold;
-}
-
-.wearables-chip:hover,
-.wearables-chip:focus-visible {
-  transform: none;
-  box-shadow: none;
-  border-color: var(--secondary-colour);
-}
-
-.admin-clock-link-row {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-  font-size: 1.3rem;
-}
-
-.admin-clock-link-row code {
-  font-family: monospace;
-  background: var(--border-colour);
-  color: #ffffff;
-  padding: 0.2rem 0.8rem;
 }
 
 .admin-clock-hint {
@@ -2312,8 +2851,9 @@ td.col-actions .admin-showcase-status {
 
 .site-footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 3.2rem;
+  gap: 1.6rem 3.2rem;
   padding: 3.2rem 2.4rem;
   font-size: 1.0rem;
   text-align: center;
@@ -2457,10 +2997,6 @@ td.col-actions .admin-showcase-status {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .features-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -2554,8 +3090,16 @@ td.col-actions .admin-showcase-status {
     grid-template-columns: 1fr;
   }
 
-  .features-grid {
-    grid-template-columns: 1fr;
+  /* One card per row leaves room for the icon-only buttons to show their word
+     too, so they grow to share the row evenly with SHARE / PUBLISH. */
+  .card-action-btn.edit-button,
+  .card-action-btn.unpublish-button,
+  .card-action-btn.delete-button {
+    flex: 1;
+  }
+
+  .card-action-label {
+    display: inline;
   }
 
   .pricing-grid {
@@ -2592,11 +3136,6 @@ td.col-actions .admin-showcase-status {
     grid-template-columns: 1fr;
   }
 
-  .form-group {
-    flex-direction: column;
-    gap: 3.0rem;
-  }
-
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
     gap: 2.0rem;
@@ -2609,6 +3148,29 @@ td.col-actions .admin-showcase-status {
 
   .empty-state {
     padding: 3.0rem;
+  }
+
+  .example-grid {
+    gap: 2.4rem;
+  }
+
+  .example-card-clock {
+    min-height: 28.0rem;
+  }
+
+  #create,
+  #examples,
+  #pricing {
+    margin-top: 7.0rem;
+    scroll-margin-top: 10.0rem;
+  }
+
+  .auth-card {
+    padding: 2.4rem;
+  }
+
+  .auth-modal-overlay {
+    padding: 1.6rem;
   }
 }
 .auth-button,
@@ -2634,4 +3196,1002 @@ td.col-actions .admin-showcase-status {
 .auth-button .button-icon {
   width: 2.0rem;
   height: 2.0rem;
+}
+
+/* ---- Boost levels & show board ---- */
+
+.card-hydrate-row {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.card-hydrators,
+.card-my-hydrates {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.level-chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 1.0rem;
+  border: 3px solid var(--fg-colour);
+  background: var(--card-colour);
+  color: var(--fg-colour);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+.viewer-stage {
+  display: grid;
+  grid-template-columns: minmax(16rem, 1fr) minmax(0, 60rem) minmax(16rem, 1fr);
+  column-gap: 4.0rem;
+  align-items: start;
+  width: 100%;
+}
+
+/* Columns are pinned rather than left to grid auto-placement: a draft renders
+   no left column at all, and an auto-placed card would drop into the narrow
+   first column instead of the 60rem middle one. */
+.viewer-center {
+  grid-column: 2;
+  width: 100%;
+  min-width: 0;
+}
+
+.viewer-stage .public-clock-card {
+  width: 100%;
+  min-width: 0;
+}
+
+.clock-finish-row {
+  display: block;
+  text-align: center;
+  font-size: min(1.2rem, calc(var(--clock-scale, 8) * 2.8px));
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  opacity: 0.7;
+  margin-top: calc(var(--clock-scale, 8) * -1px);
+}
+
+.viewer-info {
+  grid-column: 1;
+  justify-self: end;
+  width: 100%;
+  max-width: 26.0rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.community-inline {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.4rem;
+}
+
+.community-note {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  margin: 0;
+}
+
+.community-note-claim {
+  color: #2e7d32;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.community-note-grow {
+  color: #b45309;
+  background-color: rgba(255, 152, 0, 0.1);
+}
+
+.dark .community-note-claim {
+  color: #81c784;
+}
+
+.dark .community-note-grow {
+  color: #ffb74d;
+}
+
+.community-note-icon {
+  flex-shrink: 0;
+}
+
+.community-note-text {
+  line-height: 1.35;
+}
+
+/* Shown in the viewer rail when a hydrate write is rejected server-side. The optimistic count
+snaps back on failure, so without this a rejected hydrate is indistinguishable from a click
+   that never registered. Reuses the .auth-error / .card-error red. */
+.hydrate-error {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  line-height: 1.35;
+  color: #e53935;
+  background-color: rgba(229, 57, 53, 0.1);
+  border: 2px solid #e53935;
+}
+
+.hydrate-error-icon {
+  flex-shrink: 0;
+  width: 1.8rem;
+  height: 1.8rem;
+}
+
+.dark .hydrate-error {
+  color: #ef5350;
+  border-color: #ef5350;
+}
+
+.community-counts {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 1.6rem;
+}
+
+.community-stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.community-count-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-colour);
+  align-self: center;
+}
+
+.community-count-value {
+  font-size: 2.0rem;
+  font-weight: bold;
+  line-height: 1;
+}
+
+.community-count-label {
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  opacity: 0.6;
+}
+
+.community-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
+  width: 100%;
+  border-top: 3px dashed var(--fg-colour);
+  padding-top: 1.4rem;
+  opacity: 0.9;
+}
+
+.community-detail-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+  margin-top: 0.4rem;
+}
+
+.community-detail-label:first-child {
+  margin-top: 0;
+}
+
+.viewer-stats-top-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.viewer-stats-rank {
+  font-size: 1.2rem;
+  font-weight: bold;
+  opacity: 0.6;
+  min-width: 1.8rem;
+}
+
+.viewer-stats-top-handle {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.viewer-stats-you {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  color: var(--card-colour);
+  background-color: var(--fg-colour);
+}
+
+.viewer-stats-top-count {
+  font-size: 1.2rem;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.viewer-stats-empty {
+  font-size: 1.0rem;
+  opacity: 0.6;
+}
+
+.viewer-handle-nudge {
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.viewer-rail {
+  grid-column: 3;
+  justify-self: start;
+  width: 26.0rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4rem;
+}
+
+.level-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.4rem;
+  width: 100%;
+}
+
+/* Level-vote banner. Lives in the viewer's right rail, directly under the HYDRATE button, so it
+   only ever renders at rail width. The option buttons are the focal point: a water-filled vote bar
+   grows behind the copy, and hovering one previews that effect on the camel via the same
+   triggerNow path as the rack. A resolved card flashes the winner for a few seconds, then the
+   banner clears. */
+.level-poll-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.level-poll-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  background-color: var(--card-colour);
+  padding: 1.6rem;
+  --nbtc-border: 4px solid var(--boost-colour);
+  --nbtc-shadow: 8px 8px 0 var(--boost-colour);
+}
+
+.level-poll-card-resolved {
+  --nbtc-border: 4px solid #4caf50;
+  --nbtc-shadow: 8px 8px 0 #4caf50;
+}
+
+.level-poll-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.level-poll-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+}
+
+.level-poll-timer {
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+.level-poll-sub {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-weight: normal;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  opacity: 0.82;
+}
+
+/* Quorum meter: how close the tally is to the early-close threshold. A poll still resolves at the
+   24h deadline regardless, so this never implies the poll is over. */
+.level-poll-quorum {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+
+.level-poll-quorum-meter {
+  flex: 1 1 8rem;
+  min-width: 6rem;
+  height: 0.7rem;
+  border: 2px solid var(--boost-colour);
+  background-color: var(--bg-colour);
+}
+
+.level-poll-quorum-fill {
+  display: block;
+  height: 100%;
+  background-color: var(--boost-colour);
+}
+
+.level-poll-quorum-text {
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+.level-poll-win-emoji {
+  font-size: 1.8rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.level-poll-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+}
+
+.level-poll-option {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  padding: 1.2rem 1.4rem;
+  background-color: var(--bg-colour);
+  color: var(--fg-colour);
+  text-align: left;
+  /* The card's orange tokens are inherited; options keep the standard dark frame. */
+  --nbtc-border: 4px solid var(--border-colour);
+  --nbtc-shadow: 8px 8px 0 var(--border-colour);
+}
+
+.level-poll-option.is-mine {
+  background-color: color-mix(in srgb, var(--boost-colour) 22%, var(--bg-colour));
+  --nbtc-shadow: 8px 8px 0 var(--boost-colour);
+}
+
+/* The tally, drawn as an orange fill behind the copy. Sits under the body, so it never darkens
+   the name, the description or the count. */
+.level-poll-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  background-color: color-mix(in srgb, var(--boost-colour) 30%, transparent);
+}
+
+.level-poll-option-body {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.0rem;
+  width: 100%;
+}
+
+.level-poll-option-emoji {
+  font-size: 2.2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.level-poll-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.level-poll-option-name {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.level-poll-option-desc {
+  font-weight: normal;
+  font-size: 1.0rem;
+  line-height: 1.3;
+  opacity: 0.75;
+}
+
+.level-poll-option-votes {
+  position: relative;
+  z-index: 1;
+  display: block;
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
+.level-poll-foot {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  opacity: 0.7;
+}
+
+
+/* Three category rows, one per slot a clock can fill. Each bar reads how much of that category
+   has been UNLOCKED, so it only moves when a level hands over a new effect. The list underneath a
+   bar is the equip control: a button for the owner, the same list read-only for everyone else. */
+.category-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.category-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.category-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.category-row-label {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.category-row-count {
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.65;
+}
+
+.category-row-effects {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* The "BOOSTS" heading that sits above the category list in the viewer's level panel, so a
+   visitor knows what the chips below are for. */
+.boost-panel-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.7;
+}
+
+/* Boost list (compact, less prominent) */
+.boost-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  width: 100%;
+}
+
+.boost-category {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.boost-category-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.0rem;
+  padding: 0 0.2rem;
+}
+
+.boost-category-label {
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.boost-category-count {
+  font-size: 0.95rem;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.boost-list-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.boost-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.3rem 0;
+  opacity: 0.85;
+}
+
+.boost-list-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-colour);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+.boost-list-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.0rem;
+  font-weight: normal;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boost-list-toggle {
+  --nbtc-shadow: none;
+  --nbtc-hover-shadow: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  flex-shrink: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--fg-colour);
+  opacity: 0.6;
+}
+
+.boost-list-toggle:hover {
+  transform: none;
+  opacity: 1;
+}
+
+.boost-list-toggle-add {
+  color: var(--boost-colour);
+}
+
+@media (max-width: 1200px) {
+  .viewer-stage {
+    grid-template-columns: 1fr;
+    row-gap: 2.4rem;
+    justify-items: center;
+  }
+
+  /* Explicit columns would create an implicit second column here, so let the
+     single stacked column auto-place the children and drive them with order. */
+  .viewer-info,
+  .viewer-center {
+    grid-column: auto;
+  }
+
+  /* The rail dissolves into the stacked flow so its HYDRATE button can sit directly
+     under the card, ahead of the community block, while the poll banner and level
+     panel stay below it. Its ordering and width move to the children. */
+  .viewer-rail {
+    display: contents;
+  }
+
+  .viewer-center {
+    order: 1;
+  }
+
+  .viewer-rail > .clock-post-actions {
+    order: 2;
+  }
+
+  .viewer-info {
+    order: 3;
+    justify-self: center;
+    max-width: 30.0rem;
+  }
+
+  .viewer-rail > .viewer-poll {
+    order: 4;
+  }
+
+  .viewer-rail > .hydrate-error {
+    order: 5;
+  }
+
+  .viewer-rail > .level-panel {
+    order: 6;
+  }
+
+  .viewer-rail > .clock-post-actions,
+  .viewer-rail > .viewer-poll,
+  .viewer-rail > .hydrate-error,
+  .viewer-rail > .level-panel {
+    width: 100%;
+    max-width: 30.0rem;
+    justify-self: center;
+  }
+
+  /* The viewer's share block runs the full width of the community column on mobile:
+     the brand squares stretch to share the row, and the stacked action buttons fill
+     the same width. EMBED ON SITE is dropped on mobile, leaving COPY LINK + EMBED IN
+     NOTION. */
+  .viewer-info .social-share-actions {
+    max-width: none;
+  }
+
+  .viewer-info .social-share-row {
+    flex-wrap: nowrap;
+  }
+
+  .viewer-info .social-share-button {
+    flex: 1;
+    width: auto;
+  }
+
+  .viewer-info .social-share-action-embed-site {
+    display: none;
+  }
+}
+
+/* Reused by the showcase sheet and the viewer's per-category equip rows. */
+.boost-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 1.0rem 1.4rem;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  border: var(--nbtc-border);
+  background: var(--card-colour);
+  color: var(--fg-colour);
+  box-shadow: var(--nbtc-shadow);
+  cursor: pointer;
+}
+
+.boost-chip.selected {
+  background: var(--boost-colour);
+  color: white;
+}
+
+.boost-chip.available {
+  --nbtc-shadow: 8px 8px 0 color-mix(in srgb, var(--boost-colour) 35%, transparent);
+}
+
+.boost-chip.locked {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.boost-chip:disabled:hover {
+  transform: none;
+  box-shadow: var(--nbtc-shadow);
+}
+
+/* Sits after .locked deliberately: a locked row a visitor cannot touch is read-only, not
+   "not allowed", and the two selectors are otherwise an even match on specificity. */
+.boost-chip.readonly {
+  cursor: default;
+}
+
+.boost-chip.readonly:hover {
+  transform: none;
+  box-shadow: var(--nbtc-shadow);
+}
+
+.boost-chip-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boost-chip-emoji {
+  font-size: 1.7rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.boost-chip-tick,
+.boost-chip-plus,
+.boost-chip-lock {
+  flex-shrink: 0;
+}
+
+.boost-chip-plus {
+  color: var(--boost-colour);
+}
+
+/* Admin-only boost test harness (/admin/boost-test). Everything unlocked, no limits, and the
+   clock's cadence is switched off so every effect runs once on demand instead of on a loop.
+   Laid out like the viewer: pick on the sides, watch the camel in the middle. */
+.boost-test {
+  display: grid;
+  grid-template-columns: minmax(19rem, 24rem) minmax(0, 1fr) minmax(19rem, 26rem);
+  grid-template-areas:
+    "wearables camel effects"
+    "bench bench bench";
+  align-items: start;
+  column-gap: 3.0rem;
+  row-gap: 3.0rem;
+  width: 100%;
+  max-width: 150rem;
+  margin: 0 auto;
+}
+
+.boost-test-col {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.boost-test-col-wearables {
+  grid-area: wearables;
+}
+
+.boost-test-col-effects {
+  grid-area: effects;
+}
+
+.boost-test-camel {
+  grid-area: camel;
+  justify-self: center;
+  width: 100%;
+  max-width: 60rem;
+  padding: 2.4rem;
+  background-color: var(--card-colour);
+}
+
+.boost-test-bench {
+  grid-area: bench;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1.6rem;
+}
+
+.boost-test-label {
+  font-size: 1.4rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.boost-test-slot {
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  opacity: 0.7;
+}
+
+.boost-test-sub {
+  font-size: 1.0rem;
+  line-height: 1.5;
+  opacity: 0.7;
+  margin: -0.8rem 0 0;
+}
+
+.boost-test-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.boost-test-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.boost-test-btn {
+  font-size: 1.0rem;
+  padding: 0.9rem 1.2rem;
+  background-color: var(--card-colour);
+}
+
+.boost-test-btn-active {
+  --nbtc-shadow: 8px 8px 0 #ffb300;
+}
+
+.boost-test-info {
+  font-size: 1.0rem;
+  line-height: 1.6;
+  border-top: 2px solid var(--border-colour);
+  padding-top: 0.8rem;
+}
+
+/* One chip per row: the columns are narrow, so a wrapping row of chips turned into an
+   unreadable block once there were a dozen wearables in it. */
+.boost-test-chips {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.boost-test-chips .boost-chip {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.boost-test-unlocked {
+  font-size: 1.0rem;
+  padding: 0.6rem 0.9rem;
+  align-self: flex-start;
+}
+
+@media (max-width: 1200px) {
+  .boost-test {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "camel"
+      "wearables"
+      "effects"
+      "bench";
+  }
+
+  .boost-test-camel {
+    max-width: none;
+  }
+}
+
+.admin-boost-test-link {
+  display: inline-block;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  padding: 1.0rem 1.4rem;
+  margin-bottom: 2.0rem;
+  background-color: var(--card-colour);
+  border: var(--nbtc-border);
+  box-shadow: var(--nbtc-shadow);
+}
+
+/* First-run guided tour. A dimming scrim over the whole viewport with the highlighted element
+   lifted above it via .clock-tour-peek - so exactly one control stays fully lit and no
+   neighbour glints through an area-based hole. The tip is a neubrutalist card. Non-blocking by
+   design: the scrim never captures pointer events, so the real control underneath stays usable
+   while the tip explains it. */
+.clock-tour-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 998;
+  background-color: rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+/* Applied to the currently-highlighted control (never to the tip). position: relative on an
+   otherwise static element changes nothing about its layout; it only lets z-index lift the
+   control above the scrim. */
+.clock-tour-peek {
+  position: relative;
+  z-index: 999;
+}
+
+.clock-tour-tip {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  padding: 1.6rem;
+  background-color: var(--card-colour);
+  color: var(--fg-colour);
+  pointer-events: auto;
+}
+
+.clock-tour-tip.is-centered {
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+}
+
+.clock-tour-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.0rem;
+}
+
+.clock-tour-step {
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.clock-tour-skip {
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+  gap: 0.4rem;
+}
+
+.clock-tour-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: bold;
+  letter-spacing: 0.05em;
+  line-height: 1.3;
+}
+
+.clock-tour-body {
+  margin: 0;
+  font-weight: normal;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.clock-tour-progress {
+  margin: 0;
+  font-size: 1.0rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+}
+
+.clock-tour-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+  opacity: 0.6;
+}
+
+.clock-tour-actions {
+  display: flex;
+  justify-content: flex-end;
 }

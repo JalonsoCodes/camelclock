@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { Bell, UserPlus } from "lucide-react";
 import AuthModal from "./auth/AuthModal";
 import WaitlistModal from "./WaitlistModal";
+import { wearables as wearableData } from "@/utils/grids";
+
+const WEARABLE_COUNT = Object.keys(wearableData).length;
 
 // ============================================================
 // EDIT YOUR PRICING FEATURES HERE
@@ -22,7 +25,7 @@ const FREE_FEATURES = [
     },
     {
         label: "Core Customisation",
-        detail: "Choose your primary colors and access 5 starter wearables.",
+        detail: `Choose your primary colors and access all ${WEARABLE_COUNT} wearables.`,
     },
     {
         label: "Celebration Animation",
@@ -30,7 +33,7 @@ const FREE_FEATURES = [
     },
     {
         label: "Subtle Watermark",
-        detail: "A subtle 'Powered by CamelClock' mark sits under your clock, and a follow icon on the camel turns viewers into followers.",
+        detail: "A subtle 'Powered by CamelClock' mark sits under your clock — and you can let visitors tap the camel.",
     },
 ];
 
@@ -42,22 +45,6 @@ export const PRO_FEATURES = [
     {
         label: "Full Wearables Closet",
         detail: "Access all premium cosmetics, hats, and seasonal gear.",
-    },
-    {
-        label: "Interactive Boosts",
-        detail: "Hype up visitors as they click to trigger live animations like backflips, glowing aura, and particle effects.",
-    },
-    {
-        label: "Waitlist + Email Capture",
-        detail: "Convert visitor excitement into mailing list subscribers directly inside the widget.",
-    },
-    {
-        label: "Engagement Analytics",
-        detail: "Track views, embed sites, boost clicks, and email conversion rates.",
-    },
-    {
-        label: "Zero CamelClock Branding",
-        detail: "Remove CamelClock branding across every clock on your account. Your follow icon stays \u2014 it works for you.",
     },
 ];
 
@@ -85,7 +72,7 @@ export default function Pricing() {
 
     return (
         <section id="pricing">
-            <h2>Pricing</h2>
+            <h2 className="section-title">Pricing</h2>
             <p className="section-subtitle">
                 Free to get started today. Paid plans are coming soon — join the waitlist for
                 early access.

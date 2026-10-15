@@ -56,7 +56,7 @@ const FAQS = [
     {
         q: "Is CamelClock free?",
         a: [
-            "CamelClock is free for personal use, including building unlimited drafts and keeping up to 3 live clocks. Pro — with unlimited live clocks, the full wearables closet, interactive boosts and more — is coming soon; join the waitlist to get early access.",
+            "CamelClock is free for personal use, including building unlimited drafts, keeping up to 3 live clocks, and interactive visitor hydrations. Pro — with unlimited live clocks, the full wearables closet and more — is coming soon; join the waitlist to get early access.",
         ],
     },
 ];

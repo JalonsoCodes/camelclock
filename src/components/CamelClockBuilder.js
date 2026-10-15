@@ -1,30 +1,19 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
-import { useRouter } from "next/navigation";
-import { Keyboard, Play, Save, Shuffle } from "lucide-react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { Check, Keyboard, Play, Save, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
-import { wearables as wearableData } from "@/utils/grids";
-import { getConfiguredTarget, getDaysInMonth } from "@/utils/time";
+import TitleField from "./builder-fields/TitleField";
+import WhenFields from "./builder-fields/WhenFields";
+import ColourField from "./builder-fields/ColourField";
+import useClockCreate, { PENDING_KEY } from "@/hooks/useClockCreate";
+import { randomisePalette } from "@/utils/colour";
 import { formatClockTime } from "@/utils/clockValues";
-import { validateClock } from "@/utils/validation";
+import { wearables as wearableData, wearablesByCategory } from "@/utils/grids";
 
-function hslToHex(h, s, l) {
-    s /= 100;
-    l /= 100;
-    const k = (n) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-    const toHex = (x) => Math.round(x * 255).toString(16).padStart(2, "0");
-    return `#${toHex(f(0))}${toHex(f(8))}${toHex(f(4))}`;
-}
-
-const PENDING_KEY = "camelClock.pending";
-
-export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create", canvasRef = null, initialClock = null }) {
-    const router = useRouter();
+export default function CamelClockBuilder({ initialValues = null, clockId = null, createLabel = "Create", initialClock = null }) {
     const clockRef = useRef(null);
     const autoSavedRef = useRef(false);
     const initTarget = initialClock ? new Date(initialClock.target_at) : null;
@@ -36,13 +25,19 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [celebrationMessage, setCelebrationMessage] = useState(initialValues?.celebrationMessage ?? initialClock?.celebration_message ?? "TIME IS UP!");
     const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? initialClock?.primary_colour ?? "#DBB279");
     const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? initialClock?.secondary_colour ?? "#8E652C");
-    const [isSaving, setIsSaving] = useState(false);
-    const [statusMessage, setStatusMessage] = useState("");
-    const [authModalOpen, setAuthModalOpen] = useState(false);
-    const [createdId, setCreatedId] = useState(null);
     const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? initialClock?.wearables ?? []);
 
-    const effectiveId = clockId ?? createdId;
+    /* Boost equipment is not a creation option — it is earned, and equipped on the viewing page
+       once the clock is live. The builder only has to carry two things: the rack a brand new
+       clock starts with (Shine, the free level-1 rung) and whatever an existing clock already
+       has, so the preview still animates what is actually saved. */
+    const initialBoosts = useMemo(() => {
+        const existing = initialValues?.boosts ?? initialClock?.boosts ?? null;
+        if (existing != null) return existing.map((boost) => (typeof boost === "string" ? { id: boost } : boost));
+        return initialClock ? [] : [{ id: "shine" }];
+    }, [initialValues, initialClock]);
+
+    const { isSaving, statusMessage, authOpen, closeAuth, submit, effectiveId } = useClockCreate({ clockId });
 
     useEffect(() => {
         document.documentElement.style.setProperty('--primary-colour', primaryColour);
@@ -55,10 +50,9 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     }, [secondaryColour]);
 
     const randomiseColours = useCallback(() => {
-        const hue = Math.floor(Math.random() * 360);
-        setPrimaryColour(hslToHex(hue, 55, 68));
-        const secondaryHue = (hue + 60 + Math.floor(Math.random() * 120)) % 360;
-        setSecondaryColour(hslToHex(secondaryHue, 45, 30));
+        const { primaryColour, secondaryColour } = randomisePalette();
+        setPrimaryColour(primaryColour);
+        setSecondaryColour(secondaryColour);
     }, []);
 
     useEffect(() => {
@@ -74,108 +68,23 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [randomiseColours]);
 
-    const buildPayload = (values) => {
-        const now = new Date();
-        const currentYear = now.getFullYear();
-        let targetDate = getConfiguredTarget(values.month, values.day, values.time, currentYear);
-
-        if (targetDate <= now) {
-            targetDate.setFullYear(currentYear + 1);
-        }
-
-        return {
-            title: values.title,
-            target_at: targetDate.toISOString(),
-            intro_text: values.introText,
-            celebration_message: values.celebrationMessage,
-            primary_colour: values.primaryColour,
-            secondary_colour: values.secondaryColour,
-            celebration_type: "spit",
-            wearables: values.wearables ?? [],
-            status: "draft",
-        };
-    };
-
-    const stashPending = (values) => {
-        try {
-            localStorage.setItem(PENDING_KEY, JSON.stringify({ ...values, payload: buildPayload(values) }));
-        } catch {
-            // ignore
-        }
-    };
-
-    const clearPending = () => {
-        try {
-            localStorage.removeItem(PENDING_KEY);
-        } catch {
-            // ignore
-        }
-    };
-
-    const performSave = async (values) => {
-        setIsSaving(true);
-        setStatusMessage("");
-
-        const validation = validateClock(values);
-        if (!validation.valid) {
-            setStatusMessage(validation.errors[0]);
-            setIsSaving(false);
-            return false;
-        }
-
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-            stashPending(values);
-            setAuthModalOpen(true);
-            setStatusMessage("Sign in to save and manage your clocks.");
-            setIsSaving(false);
-            return false;
-        }
-
-        const isNew = !effectiveId;
-        const payload = { ...buildPayload(values), user_id: user.id };
-        if (!isNew) {
-            // Preserve the clock's current publish state — only new clocks start as drafts
-            delete payload.status;
-        }
-
-        try {
-            const { data, error } = isNew
-                ? await supabase.from("clocks").insert([payload]).select()
-                : await supabase.from("clocks").update(payload).eq("id", effectiveId).select();
-
-            if (error) {
-                throw error;
-            }
-
-            clearPending();
-            const savedId = data?.[0]?.id ?? effectiveId;
-            if (savedId) {
-                setCreatedId(savedId);
-            }
-
-            if (isNew) {
-                router.push(`/clock/${savedId}?created=1`);
-            } else {
-                router.push(`/clock/${savedId}`);
-            }
-        } catch (error) {
-            console.error("Error saving clock:", error);
-            setStatusMessage("Failed to save. Please try again.");
-            return false;
-        } finally {
-            setIsSaving(false);
-        }
-
-        return true;
-    };
+    const currentValues = useCallback(() => ({
+        title,
+        month,
+        day,
+        time,
+        introText,
+        celebrationMessage,
+        primaryColour,
+        secondaryColour,
+        wearables: selectedWearables,
+        boosts: initialBoosts,
+        boostOrder: initialValues?.boostOrder ?? initialClock?.boost_order,
+    }), [title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, selectedWearables, initialBoosts, initialValues, initialClock]);
 
     const handleSave = (e) => {
         e.preventDefault();
-                        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, wearables: selectedWearables });
+        submit(currentValues());
     };
 
     const restoreAndSave = async (pending) => {
@@ -188,7 +97,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         setPrimaryColour(pending.primaryColour ?? "#DBB279");
         setSecondaryColour(pending.secondaryColour ?? "#8E652C");
         setSelectedWearables(pending.wearables ?? []);
-        await performSave(pending);
+        await submit(pending);
     };
 
     const resumePendingIfPresent = () => {
@@ -204,7 +113,6 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         if (!pending) return;
 
         autoSavedRef.current = true;
-        // Restore and save any pending clock from before auth
         restoreAndSave(pending);
     };
 
@@ -229,135 +137,25 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     return (
         <div className="camel-builder">
-            <div className="canvas-wrapper nbtc" ref={canvasRef}>
-                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" boosts={selectedWearables} />
+            <div className="canvas-wrapper nbtc">
+                <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" wearables={selectedWearables} boosts={initialBoosts} />
             </div>
 
             <form className="camel-builder-form" onSubmit={handleSave}>
-                <label>
-                    TITLE
-                    <input 
-                        className="nbtc" 
-                        type="text" 
-                        value={title} 
-                        maxLength="72" 
-                        onChange={(e) => setTitle(e.target.value)} 
-                        onFocus={(e) => e.target.select()} 
-                    />
-                </label>
+                <TitleField value={title} onChange={setTitle} />
 
-                <div className="form-group three-quarter-split">
-                    <label>
-                        MONTH
-                        <select className="nbtc" value={month} onChange={(e) => {
-                            const newMonth = Number(e.target.value);
-                            setMonth(newMonth);
-                            const maxDays = getDaysInMonth(newMonth, new Date().getFullYear());
-                            setDay((d) => Math.min(d, maxDays));
-                        }}>
-                            <option value={0}>January</option>
-                            <option value={1}>February</option>
-                            <option value={2}>March</option>
-                            <option value={3}>April</option>
-                            <option value={4}>May</option>
-                            <option value={5}>June</option>
-                            <option value={6}>July</option>
-                            <option value={7}>August</option>
-                            <option value={8}>September</option>
-                            <option value={9}>October</option>
-                            <option value={10}>November</option>
-                            <option value={11}>December</option>
-                        </select>
-                    </label>
-
-                    <label>
-                        DAY
-                        <input 
-                            className="nbtc"
-                            type="number" 
-                            min="1" 
-                            max="31" 
-                            value={day} 
-                            onChange={(e) => setDay(Number(e.target.value))} 
-                            onFocus={(e) => e.target.select()} 
-                        />
-                    </label>
-                </div>
-
-                <label>
-                    TIME
-                    <input 
-                        className="nbtc"
-                        type="time" 
-                        value={time} 
-                        onChange={(e) => setTime(e.target.value)} 
-                    />
-                </label>
+                <WhenFields
+                    month={month}
+                    day={day}
+                    time={time}
+                    onMonthChange={setMonth}
+                    onDayChange={setDay}
+                    onTimeChange={setTime}
+                />
 
                 <div className="form-group">
-                    <label>
-                        PRIMARY COLOUR
-                        <div className="colour-picker-wrapper">
-                            <input
-                                className="nbtc colour-swatch" 
-                                type="color" 
-                                value={primaryColour} 
-                                onChange={(e) => setPrimaryColour(e.target.value)} 
-                            />
-                            <div className="hex-input-container nbtc">
-                                <span className="hex-hash">#</span>
-                                <input
-                                    className="colour-hex-text" 
-                                    type="text" 
-                                    value={undefined} 
-                                    defaultValue={primaryColour.replace('#', '').toUpperCase()}
-                                    key={`primary-${primaryColour}`} 
-                                    onChange={(e) => {
-                                        const cleanValue = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
-                                        e.target.value = cleanValue.toUpperCase();
-
-                                        if (cleanValue.length === 6) {
-                                            setPrimaryColour(`#${cleanValue}`);
-                                        }
-                                    }} 
-                                    maxLength={7} 
-                                    onFocus={(e) => e.target.select()}
-                                />
-                            </div>
-                        </div>
-                    </label>
-
-                    <label>
-                        SECONDARY COLOUR
-                        <div className="colour-picker-wrapper">
-                            <input
-                                className="nbtc colour-swatch" 
-                                type="color" 
-                                value={secondaryColour} 
-                                onChange={(e) => setSecondaryColour(e.target.value)} 
-                            />
-                            <div className="hex-input-container nbtc">
-                                <span className="hex-hash">#</span>
-                                <input
-                                    className="colour-hex-text" 
-                                    type="text" 
-                                    value={undefined}
-                                    defaultValue={secondaryColour.replace('#', '').toUpperCase()}
-                                    key={`secondary-${secondaryColour}`}
-                                    onChange={(e) => {
-                                        const cleanValue = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
-                                        e.target.value = cleanValue.toUpperCase();
-
-                                        if (cleanValue.length === 6) {
-                                            setSecondaryColour(`#${cleanValue}`);
-                                        }
-                                    }} 
-                                    maxLength={7}
-                                    onFocus={(e) => e.target.select()}
-                                />
-                            </div>
-                        </div>
-                    </label>
+                    <ColourField label="PRIMARY COLOUR" idPrefix={`primary-${effectiveId ?? "new"}`} value={primaryColour} onChange={setPrimaryColour} />
+                    <ColourField label="SECONDARY COLOUR" idPrefix={`secondary-${effectiveId ?? "new"}`} value={secondaryColour} onChange={setSecondaryColour} />
                 </div>
 
                 <button className="randomise-button" type="button" title="Randomise the colour palette" onClick={randomiseColours}>
@@ -377,86 +175,73 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                     </span>
                 </button>
 
-                <details className="more-options">
-                    <summary className="more-options-summary">
-                        MORE OPTIONS
-                        <span className="more-options-chevron" aria-hidden="true">▾</span>
-                    </summary>
-                    <div className="more-options-body">
-                        <label>
-                            LABEL
-                            <input
-                                className="nbtc" 
-                                type="text" 
-                                value={introText} 
-                                onChange={(e) => setIntroText(e.target.value)} 
-                                onFocus={(e) => e.target.select()} 
-                                maxLength="15" 
-                            />
-                        </label>
+                <div className="more-options-body">
+                    <label>
+                        LABEL
+                        <input
+                            className="nbtc"
+                            type="text"
+                            value={introText}
+                            onChange={(e) => setIntroText(e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            maxLength="15"
+                        />
+                    </label>
 
-                        <label>
-                            COMPLETION MESSAGE
-                            <textarea
-                                className="nbtc"
-                                value={celebrationMessage}
-                                onChange={(e) => setCelebrationMessage(e.target.value)}
-                                onFocus={(e) => e.target.select()}
-                                rows="3"
-                                maxLength="140"
-                                placeholder="Shown at the end of the animation"
-                            />
-                        </label>
+                    <label>
+                        COMPLETION MESSAGE
+                        <textarea
+                            className="nbtc"
+                            value={celebrationMessage}
+                            onChange={(e) => setCelebrationMessage(e.target.value)}
+                            onFocus={(e) => e.target.select()}
+                            rows="3"
+                            maxLength="140"
+                            placeholder="Shown at the end of the animation"
+                        />
+                    </label>
 
-                        <button className="preview-button" type="button" title="Preview the finished countdown" onClick={() => clockRef.current?.preview()}>
-                            <Play fill="currentColor" strokeWidth={0} aria-hidden="true" />
-                            Preview completion
-                        </button>
+                    <button className="preview-button" type="button" title="Preview the finished countdown" onClick={() => clockRef.current?.preview()}>
+                        <Play fill="currentColor" strokeWidth={0} aria-hidden="true" />
+                        Preview completion
+                    </button>
+                </div>
 
-                        <div className="wearables-section">
-                            <span className="wearables-label">WEARABLES</span>
-                            <div className="wearables-box nbtc">
-                                {(() => {
-                                    const categories = {};
-                                    Object.entries(wearableData).forEach(([id, item]) => {
-                                        if (!categories[item.category]) categories[item.category] = [];
-                                        categories[item.category].push({ id, ...item });
-                                    });
-                                    return Object.entries(categories).map(([cat, items]) => (
-                                        <div key={cat} className="wearables-category">
-                                            <div className="wearables-category-heading">{cat.toUpperCase()}</div>
-                                            <div className="wearables-list">
-                                                {items.map((item) => {
-                                                    const isSelected = selectedWearables.includes(item.id);
-                                                    return (
-                                                        <button
-                                                            key={item.id}
-                                                            type="button"
-                                                            className={`wearables-item${isSelected ? " selected" : ""}`}
-                                                            onClick={() => {
-                                                                setSelectedWearables((prev) => {
-                                                                    if (isSelected) return prev.filter((wid) => wid !== item.id);
-                                                                    return [
-                                                                        ...prev.filter((wid) => wearableData[wid]?.category !== cat),
-                                                                        item.id,
-                                                                    ];
-                                                                });
-                                                            }}
-                                                        >
-                                                            <span className="wearables-tick"><span className="wearables-tick-tick">✓</span></span>
-                                                            <span className="wearables-item-emoji">{item.emoji}</span>
-                                                            <span className="wearables-item-name">{item.name}</span>
-                                                        </button>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-                                    ));
-                                })()}
+                <div className="wearables-section">
+                    <span className="wearables-label">WEARABLES</span>
+                    <div className="wearables-box nbtc">
+                        {wearablesByCategory().map(([cat, items]) => (
+                            <div key={cat} className="wearables-category">
+                                <div className="wearables-category-heading">{cat.toUpperCase()}</div>
+                                <div className="wearables-list">
+                                    {items.map((item) => {
+const isSelected = selectedWearables.includes(item.id);
+                                        return (
+                                            <button
+                                                key={item.id}
+                                                type="button"
+                                                className={`wearables-item${isSelected ? " selected" : ""}`}
+                                                onClick={() => {
+                                                    setSelectedWearables((prev) => {
+                                                        if (isSelected) return prev.filter((wid) => wid !== item.id);
+                                                        return [
+                                                            ...prev.filter((wid) => wearableData[wid]?.category !== cat),
+                                                            item.id,
+                                                        ];
+                                                    });
+                                                }}
+                                            >
+                                                <span className="wearables-tick"><span className="wearables-tick-tick"><Check size={14} strokeWidth={4} aria-hidden="true" /></span></span>
+                                                <span className="wearables-item-emoji">{item.emoji}</span>
+                                                <span className="wearables-item-name">{item.name}</span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
+                        ))}
                     </div>
-                </details>
+                </div>
 
                 <button
                     className="share-button nbtc" type="submit" disabled={isSaving}
@@ -472,13 +257,13 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
                 )}
             </form>
 
-            {authModalOpen && (
+            {authOpen && (
                 <AuthModal
                     mode="signup"
-                    onClose={() => setAuthModalOpen(false)}
+                    onClose={closeAuth}
                     onSuccess={() => {
-                        setAuthModalOpen(false);
-        performSave({ title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, wearables: selectedWearables });
+                        closeAuth();
+                        submit(currentValues());
                     }}
                 />
             )}

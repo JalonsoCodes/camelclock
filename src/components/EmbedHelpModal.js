@@ -58,9 +58,8 @@ export default function EmbedHelpModal({ url, onClose }) {
                     <li>In Notion, type <strong>/embed</strong> and press Enter.</li>
                     <li>Paste the URL into the embed block, then drag a corner to size it.</li>
                     <li>
-                        Hover the top-right corner to switch theme (<strong>LIGHT</strong>/<strong>DARK</strong>) and
-                        card style (<strong>CARD</strong>/<strong>TRANSPARENT</strong>). Use
-                        CARD + DARK to match Notion&apos;s dark pages.
+                        To change the look, append <strong>?theme=dark</strong> or <strong>?card=transparent</strong>
+                        to the URL. CARD + DARK sits well on Notion&apos;s dark pages.
                     </li>
                 </ol>
 
