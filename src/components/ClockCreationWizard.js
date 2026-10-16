@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
@@ -16,6 +16,7 @@ import { quickStart } from "@/content/landingCopy";
 
 const SLIDE_MS = 260;
 const DEFAULT_BOOSTS = [{ id: "shine" }];
+const useIsoLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 const STEPS = quickStart.steps;
 
@@ -39,6 +40,8 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
     const [leaving, setLeaving] = useState(null);
     const [direction, setDirection] = useState(1);
     const slideTimer = useRef(null);
+    const stageRef = useRef(null);
+    const prevStepRef = useRef(0);
 
     const lastStep = STEPS.length - 1;
     const isLastStep = step === lastStep;
@@ -57,6 +60,35 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
 
         clearTimeout(slideTimer.current);
         slideTimer.current = setTimeout(() => setLeaving(null), SLIDE_MS);
+    }, [step]);
+
+    /* The style slide is far taller than the ones after it, so a step change
+       collapses the stage and shifts everything below it. Snap the new question
+       so it lands clear of the navbar (which the landing pins over the page) and
+       the reader is handed the next question instead of being left adrift. Runs
+       before paint, so the un-scrolled reflow is never shown. */
+    useIsoLayoutEffect(() => {
+        if (step === prevStepRef.current) return;
+        prevStepRef.current = step;
+
+        const stage = stageRef.current;
+        if (!stage) return;
+
+        // Measure the pinned navbar rather than trusting a fixed token, then leave a gap so the
+        // question heading never sits under it; off the landing the CSS scroll-margin is enough.
+        let offset = parseFloat(getComputedStyle(stage).scrollMarginTop) || 0;
+        if (document.body.classList.contains("show-navbar")) {
+            const navbar = document.querySelector(".navbar");
+            if (navbar) {
+                const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 10;
+                offset = Math.max(offset, navbar.getBoundingClientRect().bottom + rem * 4);
+            }
+        }
+
+        window.scrollTo({
+            top: Math.max(0, stage.getBoundingClientRect().top + window.scrollY - offset),
+            behavior: "instant",
+        });
     }, [step]);
 
     const randomiseColours = useCallback(() => {
@@ -213,7 +245,7 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
             {subheading && <p className="section-subtitle">{subheading}</p>}
             <div className="quick-start">
                 <form className="camel-builder-form quick-start-form" onSubmit={handleSubmit}>
-                    <div className="quick-start-stage">
+                    <div className="quick-start-stage" ref={stageRef}>
                         {leaving !== null && (
                             <div
                                 className="quick-start-slide is-leaving"

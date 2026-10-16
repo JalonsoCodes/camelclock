@@ -6,7 +6,7 @@ Build pixel-art countdown clocks, share them, and embed them anywhere. Built wit
 
 - Countdown clock builder with live preview, wearables, and celebration animations
 - Draft/live publishing with a free-tier cap on live clocks
-- Follow system with per-clock follower counts
+- Hydration system with per-clock hydrator counts
 - Embeddable widget route with light/dark/transparent themes
 - Dynamic social-preview (OG) images per clock
 - Admin showcase manager that keeps landing-page demo clocks in sync
@@ -26,7 +26,7 @@ Build pixel-art countdown clocks, share them, and embed them anywhere. Built wit
    - `SUPABASE_SERVICE_ROLE_KEY` — server-only secret key (account deletion)
    - `NEXT_PUBLIC_SITE_URL` — leave as localhost for development
 
-3. Run the database schema/migrations against your Supabase project (tables: `clocks`, `follows`, `profiles`, `showcases`, `waitlist`, plus RLS policies, the live-limit trigger, and the `count_my_live_clocks` RPC).
+3. Run the database schema/migrations against your Supabase project (tables: `clocks`, `hydrations`, `profiles`, `waitlist`, plus RLS policies, the live-limit trigger, and the `count_my_live_clocks` RPC).
 
 4. Start the dev server:
 

@@ -693,22 +693,6 @@ input.colour-swatch::-webkit-color-swatch {
   opacity: 0.65;
 }
 
-.embed-disabled-card {
-  background-color: var(--card-colour);
-  padding: 4.0rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2.4rem;
-  text-align: center;
-  max-width: 52rem;
-}
-
-.embed-disabled-card p {
-  font-size: 1.4rem;
-  opacity: 0.75;
-}
-
 .share-field-label {
   font-size: 1.2rem;
 }
@@ -1394,6 +1378,11 @@ input.colour-swatch::-webkit-color-swatch {
   gap: 4.0rem;
   margin-top: 4.0rem;
   align-items: start;
+  /* The style slide is far taller than the completion slide, so a step change
+     collapses the stage. Scroll anchoring would read that reflow as content
+     shifting under the reader and yank the page down to compensate. The wizard
+     reflows on purpose, so it opts out. */
+  overflow-anchor: none;
 }
 
 /* Matches .canvas-wrapper nbtc — the preview is the same card the builder
@@ -1425,6 +1414,11 @@ body.show-navbar .quick-start-preview {
 .quick-start-stage {
   position: relative;
   overflow: hidden;
+  scroll-margin-top: var(--page-pad-y);
+}
+
+body.show-navbar .quick-start-stage {
+  scroll-margin-top: 16.0rem;
 }
 
 .quick-start-slide {
@@ -1839,7 +1833,7 @@ body.show-navbar .quick-start-preview {
   box-shadow: 8px 8px 0px #9e9e9e;
 }
 
-.stat-card.stat-following {
+.stat-card.stat-hydrated {
   border-color: #2196f3;
   box-shadow: 8px 8px 0px #2196f3;
 }
@@ -1865,7 +1859,7 @@ body.show-navbar .quick-start-preview {
   color: #9e9e9e;
 }
 
-.stat-value-following {
+.stat-value-hydrated {
   color: #2196f3;
 }
 
@@ -1946,7 +1940,7 @@ body.show-navbar .quick-start-preview {
   box-shadow: 8px 8px 0px #9e9e9e;
 }
 
-.clock-card.followed-card {
+.clock-card.hydrated-card {
   position: relative;
   border-color: #2196f3;
   box-shadow: 8px 8px 0px #2196f3;
@@ -2590,25 +2584,6 @@ button:disabled {
   white-space: nowrap;
   min-width: 0;
   font-size: 1.3rem;
-}
-
-.follow-button {
-  background-color: #2196f3;
-  color: white;
-  font-size: 1.2rem;
-  font-weight: bold;
-  cursor: pointer;
-  padding: 1.0rem 2.4rem;
-  min-height: 4.4rem;
-  letter-spacing: 0.05em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
-.follow-button.following {
-  background-color: var(--card-colour);
-  color: var(--fg-colour);
 }
 
 .draft-banner-row {

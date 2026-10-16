@@ -73,7 +73,7 @@ camelclock/
 - **Components**: PascalCase `.js`, one per file. `'use client'` only where interactivity requires it.
 - **CSS**: plain global class names (kebab-case). CSS modules are rare — only `CamelClock.module.css` (and `landing-hero.css`).
 - **Utilities/hooks**: camelCase functions; hooks use the `use*` prefix.
-- **DB**: tables plural snake_case (`clocks`, `follows`, `profiles`); RPCs `snake_case(p_arg)` with named params.
+- **DB**: tables plural snake_case (`clocks`, `hydrations`, `profiles`); RPCs `snake_case(p_arg)` with named params.
 
 ---
 
@@ -180,7 +180,7 @@ camelclock/
 - The scrim **never captures pointer events** — the highlighted control (the PUBLISH button, the camel/card, the HYDRATE button, the poll banner, the level panel) stays usable underneath. The scrim darkens the whole viewport and the target is lifted above it via a `.clock-tour-peek` class (position + z-index bump), so exactly one control stays lit and no neighbouring element glints through an area-based hole; when a target can't be measured the tip centres instead. `ClockViewer` owns the `showTour`/`tourOpen` state and the target refs it hands to `ClockTour` as `targets`. **The vote/effect tips are anchored to the left of the rail** (`left = rect.left - TIP_GAP - tipSize.w`, vertically centred, clamped; falls back to below/above centring when there is no room) so the poll/wardrobe and the camel preview stay visible while the tip still reads as "near the boosts".
 - **The tour has no action buttons of its own.** The publish step only explains the real PUBLISH button above it and waits for `status` to flip (which advances the step state-driven); the tour hides itself while a dialog is open (`shareOpen` — the live share dialog or the post-create `saved` dialog). Every other step is copy-only and gated on the real interaction (NEXT is disabled until the vote resolves).
 - Finishing or skipping calls `complete_tutorial(p_clock_id)` (definer RPC, `authenticated` only, owner-gated — stamps **that clock's** `tutorial_completed = true`); the tour closes immediately and the write is best-effort. `clocks.tutorial_completed` is **never** written by an edit — re-saving a clock leaves its tour state alone, and a skipped clock's own L2 poll just uses the normal quorum rules.
-- `hydrate_clock` marks the level-2 poll `tutorial = true` when **that clock's** `tutorial_completed` is still false, so a freshly-created clock's first poll is its owner's to settle alone; `poll_ready()` resolves a tutorial poll at ≥1 vote. `profiles.tutorial_completed` is a legacy column from an earlier per-account design — no longer read anywhere.
+- `hydrate_clock` marks the level-2 poll `tutorial = true` when **that clock's** `tutorial_completed` is still false, so a freshly-created clock's first poll is its owner's to settle alone; `poll_ready()` resolves a tutorial poll at ≥1 vote. (`profiles.tutorial_completed` was dropped in `20261016120000_tier1_dead_columns.sql` — the per-account design is fully gone.)
 
 ### Auth & email
 
@@ -248,7 +248,7 @@ Order: `Navbar` → `LandingHero` → `ClockCreationWizard` (wizard) → `Exampl
 ### Database workflow
 
 - Supabase CLI is linked (`npx supabase db push` works).
-- `supabase/migrations/20260928210307_remote_schema.sql` is the **baseline** `db pull` snapshot (registered via `supabase migration repair`); everything after it is a real forward migration. Latest: `20261015140000_hydrate_clock_ownerless.sql`.
+- `supabase/migrations/20260928210307_remote_schema.sql` is the **baseline** `db pull` snapshot (registered via `supabase migration repair`); everything after it is a real forward migration. Latest: `20261016130000_rename_follows_to_hydrations.sql`.
 
 ---
 
@@ -289,9 +289,9 @@ npx supabase db push # apply migrations
 
 ### Security — RLS and database
 
-- **RLS is ENFORCED on `clocks`, `follows`, `profiles` and must stay that way.**
+- **RLS is ENFORCED on `clocks`, `hydrations`, `profiles` and must stay that way.**
 - **Never add `FORCE RLS`** — it breaks the service-role cleanup in `deleteAccount`.
-- Policies: `clocks` — anon SELECT only `status='live'`; authenticated SELECT `status='live' OR user_id = auth.uid()`; INSERT/UPDATE/DELETE owner-only via `user_id = auth.uid()` (with `WITH CHECK`). `follows` — owner SELECT only; no client INSERT/UPDATE/DELETE (hydration is permanent, `hydrate_clock` is the only writer). `profiles` — owner read-only; UPDATE column-gated via `REVOKE UPDATE` + `GRANT UPDATE (username)`. All other writes owner-only.
+- Policies: `clocks` — anon SELECT only `status='live'`; authenticated SELECT `status='live' OR user_id = auth.uid()`; INSERT/UPDATE/DELETE owner-only via `user_id = auth.uid()` (with `WITH CHECK`). `hydrations` — owner SELECT only; no client INSERT/UPDATE/DELETE (hydration is permanent, `hydrate_clock` is the only writer). `profiles` — owner read-only; UPDATE column-gated via `REVOKE UPDATE` + `GRANT UPDATE (username)`. All other writes owner-only.
 - **All `SECURITY DEFINER` functions pin `search_path`.**
 - `get_clock_hydrate_stats(clock_id, top_limit)` is the **only** thing exposing other users' row data publicly. It must **never select email/user_id**. Read it through `useHydrateStats` only — never call the RPC directly from a component.
 - `get_clock_creator(p_clock_id)` returns only `username`.
@@ -300,7 +300,7 @@ npx supabase db push # apply migrations
 - **`clock_polls` / `clock_poll_votes` have no client write path.** `finalise_poll` (definer, owner-only EXECUTE) is the only writer of a poll's `winner`/`resolved_at` and the only thing besides the owner that writes `clocks.boosts` (it merges a winner through `normalise_boost_rack`). `get_clock_polls` is the only public read (definer, pinned `search_path`); `vote_poll` is authenticated-only and one row per `(poll_id, user_id)`. RLS on `clock_polls` mirrors `clocks` visibility; `clock_poll_votes` is owner-read-only with no client INSERT.
 - `count_my_live_clocks()` only counts `auth.uid()`'s rows, so it can't leak other users' counts.
 - The trigger `enforce_live_clock_limit()` is the hard backstop for the 3-live cap: `SECURITY DEFINER`, pinned `search_path`, skips non-live inserts and live→live updates, bypasses for admins via `profiles.is_admin`, raises `Live clock limit reached (3)` at >= 3 other live rows.
-- Service-role table GRANTs on `follows`/`clocks`/`profiles` are required for `deleteAccount` (`src/app/settings/actions.js` via `createAdminClient` in `src/lib/supabase/admin.js`). On `permission denied for table follows`, re-run the GRANTs — **don't** switch to `FORCE RLS`.
+- Service-role table GRANTs on `hydrations`/`clocks`/`profiles` are required for `deleteAccount` (`src/app/settings/actions.js` via `createAdminClient` in `src/lib/supabase/admin.js`). On `permission denied for table hydrations`, re-run the GRANTs — **don't** switch to `FORCE RLS`.
 - Owners can never touch `is_admin`.
 
 ### Never do these
@@ -333,9 +333,9 @@ npx supabase db push # apply migrations
 - **Owner spends the user's daily drop before `onBlocked` fires** (opens ShareDialog in grow mode) — no phantom `+1` when blocked. The one exception is a sub-L2 clock (see the free-sub-L2 bullet in *Boosts & the hydration economy*): there `beginHydrate` skips the spend and block entirely, so the tutorial can't be capped.
 - **Never hardcode per-anim physics in `drawCamelBoost`** when a `def.profile` exists — read it purely from `def.profile` (`pivotX`/`pivotY`, `reps`, per-row `rowScale`, etc.).
 - For `ghost`, alpha **must** stay the terminal transform (applied after the `shadeFns` chain in `CamelClock`) — `lightenHex` silently breaks on `rgba(...)`.
-- `.followed-card` border/shadow is `followed && !owned` gated. **Hydration is permanent** — the old UNHYDRATE button (a client delete of the `follows` row) is gone and the `follows` delete/insert policies are dropped, so a `follows` row can never be removed from the app or the Data API (it would otherwise reset the lifetime self-hydrate cap and drop the hydrator from counts). `hydrate_clock()` (definer) and `deleteAccount` (service role) still write it because both bypass RLS.
+- `.hydrated-card` border/shadow is `hydrated && !owned` gated. **Hydration is permanent** — the old UNHYDRATE button (a client delete of the `hydrations` row) is gone and the `hydrations` delete/insert policies are dropped, so a `hydrations` row can never be removed from the app or the Data API (it would otherwise reset the lifetime self-hydrate cap and drop the hydrator from counts). `hydrate_clock()` (definer) and `deleteAccount` (service role) still write it because both bypass RLS.
 - The "SUPPORTED" stat card counts **others'** clocks you've hydrated (`followedClocks` minus own ids) — never a clock state, always third-party.
-- Dashboard hydrate stats come from `clocks.hydrate_count` + the denormalised `clocks.hydrator_count` (maintained by `hydrate_clock()`) — the dashboard needs no RPC, because RLS on `follows` is owner-gated. Per-hydrator counts use `follows.hydrate_count`; `clocks.owner_hydrate_count` splits out the owner's own claims.
+- Dashboard hydrate stats come from `clocks.hydrate_count` + the denormalised `clocks.hydrator_count` (maintained by `hydrate_clock()`) — the dashboard needs no RPC, because RLS on `hydrations` is owner-gated. Per-hydrator counts use `hydrations.hydrate_count`; `clocks.owner_hydrate_count` splits out the owner's own claims.
 - There are no guest-hydrate storage/caps, no welcome-gift column, no `boost_events` trail, and no double-hydrate hour.
 
 ### Workflow guardrails

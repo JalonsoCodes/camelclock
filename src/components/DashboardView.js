@@ -26,15 +26,15 @@ function getStats(clocks) {
     return { total: clocks.length, drafts, live, expired };
 }
 
-export default function DashboardView({ clocks, followedClocks = [], emailConfirmed = true, userEmail = "" }) {
+export default function DashboardView({ clocks, hydratedClocks = [], emailConfirmed = true, userEmail = "" }) {
     const router = useRouter();
     const [upcomingOpen, setUpcomingOpen] = useState(true);
     const [expiredOpen, setExpiredOpen] = useState(true);
     const { total, drafts, live, expired } = getStats(clocks);
 
     const ownIds = new Set(clocks.map((c) => c.id));
-    const followedIds = new Set(followedClocks.map((c) => c.id));
-    const allClocks = [...clocks, ...followedClocks.filter((c) => !ownIds.has(c.id))];
+    const hydratedIds = new Set(hydratedClocks.map((c) => c.id));
+    const allClocks = [...clocks, ...hydratedClocks.filter((c) => !ownIds.has(c.id))];
 
     const now = new Date();
     const byDate = (a, b) => new Date(a.target_at) - new Date(b.target_at);
@@ -60,8 +60,8 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                     <span className="stat-value stat-value-drafts">{drafts}</span>
                     <span className="stat-label">DRAFTS</span>
                 </div>
-                <div className="stat-card nbtc stat-following">
-                    <span className="stat-value stat-value-following">{followedClocks.filter((c) => !ownIds.has(c.id)).length}</span>
+                <div className="stat-card nbtc stat-hydrated">
+                    <span className="stat-value stat-value-hydrated">{hydratedClocks.filter((c) => !ownIds.has(c.id)).length}</span>
                     <span className="stat-label">SUPPORTED</span>
                 </div>
                 <div className="stat-card nbtc stat-expired">
@@ -70,7 +70,7 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                 </div>
             </div>
 
-            {total === 0 && followedClocks.length === 0 ? (
+            {total === 0 && hydratedClocks.length === 0 ? (
                 <EmptyState />
             ) : (
                 <>
@@ -95,7 +95,7 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                                             key={clock.id}
                                             clock={clock}
                                             owned={ownIds.has(clock.id)}
-                                            followed={followedIds.has(clock.id)}
+                                            hydrated={hydratedIds.has(clock.id)}
                                             onDeleted={() => router.refresh()}
                                         />
                                     ))}
@@ -131,7 +131,7 @@ export default function DashboardView({ clocks, followedClocks = [], emailConfir
                                             key={clock.id}
                                             clock={clock}
                                             owned={ownIds.has(clock.id)}
-                                            followed={followedIds.has(clock.id)}
+                                            hydrated={hydratedIds.has(clock.id)}
                                             onDeleted={() => router.refresh()}
                                         />
                                     ))}

@@ -36,9 +36,9 @@ const FAQS = [
         ],
     },
     {
-        q: "Can I follow clocks and get notified when they end?",
+        q: "Can I hydrate clocks and get notified when they end?",
         a: [
-            "Yes. Any live clock shows a FOLLOW button, so you can keep it saved in your dashboard — and the follow icon on the camel lets your own viewers subscribe in one click.",
+            "Yes. Any live clock shows a HYDRATE button, so you can add it to your dashboard — and the hydrate icon on the camel lets your own viewers join in one click.",
         ],
     },
     {
@@ -50,7 +50,7 @@ const FAQS = [
     {
         q: "How do I delete a clock or my account?",
         a: [
-            "Open a clock from your dashboard and use the delete option on its card to remove it. To delete your whole account, go to Settings and choose \u201CDelete account\u201D — this permanently removes your clocks, follows and profile.",
+            "Open a clock from your dashboard and use the delete option on its card to remove it. To delete your whole account, go to Settings and choose \u201CDelete account\u201D — this permanently removes your clocks, hydrations and profile.",
         ],
     },
     {

@@ -25,37 +25,37 @@ export default async function DashboardPage() {
         console.error("Failed to load dashboard clocks:", error.message);
     }
 
-    const { data: followedRows = [], error: followsError } = await supabase
-        .from("follows")
+    const { data: hydratedRows = [], error: hydrationsError } = await supabase
+        .from("hydrations")
         .select("clock_id")
         .eq("user_id", user.id);
 
-    if (followsError) {
-        console.error("Failed to load followed clocks:", followsError.message);
+    if (hydrationsError) {
+        console.error("Failed to load hydrated clocks:", hydrationsError.message);
     }
 
-    const followedIds = (followedRows ?? []).map((row) => row.clock_id);
+    const hydratedIds = (hydratedRows ?? []).map((row) => row.clock_id);
 
-    let followedClocks = [];
-    if (followedIds.length > 0) {
-        const { data, error: followedError } = await supabase
+    let hydratedClocks = [];
+    if (hydratedIds.length > 0) {
+        const { data, error: hydratedError } = await supabase
             .from("clocks")
             .select("*")
-            .in("id", followedIds)
+            .in("id", hydratedIds)
             .eq("status", "live")
             .order("target_at", { ascending: true });
 
-        if (followedError) {
-            console.error("Failed to load followed clock details:", followedError.message);
+        if (hydratedError) {
+            console.error("Failed to load hydrated clock details:", hydratedError.message);
         } else {
-            followedClocks = data ?? [];
+            hydratedClocks = data ?? [];
         }
     }
 
     return (
         <DashboardView
             clocks={clocks}
-            followedClocks={followedClocks}
+            hydratedClocks={hydratedClocks}
             emailConfirmed={Boolean(user.email_confirmed_at)}
             userEmail={user.email ?? ""}
         />

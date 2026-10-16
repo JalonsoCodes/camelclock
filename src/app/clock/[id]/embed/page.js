@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import EmbedMode from "@/components/EmbedMode";
 import EmbedShell from "@/components/EmbedShell";
 import { createClient } from "@/lib/supabase/server";
 
@@ -45,19 +44,6 @@ export default async function EmbedPage({ params, searchParams }) {
 
     if (clock.status !== "live") {
         notFound();
-    }
-
-    if (!clock.allow_embed) {
-        return (
-            <main className="public-clock">
-                <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, "card") }} />
-                <EmbedMode theme={embedTheme} card="card" />
-                <div className="embed-disabled-card nbtc">
-                    <p>This CamelClock&apos;s owner has disabled embedding.</p>
-                    <a href={`/clock/${id}`} target="_top" className="btn-link">VIEW IT ON CAMELCLOCK</a>
-                </div>
-            </main>
-        );
     }
 
     return (

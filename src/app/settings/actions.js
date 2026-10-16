@@ -73,10 +73,10 @@ export async function deleteAccount(confirmation) {
 
     const admin = createAdminClient();
 
-    const { error: followsError } = await admin.from("follows").delete().eq("user_id", user.id);
-    if (followsError) {
-        console.error("deleteAccount: failed to delete follows:", followsError.message);
-        return { error: "Failed to clean up your data (follows). Please try again." };
+    const { error: hydrationsError } = await admin.from("hydrations").delete().eq("user_id", user.id);
+    if (hydrationsError) {
+        console.error("deleteAccount: failed to delete hydrations:", hydrationsError.message);
+        return { error: "Failed to clean up your data (hydrations). Please try again." };
     }
 
     const { error: clocksError } = await admin.from("clocks").delete().eq("user_id", user.id);

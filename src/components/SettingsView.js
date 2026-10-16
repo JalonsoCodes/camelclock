@@ -186,7 +186,7 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
                 </h2>
                 <p className="settings-danger-copy">
                     Deleting your account permanently removes every clock you own and all of
-                    your follows. This cannot be undone.
+                    your hydrations. This cannot be undone.
                 </p>
                 {deleteError && <p className="auth-error">{deleteError}</p>}
                 <button className="danger-button" type="button" onClick={() => setConfirmDelete(true)}>

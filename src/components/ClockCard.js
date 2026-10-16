@@ -27,7 +27,7 @@ function getStatus(clock) {
     return "live";
 }
 
-export default function ClockCard({ clock, onDeleted, owned = true, followed = false }) {
+export default function ClockCard({ clock, onDeleted, owned = true, hydrated = false }) {
     const [deleting, setDeleting] = useState(false);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [deleteError, setDeleteError] = useState("");
@@ -110,7 +110,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, followed = f
     };
 
     return (
-        <div className={`clock-card nbtc status-${status}${followed && !owned ? " followed-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
+        <div className={`clock-card nbtc status-${status}${hydrated && !owned ? " hydrated-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
             <Link href={`/clock/${clock.id}`} className="clock-card-link">
                 <CamelClock
                     title={clock.title}

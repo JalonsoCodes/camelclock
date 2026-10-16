@@ -29,7 +29,7 @@ export default function PrivacyPage() {
                     <p>We use Supabase for authentication and database hosting, and our application is hosted on a cloud platform. These services process data on our behalf under strict security standards.</p>
 
                     <h2>5. Data Retention</h2>
-                    <p>Your account and clock data are retained as long as your account is active. You can delete your clocks at any time from the dashboard. You can delete your entire account (including all clocks and follows) at any time from <strong>Settings</strong>.</p>
+                    <p>Your account and clock data are retained as long as your account is active. You can delete your clocks at any time from the dashboard. You can delete your entire account (including all clocks and hydrations) at any time from <strong>Settings</strong>.</p>
 
                     <h2>6. Your Rights</h2>
                     <p>You can access, update, or delete your data at any time through your dashboard. For any additional requests, contact us at the email below.</p>
