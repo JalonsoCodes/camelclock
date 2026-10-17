@@ -701,7 +701,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             {showWatermark && (
                 <div className={styles.hydrateWatermarkWrap}>
                     {viewerHydrates && !hideHydrateNote && isOwner && (() => {
-                        const note = hydrateNoteText({ isOwner, dropLeft });
+                        const note = hydrateNoteText({ dropLeft });
                         return note ? <span className={styles.hydrateNote}>{note}</span> : null;
                     })()}
                     {!hideWatermarkLink && (

@@ -3,34 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { validatePassword } from "@/utils/passwordValidation";
 import { normalizeUsername, validateUsername } from "@/utils/usernameValidation";
-
-const PASSWORD_MESSAGES = {
-    "New password should be different from the old password.": "Choose a password you haven't used before.",
-    "Password should be at least 6 characters.": "Password must be at least 8 characters.",
-};
-
-export async function changePassword(password) {
-    const passwordError = validatePassword(password);
-    if (passwordError) {
-        return { error: passwordError };
-    }
-
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return { error: "You are not signed in." };
-    }
-
-    const { error } = await supabase.auth.updateUser({ password });
-    if (error) {
-        console.error("changePassword:", error.message);
-        return { error: PASSWORD_MESSAGES[error.message] ?? "Could not update your password. Please try again." };
-    }
-
-    return { ok: true };
-}
 
 export async function updateUsername(input) {
     const usernameError = validateUsername(input);

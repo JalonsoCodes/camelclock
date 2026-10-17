@@ -3,16 +3,33 @@
 import { useState } from "react";
 import { AtSign, KeyRound, Mail, Trash2 } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
-import { changePassword, deleteAccount, updateUsername } from "@/app/settings/actions";
+import { deleteAccount, updateUsername } from "@/app/settings/actions";
 import PasswordRequirements from "./PasswordRequirements";
+import { supabase } from "@/lib/supabase/client";
 import { validatePassword } from "@/utils/passwordValidation";
 import { validateUsername } from "@/utils/usernameValidation";
 import EmailConfirmBanner from "./EmailConfirmBanner";
 
+const PASSWORD_MESSAGES = {
+    "New password should be different from the old password.": "Choose a password you haven't used before.",
+    "Password should be at least 6 characters.": "Password must be at least 8 characters.",
+};
+
+function passwordErrorMessage(message) {
+    if (!message) return "Something went wrong. Please try again.";
+    if (/nonce|token|otp|expired|invalid/i.test(message)) {
+        return "That code is invalid or has expired. Send a new one.";
+    }
+    return PASSWORD_MESSAGES[message] ?? "Could not update your password. Please try again.";
+}
+
 export default function SettingsView({ email, emailConfirmed = true, username = null }) {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [code, setCode] = useState("");
+    const [pwStep, setPwStep] = useState("request");
     const [pwStatus, setPwStatus] = useState(null);
+    const [sendingCode, setSendingCode] = useState(false);
     const [savingPassword, setSavingPassword] = useState(false);
 
     const [handle, setHandle] = useState(username ?? "");
@@ -46,31 +63,78 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
         }
     };
 
-    const handlePasswordSubmit = async (e) => {
-        e.preventDefault();
-        setPwStatus(null);
-
+    const validateNewPassword = () => {
         if (password !== confirmPassword) {
             setPwStatus({ type: "error", text: "Passwords do not match." });
-            return;
+            return false;
         }
         const passwordError = validatePassword(password);
         if (passwordError) {
             setPwStatus({ type: "error", text: passwordError });
+            return false;
+        }
+        return true;
+    };
+
+    /* Secure password change: the account must re-prove itself with an email code
+       before the password moves, so a lifted session can't silently change it. */
+    const sendCode = async () => {
+        setSendingCode(true);
+        const { error } = await supabase.auth.reauthenticate();
+        setSendingCode(false);
+        if (error) {
+            setPwStatus({ type: "error", text: "Could not send a code. Please try again." });
+            return false;
+        }
+        return true;
+    };
+
+    const handleRequestCode = async (e) => {
+        e.preventDefault();
+        setPwStatus(null);
+        if (!validateNewPassword()) return;
+        if (await sendCode()) {
+            setPwStep("verify");
+            setPwStatus({ type: "ok", text: "We emailed you a 6-digit code." });
+        }
+    };
+
+    const handleResendCode = async () => {
+        setPwStatus(null);
+        if (await sendCode()) {
+            setPwStatus({ type: "ok", text: "A new code is on its way." });
+        }
+    };
+
+    const handleVerifyCode = async (e) => {
+        e.preventDefault();
+        setPwStatus(null);
+
+        if (!code.trim()) {
+            setPwStatus({ type: "error", text: "Enter the 6-digit code from your email." });
             return;
         }
 
         setSavingPassword(true);
-        const result = await changePassword(password);
+        const { error } = await supabase.auth.updateUser({ password, nonce: code.trim() });
         setSavingPassword(false);
 
-        if (result?.ok) {
-            setPassword("");
-            setConfirmPassword("");
-            setPwStatus({ type: "ok", text: "PASSWORD UPDATED." });
-        } else {
-            setPwStatus({ type: "error", text: result?.error ?? "Something went wrong." });
+        if (error) {
+            setPwStatus({ type: "error", text: passwordErrorMessage(error.message) });
+            return;
         }
+
+        setPassword("");
+        setConfirmPassword("");
+        setCode("");
+        setPwStep("request");
+        setPwStatus({ type: "ok", text: "PASSWORD UPDATED." });
+    };
+
+    const restartPasswordFlow = () => {
+        setPwStep("request");
+        setCode("");
+        setPwStatus(null);
     };
 
     const handleDeleteConfirmed = async () => {
@@ -101,39 +165,80 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
                     <KeyRound className="button-icon" />
                     CHANGE PASSWORD
                 </h2>
-                <form className="settings-form" onSubmit={handlePasswordSubmit}>
-                    <label className="auth-label">
-                        NEW PASSWORD
-                        <input
-                            className="auth-input nbtc"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="new-password"
-                            required
-                            minLength={8}
-                        />
-                    </label>
-                    <PasswordRequirements password={password} />
-                    <label className="auth-label">
-                        CONFIRM NEW PASSWORD
-                        <input
-                            className="auth-input nbtc"
-                            type="password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            autoComplete="new-password"
-                            required
-                            minLength={8}
-                        />
-                    </label>
-                    {pwStatus && (
-                        <p className={pwStatus.type === "ok" ? "settings-ok" : "auth-error"}>{pwStatus.text}</p>
+                <form className="settings-form" onSubmit={pwStep === "request" ? handleRequestCode : handleVerifyCode}>
+                    {pwStep === "request" ? (
+                        <>
+                            <label className="auth-label">
+                                NEW PASSWORD
+                                <input
+                                    className="auth-input nbtc"
+                                    type="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    autoComplete="new-password"
+                                    required
+                                    minLength={8}
+                                />
+                            </label>
+                            <PasswordRequirements password={password} />
+                            <label className="auth-label">
+                                CONFIRM NEW PASSWORD
+                                <input
+                                    className="auth-input nbtc"
+                                    type="password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    autoComplete="new-password"
+                                    required
+                                    minLength={8}
+                                />
+                            </label>
+                            {pwStatus && (
+                                <p className={pwStatus.type === "ok" ? "settings-ok" : "auth-error"}>{pwStatus.text}</p>
+                            )}
+                            <p className="settings-hint">
+                                We&apos;ll email you a 6-digit code to confirm it&apos;s you.
+                            </p>
+                            <button className="auth-button" type="submit" disabled={sendingCode}>
+                                <KeyRound className="button-icon" />
+                                {sendingCode ? "SENDING..." : "SEND CODE"}
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <p className="settings-hint">
+                                Enter the 6-digit code we sent to {email}.
+                            </p>
+                            <label className="auth-label">
+                                CONFIRMATION CODE
+                                <input
+                                    className="auth-input nbtc"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="one-time-code"
+                                    value={code}
+                                    onChange={(e) => setCode(e.target.value)}
+                                    maxLength={10}
+                                    required
+                                />
+                            </label>
+                            {pwStatus && (
+                                <p className={pwStatus.type === "ok" ? "settings-ok" : "auth-error"}>{pwStatus.text}</p>
+                            )}
+                            <button className="auth-button" type="submit" disabled={savingPassword}>
+                                <KeyRound className="button-icon" />
+                                {savingPassword ? "SAVING..." : "UPDATE PASSWORD"}
+                            </button>
+                            <div className="settings-password-actions">
+                                <button className="btn-link" type="button" onClick={handleResendCode} disabled={sendingCode}>
+                                    {sendingCode ? "SENDING..." : "RESEND CODE"}
+                                </button>
+                                <button className="btn-link btn-secondary" type="button" onClick={restartPasswordFlow}>
+                                    START OVER
+                                </button>
+                            </div>
+                        </>
                     )}
-                    <button className="auth-button" type="submit" disabled={savingPassword}>
-                        <KeyRound className="button-icon" />
-                        {savingPassword ? "SAVING..." : "UPDATE PASSWORD"}
-                    </button>
                 </form>
             </section>
 

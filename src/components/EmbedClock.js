@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
+import ShareDialog from "./ShareDialog";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
 import useHydrateInteraction from "@/hooks/useHydrate";
 import useHydrateStats from "@/hooks/useHydrateStats";
 import { computeDropLeft } from "@/utils/boost";
 
-export default function EmbedClock({ clock, id, showWatermark = true, titleHref, titleExternal = true }) {
+export default function EmbedClock({ clock, id, showWatermark = true, titleHref, titleExternal = true, entitlements = {} }) {
     const target = new Date(clock.target_at);
     const viewerHydrates = clock.viewer_hydrates === true;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
+    const [capOpen, setCapOpen] = useState(false);
     // The title links out to the clock's own page; the embed passes an absolute
     // href with target="_top" so it breaks out of the iframe, while the landing's
     // showcase examples link relatively in the same tab. A caller with no such
@@ -25,7 +28,11 @@ export default function EmbedClock({ clock, id, showWatermark = true, titleHref,
         applyServer,
         hydratePromptOpen,
         setHydratePromptOpen,
-    } = useHydrateInteraction(clock, viewerHydrates, { isOwner: false, drop: 0 });
+    } = useHydrateInteraction(clock, viewerHydrates, {
+        isOwner: false,
+        drop: entitlements.drop ?? 0,
+        onBlocked: () => setCapOpen(true),
+    });
 
     useHydrateStats(clock.id, serverCount, (data) => {
         applyServer({
@@ -67,6 +74,16 @@ export default function EmbedClock({ clock, id, showWatermark = true, titleHref,
                     next={`/clock/${id}`}
                     onClose={() => setHydratePromptOpen(false)}
                     onSuccess={() => setHydratePromptOpen(false)}
+                />
+            )}
+            {capOpen && (
+                <ShareDialog
+                    clockId={clock.id}
+                    title={clock.title}
+                    mode="saved"
+                    heading="THAT'S TODAY'S HYDRATIONS"
+                    subline="You've used your daily hydrations for this CamelClock. Come back tomorrow to keep it climbing."
+                    onClose={() => setCapOpen(false)}
                 />
             )}
         </>

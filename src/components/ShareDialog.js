@@ -32,9 +32,8 @@ export default function ShareDialog({
     const shareUrl = `${window.location.origin}/clock/${clockId}`;
     const embedUrl = `${shareUrl}/embed`;
 
-    const resolvedHeading = saved
-        ? "YOUR CLOCK IS SAVED"
-        : (heading ?? "YOUR CLOCK IS LIVE");
+    const resolvedHeading = heading
+        ?? (saved ? "YOUR CLOCK IS SAVED" : "YOUR CLOCK IS LIVE");
     const resolvedSubline = subline
         ? subline
         : saved

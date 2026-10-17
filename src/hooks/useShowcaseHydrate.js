@@ -13,34 +13,34 @@ import { levelFromCount } from "@/utils/boost";
  * this camel is built up rather than swapped, so a per-slide reset would throw
  * away the taps you just made.
  *
- * `floor` is the count the build-up script has already earned by equipping boosts
- * (see useHeroBuild). Taps count above it, never below, so the script's boosts
- * can't be walked back down by an idle visitor.
+ * The count is the taps and nothing else. The scripted build equips boosts, but
+ * CamelClock renders whatever rack it is handed, so the hero's level never has
+ * to be lifted to unlock them — and because the level banner is hidden here, a
+ * build-driven floor would only ever fire a stray splash on scroll. Counting
+ * taps alone means every click paints the water front.
  *
  * The reaction split is lifted from queueHydrate so a tap reads the same as it
  * does on a real clock — a legend backflip on a level-up, an ordinary hop otherwise.
  */
-export default function useShowcaseHydrate({ floor = 0 } = {}) {
+export default function useShowcaseHydrate() {
     const [taps, setTaps] = useState(0);
     const camelRef = useRef(null);
     const tapsRef = useRef(0);
 
-    const hydrateCount = Math.max(taps, floor);
+    const hydrateCount = taps;
 
     const hydrate = useCallback(() => {
-        const previous = Math.max(tapsRef.current, floor);
+        const previous = tapsRef.current;
         tapsRef.current += 1;
-        const next = Math.max(tapsRef.current, floor);
-        camelRef.current?.triggerNow(levelFromCount(next) > levelFromCount(previous) ? "legend" : "hop");
+        camelRef.current?.triggerNow(levelFromCount(tapsRef.current) > levelFromCount(previous) ? "legend" : "hop");
         setTaps(tapsRef.current);
-    }, [floor]);
+    }, []);
 
     return {
         camelRef,
         hydrateCount,
         // The level prop is what CamelClock watches for its level-up flash, and
-        // deriving it from the count keeps it in step with questState instead of
-        // leaving a floor for the two to disagree about.
+        // deriving it from the count keeps it in step with questState.
         level: levelFromCount(hydrateCount),
         hydrate,
     };

@@ -49,6 +49,8 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const [signedIn, setSignedIn] = useState(false);
     const [myUsername, setMyUsername] = useState(null);
     const [capNudge, setCapNudge] = useState(false);
+    const [capNotice, setCapNotice] = useState(false);
+    const [visitorCapOpen, setVisitorCapOpen] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
@@ -95,8 +97,13 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         isOwner,
         drop: entitlements.drop ?? 0,
         onBlocked: () => {
-            setCapNudge(true);
-            setShareOpen(true);
+            if (isOwner) {
+                setCapNudge(true);
+                setShareOpen(true);
+            } else {
+                setCapNotice(true);
+                setVisitorCapOpen(true);
+            }
         },
     });
 
@@ -125,8 +132,15 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
 
     // The tour tells the owner they can hydrate by clicking the camel too. The camel and the rail
     // button both call beginHydrate, so wrap the camel's handler to record that this path was used.
+    // Both wrappers clear any previous cap notice: beginHydrate re-sets it if the pool is still dry.
     const hydrateFromCamel = useCallback(() => {
         setCamelHydrated(true);
+        setCapNotice(false);
+        beginHydrate();
+    }, [beginHydrate]);
+
+    const handleHydrate = useCallback(() => {
+        setCapNotice(false);
         beginHydrate();
     }, [beginHydrate]);
 
@@ -244,10 +258,11 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const categoryRows = categoryProgress(clock.boost_order, quest.level, equippable);
     const defsByCategory = boostDefsByCategory();
 
-    // Below L2 an owner's own hydrations are free, so the "no claimable hydrations today" pool
-    // warning is misleading there and only distracts from the tutorial - hide it until level 2.
-    const note = viewerHydrates && (dropLeft > 0 || quest.level >= 2)
-        ? hydrateNoteText({ isOwner, dropLeft })
+    // A visitor draws on the same shared daily pool, so their claim note is always informative. An
+    // owner's is suppressed below L2, where their own hydrations are free - "no claimable" would be
+    // misleading during the tutorial.
+    const note = viewerHydrates && (isOwner ? (dropLeft > 0 || quest.level >= 2) : true)
+        ? hydrateNoteText({ dropLeft })
         : null;
     const noteTone = dropLeft > 0 ? "claim" : "grow";
     const NoteIcon = dropLeft > 0 ? Sun : Share2;
@@ -424,7 +439,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             <button
                                 type="button"
                                 className="post-actions-hydrate nbtc"
-                                onClick={beginHydrate}
+                                onClick={handleHydrate}
                                 title="Hydrate this CamelClock"
                                 ref={tourHydrateRef}
                             >
@@ -452,6 +467,12 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                         >
                             <TriangleAlert className="hydrate-error-icon" aria-hidden="true" />
                             <span>COULDN&rsquo;T SAVE THAT HYDRATION &mdash; TRY AGAIN</span>
+                        </p>
+                    )}
+                    {capNotice && (
+                        <p className="hydrate-error hydrate-capped" role="status">
+                            <TriangleAlert className="hydrate-error-icon" aria-hidden="true" />
+                            <span>OUT OF HYDRATIONS TODAY &mdash; COME BACK TOMORROW</span>
                         </p>
                     )}
                     {viewerHydrates && (
@@ -551,6 +572,17 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                     title={clock.title}
                     mode="saved"
                     onClose={() => setSavedOpen(false)}
+                />
+            )}
+
+            {visitorCapOpen && (
+                <ShareDialog
+                    clockId={clock.id}
+                    title={clock.title}
+                    mode="saved"
+                    heading="THAT'S TODAY'S HYDRATIONS"
+                    subline="You've used your daily hydrations for this CamelClock. Come back tomorrow to keep it climbing."
+                    onClose={() => setVisitorCapOpen(false)}
                 />
             )}
 

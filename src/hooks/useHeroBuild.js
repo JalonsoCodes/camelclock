@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { wearables as wearableData } from "@/utils/grids";
-import { boostLadderFor, hydratesForLevel } from "@/utils/boost";
 
 /* How long one layer takes to fill itself in. Deliberately the same budget the
    old per-slide reveal used, so the beat feels familiar. */
@@ -29,19 +28,9 @@ function onePerCategory(ids) {
     return out;
 }
 
-/* A clock only shows boosts its quest level has unlocked, so a boost the hero has
-   just equipped needs the count lifted to the threshold that unlocks it under
-   this hero's own reveal order. The ladder chunks the order into pairs, so the
-   floor is the threshold of the last rung that contains something currently on
-   the camel — and landing exactly on a threshold is what makes the meter read
-   "0 hydrations to level X" above an empty bar, so a visitor's first tap visibly
-   starts filling it. */
-function hydrateFloorFor(ids, order) {
-    const highest = boostLadderFor(order)
-        .filter((entry) => entry.ids.some((id) => ids.includes(id)))
-        .reduce((max, entry) => Math.max(max, entry.level), 1);
-    return hydratesForLevel(highest);
-}
+/* A clock only shows boosts its quest level has unlocked, but the hero's rack is
+   handed straight to CamelClock and never filtered by level — so the build needs
+   no hydration floor to unlock what its panels put on. */
 
 /**
  * The landing hero's build-up.
@@ -62,7 +51,7 @@ function hydrateFloorFor(ids, order) {
  * layer actually being undone is the one leaving, and it is dropped outright
  * rather than played backwards — see `progressAt`.
  */
-export default function useHeroBuild(steps, index, { wearables = [], boostOrder = null } = {}) {
+export default function useHeroBuild(steps, index, { wearables = [] } = {}) {
     const [colourFill, setColourFill] = useState(0);
     const [built, setBuilt] = useState(0);
     const [fill, setFill] = useState(1);
@@ -122,6 +111,5 @@ export default function useHeroBuild(steps, index, { wearables = [], boostOrder 
         celebrate: index >= 5,
         wearables: index >= 2 ? heroWearables : [],
         boosts,
-        hydrateFloor: hydrateFloorFor(boosts, boostOrder),
     };
 }

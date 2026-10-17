@@ -27,13 +27,6 @@ const DEMO_GAP = 900;
    the breakpoint where the two-column hero stops fitting. */
 const SIMPLE_QUERY = "(max-width: 1200px)";
 
-/* The hero is scripted rather than seeded from a row, so its reveal order is
-   spelled out here for the same reason a clock stores boost_order: the meter has
-   to be lifted to a level that actually unlocks what this panel puts on. This is
-   a legal order — every pair spans two categories, which is what
-   shuffleBoostOrder would have drawn. */
-const HERO_BOOST_ORDER = ["pushup", "sparkle", "sun", "jack", "fireworks", "rain", "sandstorm"];
-
 /* Prose lives in src/content/landingCopy.js. What stays here is the behaviour a
    step carries — which effects it demos, whether it fires the finale — joined to
    that copy by the step's `id`. That is what lets the copy be reordered or
@@ -97,8 +90,8 @@ export default function LandingHero() {
     const { index, goTo } = useShowcaseSteps(count, trackRef, scrollToStep);
 
     /* Nothing scrolls the build in simple mode, so every layer is handed over at
-       once: the camel arrives dressed, with its demo boosts equipped and its
-       meter already lifted, and the effects then run on their own cadence. */
+       once: the camel arrives dressed, with its demo boosts equipped, and the
+       effects then run on their own cadence. */
     const buildIndex = simple ? HERO_STEPS.length : index;
 
     const {
@@ -107,11 +100,11 @@ export default function LandingHero() {
         boostsLive,
         interactive,
         celebrate,
+        wearables,
         boosts,
-        hydrateFloor,
-    } = useHeroBuild(HERO_STEPS, buildIndex, { wearables: HERO_CLOCK.wearables, boostOrder: HERO_BOOST_ORDER });
+    } = useHeroBuild(HERO_STEPS, buildIndex, { wearables: HERO_CLOCK.wearables });
 
-    const { camelRef, hydrateCount, level, hydrate } = useShowcaseHydrate({ floor: hydrateFloor });
+    const { camelRef, hydrateCount, level, hydrate } = useShowcaseHydrate();
 
     useEffect(() => {
         document.body.classList.add("show-navbar");
@@ -223,7 +216,7 @@ export default function LandingHero() {
                     celebrationType={HERO_CLOCK.celebrationType}
                     primaryColour={HERO_CLOCK.primaryColour}
                     secondaryColour={HERO_CLOCK.secondaryColour}
-                    wearables={HERO_CLOCK.wearables}
+                    wearables={wearables}
                     ref={camelRef}
                     revealProgress={colourProgress}
                     wearableRevealProgress={wearableRevealProgress}
@@ -233,8 +226,8 @@ export default function LandingHero() {
                     showWatermark={interactive}
                     hideWatermarkLink
                     hideLevelBanner
-                    viewerHydrates={interactive}
-                    onHydrateClick={interactive ? hydrate : null}
+                    viewerHydrates
+                    onHydrateClick={hydrate}
                 />
             </div>
         </div>

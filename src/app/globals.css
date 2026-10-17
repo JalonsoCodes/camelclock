@@ -2392,6 +2392,12 @@ button:disabled {
   max-width: 40rem;
 }
 
+.settings-password-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
+}
+
 .settings-ok {
   color: #4caf50;
   font-weight: bold;
@@ -2647,11 +2653,41 @@ body.embed-mode.embed-transparent {
   background-color: transparent;
 }
 
+/* A cross-origin iframe's canvas is painted by the host, and Notion's dark pages paint
+   #191919 rather than true transparency — so a transparent embed would show white. Paint
+   the known host colour instead so the camel reads as sitting directly on the page. */
+html.dark body.embed-mode.embed-transparent {
+  background-color: #191919;
+}
+
 body.embed-mode.embed-transparent .public-clock-card {
   border: none;
   box-shadow: none;
   background-color: transparent;
   padding: 0;
+}
+
+/* The embed card's cap is selectable via ?size=, so a Notion block only ever grows the
+   camel as far as the chosen size before it letterboxes. Scoped to embed-mode: the viewer
+   card keeps its own 60rem. */
+body.embed-mode.embed-size-sm {
+  --embed-card-max: 30rem;
+}
+
+body.embed-mode.embed-size-md {
+  --embed-card-max: 44rem;
+}
+
+body.embed-mode.embed-size-lg {
+  --embed-card-max: 60rem;
+}
+
+body.embed-mode .public-clock {
+  padding: 1.6rem;
+}
+
+body.embed-mode .public-clock-card {
+  max-width: var(--embed-card-max, 60rem);
 }
 
 body.embed-mode .site-footer {
@@ -2663,7 +2699,7 @@ body.embed-mode .site-footer {
    track the iframe's own viewport. */
 @media (max-width: 520px) {
   body.embed-mode .public-clock {
-    padding: 1.6rem;
+    padding: 1.2rem;
   }
 
   body.embed-mode .public-clock-card {
@@ -3320,6 +3356,18 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   border-color: #ef5350;
 }
 
+/* A daily-cap block is not a failed write: same region, water tone rather than the danger red. */
+.hydrate-capped {
+  color: var(--water-colour);
+  background-color: color-mix(in srgb, var(--water-colour) 12%, transparent);
+  border-color: var(--water-colour);
+}
+
+.dark .hydrate-capped {
+  color: var(--water-colour);
+  border-color: var(--water-colour);
+}
+
 .community-counts {
   display: flex;
   align-items: baseline;
@@ -3556,11 +3604,12 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   /* The card's orange tokens are inherited; options keep the standard dark frame. */
   --nbtc-border: 4px solid var(--border-colour);
   --nbtc-shadow: 8px 8px 0 var(--border-colour);
+  --level-poll-fill-colour: var(--boost-colour);
 }
 
 .level-poll-option.is-mine {
-  background-color: color-mix(in srgb, var(--boost-colour) 22%, var(--bg-colour));
   --nbtc-shadow: 8px 8px 0 var(--boost-colour);
+  --level-poll-fill-colour: color-mix(in srgb, var(--boost-colour), white 40%);
 }
 
 /* The tally, drawn as an orange fill behind the copy. Sits under the body, so it never darkens
@@ -3570,7 +3619,7 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   top: 0;
   bottom: 0;
   left: 0;
-  background-color: color-mix(in srgb, var(--boost-colour) 30%, transparent);
+  background-color: color-mix(in srgb, var(--level-poll-fill-colour) 22%, transparent);
 }
 
 .level-poll-option-body {

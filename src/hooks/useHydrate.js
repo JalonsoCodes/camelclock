@@ -99,21 +99,19 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
         const amount = pendingRef.current;
         pendingRef.current = 0;
 
-        const owner = optsRef.current.isOwner;
-        const dropSpent = owner ? spentRef.current.drop : 0;
-        if (owner) spentRef.current.drop = 0;
+        // The daily pool is now spent by every hydrator, so the optimistic spend is settled and
+        // refunded for visitors exactly as it was for the owner.
+        const dropSpent = spentRef.current.drop;
+        spentRef.current.drop = 0;
         inFlightRef.current = true;
 
         supabase
             .rpc("hydrate_clock", { target: clock.id, amount })
             .then(({ data, error }) => {
                 if (!error && data) {
-                    // Only the spend this request covered is settled; anything the owner clicked
-                    // while it was in flight is still held against the new base.
+                    // Only the spend this request covered is settled; anything clicked while it was
+                    // in flight is still held against the new base.
                     setHydrateError(null);
-                    if (owner && dropSpent > 0) {
-                        spentRef.current.drop = Math.max(0, spentRef.current.drop - dropSpent);
-                    }
                     baseRef.current = {
                         drop: computeDropLeft(data.drop_day, data.drop_used) ?? baseRef.current.drop,
                     };
@@ -125,7 +123,7 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
                     // Roll the optimistic count back with it and say so, rather than letting a
                     // rejected hydration look like a click that never registered.
                     setHydrateError({ code: error?.code || null, message: error?.message || null });
-                    if (owner) {
+                    if (dropSpent > 0) {
                         spentRef.current.drop = Math.min(baseRef.current.drop, spentRef.current.drop + dropSpent);
                     }
                     const refunded = Math.max(0, countRef.current - amount);
@@ -179,6 +177,21 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
         scheduleFlush();
     }, [scheduleFlush]);
 
+    // The daily pool is shared by every hydrator, so the entitlement check applies to visitors as
+    // well as the owner. The one exception is the owner's free sub-L2 allowance: their first 10
+    // hydrations on a fresh clock are on the house, so the pool is neither checked nor spent there.
+    const spendOrBlock = useCallback(() => {
+        const freeOwner = optsRef.current.isOwner && levelRef.current < 2;
+        if (freeOwner) return true;
+        if (baseRef.current.drop - spentRef.current.drop <= 0) {
+            optsRef.current.onBlocked?.();
+            return false;
+        }
+        spentRef.current.drop += 1;
+        syncEntitlementDisplay();
+        return true;
+    }, [syncEntitlementDisplay]);
+
     const beginHydrate = useCallback(() => {
         if (!user) {
             pendingHydrateRef.current = true;
@@ -190,19 +203,9 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
         // rather than sitting there for the length of the debounce.
         setHydrateError(null);
 
-        // Owner hydrations on their own clock are free below L2 (the first-run tutorial needs 10 to
-        // reach it), so the daily drop is neither checked nor spent until the clock levels up.
-        if (optsRef.current.isOwner && levelRef.current >= 2) {
-            if (baseRef.current.drop - spentRef.current.drop <= 0) {
-                optsRef.current.onBlocked?.();
-                return;
-            }
-            spentRef.current.drop += 1;
-            syncEntitlementDisplay();
-        }
-
+        if (!spendOrBlock()) return;
         queueHydrate();
-    }, [user, queueHydrate, syncEntitlementDisplay]);
+    }, [user, queueHydrate, spendOrBlock]);
 
     useEffect(() => {
         if (!enabled) return;
@@ -214,7 +217,9 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
             if (event === "SIGNED_IN" && pendingHydrateRef.current && u) {
                 pendingHydrateRef.current = false;
                 setHydratePromptOpen(false);
-                queueHydrate();
+                // The deferred sign-in hand-off is still a real hydration, so it runs the same
+                // pool check rather than bypassing it.
+                if (spendOrBlock()) queueHydrate();
             }
         });
 
@@ -236,7 +241,7 @@ export default function useHydrateInteraction(clock, enabled, { isOwner = false,
             subscription.unsubscribe();
             supabase.removeChannel(channel);
         };
-    }, [enabled, clock.id, applyCount, setServerCountFloor, queueHydrate]);
+    }, [enabled, clock.id, applyCount, setServerCountFloor, queueHydrate, spendOrBlock]);
 
     return {
         camelRef,

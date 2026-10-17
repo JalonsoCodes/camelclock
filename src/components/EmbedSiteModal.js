@@ -16,6 +16,12 @@ const CARD_OPTIONS = [
     { value: "transparent", label: "TRANSPARENT" },
 ];
 
+const SIZE_OPTIONS = [
+    { value: "sm", label: "SMALL" },
+    { value: "md", label: "MEDIUM" },
+    { value: "lg", label: "LARGE" },
+];
+
 const MOCKUP_PARAS = [
     ["17rem", "13rem", "14rem", "16rem", "8rem"],
     ["15rem", "12rem", "16rem", "9rem"],
@@ -41,10 +47,11 @@ export default function EmbedSiteModal({ url, title, onClose }) {
     const iframeRef = useRef(null);
     const [theme, setTheme] = useState("light");
     const [card, setCard] = useState("card");
+    const [size, setSize] = useState("md");
     const [copied, setCopied] = useState(null);
 
-    const embedSrc = `${url}?theme=${theme}${card === "transparent" ? "&card=transparent" : ""}`;
-    const embedCode = `<iframe src="${embedSrc}" width="100%" height="560" frameborder="0" style="border:0;" title="${escapeHtmlAttribute(title)}" loading="lazy"></iframe>`;
+    const embedSrc = `${url}?theme=${theme}${card === "transparent" ? "&card=transparent" : ""}&size=${size}`;
+    const embedCode = `<iframe src="${embedSrc}" width="100%" height="560" frameborder="0" style="border:0;background:transparent;" title="${escapeHtmlAttribute(title)}" loading="lazy"></iframe>`;
 
     const sizePreview = useCallback(() => {
         const frame = iframeRef.current;
@@ -127,6 +134,10 @@ export default function EmbedSiteModal({ url, title, onClose }) {
                             <div className="embed-site-option-group">
                                 <span className="embed-site-option-label">CARD STYLE</span>
                                 <OptionSlider ariaLabel="Preview card style" options={CARD_OPTIONS} value={card} onChange={setCard} />
+                            </div>
+                            <div className="embed-site-option-group">
+                                <span className="embed-site-option-label">SIZE</span>
+                                <OptionSlider ariaLabel="Preview size" options={SIZE_OPTIONS} value={size} onChange={setSize} />
                             </div>
                         </div>
 

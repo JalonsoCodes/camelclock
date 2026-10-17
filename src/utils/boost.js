@@ -34,8 +34,9 @@ export function computeDropLeft(dropDay, dropUsed) {
     return dropDay === today ? Math.max(0, dailyDropQuota() - dropUsed) : dailyDropQuota();
 }
 
-export function hydrateNoteText({ isOwner, dropLeft = 0 }) {
-    if (!isOwner) return null;
+// The daily pool is shared by every hydrator, so the claim note is no longer owner-only. The
+// caller decides who sees it (the camel keeps its own isOwner guard); this just words it.
+export function hydrateNoteText({ dropLeft = 0 } = {}) {
     if (dropLeft > 0) return `${dropLeft} CLAIMABLE TODAY`;
     return "NO CLAIMABLE HYDRATIONS TODAY \u2014 SHARE TO GROW";
 }

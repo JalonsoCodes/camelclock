@@ -86,7 +86,7 @@ export default async function ClockPage({ params }) {
     }
 
     const supabase = await createClient();
-    const entitlements = isOwner
+    const entitlements = user
         ? await (async () => {
               const { data: uh } = await supabase
                   .from("user_hydrates")
