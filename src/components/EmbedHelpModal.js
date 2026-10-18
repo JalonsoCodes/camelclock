@@ -22,7 +22,7 @@ export default function EmbedHelpModal({ url, onClose }) {
     const [card, setCard] = useState("card");
     const [copied, setCopied] = useState(false);
 
-    const embedSrc = `${url}?theme=${theme}${card === "transparent" ? "&card=transparent" : ""}`;
+    const embedSrc = `${url}?theme=${theme}${card === "transparent" ? "&card=transparent" : ""}&notion=1`;
 
     useEffect(() => {
         const handleEsc = (e) => {
@@ -67,8 +67,8 @@ export default function EmbedHelpModal({ url, onClose }) {
                         <OptionSlider ariaLabel="Embed card style" options={CARD_OPTIONS} value={card} onChange={setCard} />
                     </div>
                     <p className="embed-help-note">
-                        CARD + DARK sits well on Notion&apos;s dark pages; TRANSPARENT + DARK fills the frame with
-                        Notion&apos;s page colour.
+                        The frame picks up Notion&apos;s own page colour, so CARD and TRANSPARENT both sit flush
+                        on Notion&apos;s light and dark pages.
                     </p>
                 </div>
 

@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 export const metadata = {
     title: "FAQ",
     description: "Frequently asked questions about CamelClock, countdowns, timezones, embedding and more.",
+    alternates: { canonical: "/faq" },
 };
 
 const FAQS = [
@@ -18,14 +19,14 @@ const FAQS = [
     {
         q: "How do I embed my CamelClock on my website?",
         a: [
-            "Open your live clock and press SHARE, then copy the embed code into your site's HTML. The clock is responsive and will fit its container. Hover the embed's top-right corner to switch its theme (LIGHT/DARK) and card style (CARD/TRANSPARENT) live.",
+            "Open your live clock and press SHARE, then choose EMBED ON SITE — pick the theme, card style and size there, then copy the embed code into your site's HTML. The clock is responsive and will fit its container. TRANSPARENT lets your own page show through behind the clock.",
         ],
     },
     {
         q: "Can I embed a CamelClock in Notion?",
         a: [
-            "Yes. Open your live clock and press the Notion icon next to the clock (or open SHARE and choose \u201CHOW TO EMBED IN NOTION\u201D), then copy the embed URL.",
-            "In Notion, type /embed and press Enter, paste the URL, then drag a corner of the block to size it. Hover the top-right corner to switch theme (LIGHT/DARK) and card style (CARD/TRANSPARENT) \u2014 use CARD + DARK to match Notion's dark pages. The countdown is live inside Notion while the clock stays published.",
+            "Yes. Open your live clock and press the Notion icon next to the clock (or open SHARE and choose \u201CEMBED IN NOTION\u201D), pick your look, then copy the embed URL.",
+            "In Notion, type /embed and press Enter, paste the URL, then drag a corner of the block to size it. The frame picks up Notion's own page colour, so it sits flush on light and dark pages. The countdown is live inside Notion while the clock stays published.",
         ],
     },
     {
@@ -62,8 +63,22 @@ const FAQS = [
 ];
 
 export default function FaqPage() {
+    const faqSchema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: FAQS.map((faq) => ({
+            "@type": "Question",
+            name: faq.q,
+            acceptedAnswer: { "@type": "Answer", text: faq.a.join(" ") },
+        })),
+    };
+
     return (
         <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema).replace(/</g, "\\u003c") }}
+            />
             <Navbar />
             <main className="legal-page">
                 <div className="legal-content nbtc">

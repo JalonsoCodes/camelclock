@@ -6,15 +6,15 @@ const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CamelClock — a countdown with a camel in tow",
+    default: "CamelClock — Embeddable Pixel Camel Countdown Timer",
     template: "%s | CamelClock",
   },
   description:
-    "Turn any big day into a friendly pixel camel that counts down the seconds — and lets your crowd tap along. Free to make, easy to share or embed.",
+    "An interactive, stylish way to count down any big day: a pixel camel clock you customise, then share or embed on your site or Notion page — and let your crowd tap along.",
   openGraph: {
-    title: "CamelClock — a countdown with a camel in tow",
+    title: "CamelClock — Embeddable Pixel Camel Countdown Timer",
     description:
-      "Turn any big day into a friendly pixel camel that counts down the seconds and lets your crowd tap along.",
+      "An interactive, stylish pixel camel countdown you can customise, share and embed — and let your crowd tap along.",
     siteName: "CamelClock",
     type: "website",
   },

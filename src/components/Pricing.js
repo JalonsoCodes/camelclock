@@ -33,7 +33,7 @@ const FREE_FEATURES = [
     },
     {
         label: "Subtle Watermark",
-        detail: "A subtle 'Powered by CamelClock' mark sits under your clock — and you can let visitors tap the camel.",
+        detail: "A 'Create your CamelClock' link sits under your clock — and you can let visitors tap the camel.",
     },
 ];
 

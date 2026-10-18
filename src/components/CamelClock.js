@@ -710,7 +710,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                             className={styles.watermarkLink}
                             {...(watermarkExternal ? { target: "_top" } : {})}
                         >
-                            Powered by CamelClock
+                            Create your CamelClock
                         </Link>
                     )}
                 </div>

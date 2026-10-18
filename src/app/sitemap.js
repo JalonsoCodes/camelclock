@@ -21,7 +21,9 @@ export default async function sitemap() {
             .from("clocks")
             .select("id, updated_at")
             .eq("status", "live")
-            .order("updated_at", { ascending: false })
+            .eq("is_showcase", true)
+            .gt("target_at", new Date().toISOString())
+            .order("showcase_order", { ascending: true })
             .limit(5000);
         if (error) {
             throw new Error(error.message);

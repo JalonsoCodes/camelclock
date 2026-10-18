@@ -31,6 +31,7 @@ const getCurrentUser = cache(async () => {
 const fallbackMetadata = {
     title: "Clock",
     description: "View this countdown clock on CamelClock",
+    robots: { index: false, follow: false },
 };
 
 export async function generateMetadata({ params }) {
@@ -45,22 +46,26 @@ export async function generateMetadata({ params }) {
         if (clock.status === "draft" && !isOwner) return fallbackMetadata;
 
         return {
-            title: clock.title ?? "Clock",
+            title: clock.title ? `Countdown to ${clock.title} — Live Timer` : "Clock",
             description: clock.title
-                ? `Only time will tell — watch the CamelClock countdown to ${clock.title} so you don't miss it.`
+                ? `An interactive, stylish pixel camel countdown to ${clock.title} — share it or embed it on your site or Notion page, and let visitors tap along. Live to the second.`
                 : fallbackMetadata.description,
+            alternates: { canonical: `/clock/${id}` },
+            robots: clock.is_showcase === true
+                ? { index: true, follow: true }
+                : { index: false, follow: true },
             openGraph: {
-                title: clock.title ?? "Clock",
+                title: clock.title ? `Countdown to ${clock.title} — Live Timer` : "Clock",
                 description: clock.title
-                    ? `Watch the CamelClock countdown to ${clock.title} so you don't miss it.`
+                    ? `Watch the CamelClock countdown to ${clock.title} — an interactive pixel camel clock you can share or embed.`
                     : fallbackMetadata.description,
                 type: "website",
             },
             twitter: {
                 card: "summary_large_image",
-                title: clock.title ?? "Clock",
+                title: clock.title ? `Countdown to ${clock.title} — Live Timer` : "Clock",
                 description: clock.title
-                    ? `Watch the CamelClock countdown to ${clock.title} so you don't miss it.`
+                    ? `Watch the CamelClock countdown to ${clock.title} — an interactive pixel camel clock you can share or embed.`
                     : fallbackMetadata.description,
             },
         };

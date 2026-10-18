@@ -5,11 +5,15 @@ import { dailyDropQuota, computeDropLeft } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
+export const metadata = {
+    robots: { index: false, follow: false },
+};
+
 const VALID_THEMES = ["dark"];
 const VALID_CARDS = ["transparent"];
 const VALID_SIZES = ["sm", "md", "lg"];
 
-function noFlashScript(embedTheme, embedCard, embedSize) {
+function noFlashScript(embedTheme, embedCard, embedSize, embedNotion) {
     let script = `document.body.classList.add("embed-mode", "embed-size-${embedSize}");`;
     if (embedTheme === "dark") {
         script += 'document.documentElement.classList.add("dark");';
@@ -17,17 +21,21 @@ function noFlashScript(embedTheme, embedCard, embedSize) {
     if (embedCard === "transparent") {
         script += 'document.body.classList.add("embed-transparent");';
     }
+    if (embedNotion) {
+        script += 'document.body.classList.add("embed-notion");';
+    }
     return script;
 }
 
 export default async function EmbedPage({ params, searchParams }) {
     const { id } = await params;
-    const { theme, card, size } = await searchParams;
+    const { theme, card, size, notion } = await searchParams;
 
     const legacy = theme === "transparent";
     const embedTheme = legacy || !VALID_THEMES.includes(theme) ? "light" : theme;
     const embedCard = legacy ? "transparent" : VALID_CARDS.includes(card) ? card : "card";
     const embedSize = VALID_SIZES.includes(size) ? size : "sm";
+    const embedNotion = notion === "1" || notion === "true";
 
     const supabase = await createClient();
 
@@ -67,8 +75,8 @@ export default async function EmbedPage({ params, searchParams }) {
 
     return (
         <main className="public-clock">
-            <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, embedCard, embedSize) }} />
-            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} initialCard={embedCard} initialSize={embedSize} entitlements={entitlements} />
+            <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, embedCard, embedSize, embedNotion) }} />
+            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} initialCard={embedCard} initialSize={embedSize} initialNotion={embedNotion} entitlements={entitlements} />
         </main>
     );
 }

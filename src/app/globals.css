@@ -2639,9 +2639,12 @@ button:disabled {
   background-color: var(--card-colour);
 }
 
+/* The embed page never paints its own background: the host page shows through, so a card
+   floats on the site and ?card=transparent shows it completely. */
 body.embed-mode {
   padding: 0;
   background-image: none;
+  background-color: transparent;
   overflow: hidden;
 }
 
@@ -2649,14 +2652,15 @@ body.embed-mode::before {
   display: none;
 }
 
-body.embed-mode.embed-transparent {
-  background-color: transparent;
+/* A cross-origin iframe's canvas is painted by the host, and Notion can't show its own
+   page through one — a transparent frame there reads as white. The Notion embed URL
+   carries ?notion=1 (only EmbedHelpModal emits it), which paints the host's page colour
+   so the embed sits flush on Notion's light and dark pages. */
+body.embed-mode.embed-notion {
+  background-color: #ffffff;
 }
 
-/* A cross-origin iframe's canvas is painted by the host, and Notion's dark pages paint
-   #191919 rather than true transparency — so a transparent embed would show white. Paint
-   the known host colour instead so the camel reads as sitting directly on the page. */
-html.dark body.embed-mode.embed-transparent {
+html.dark body.embed-mode.embed-notion {
   background-color: #191919;
 }
 

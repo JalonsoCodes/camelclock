@@ -9,10 +9,13 @@ import { levelFromCount, unlockedBoostIdsFor } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
+
 export const metadata = {
-    title: "Create a Countdown Clock",
+    title: "Create a Free Embeddable Countdown Clock",
     description:
-        "Turn any big day into a friendly pixel camel that counts down the seconds — and lets your crowd tap along. Free to make, easy to share or embed.",
+        "CamelClock is an interactive, stylish way to count down any big day — a pixel camel clock you customise, then share or embed on your site or Notion page. Free, and your crowd can tap along.",
+    alternates: { canonical: "/" },
 };
 
 const BRAND_PRIMARY = "#DBB279";
@@ -90,8 +93,24 @@ async function getShowcaseClocks() {
 export default async function Home() {
     const examples = await getShowcaseClocks();
 
+    const softwareSchema = {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        name: "CamelClock",
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Web",
+        url: siteUrl,
+        description:
+            "An interactive, stylish countdown: customise a pixel camel clock, then share it or embed it on your site or Notion page.",
+        offers: { "@type": "Offer", price: "0", priceCurrency: "GBP" },
+    };
+
     return (
         <>
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema).replace(/</g, "\\u003c") }}
+            />
             <Navbar />
             <main className="landing-page">
                 <LandingHero />

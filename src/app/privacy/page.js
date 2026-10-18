@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 export const metadata = {
     title: "Privacy Policy",
     description: "Privacy Policy for CamelClock",
+    alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
