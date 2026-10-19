@@ -13,6 +13,7 @@ import { randomisePalette } from "@/utils/colour";
 import { getNextTarget } from "@/utils/time";
 import { formatFinishRow } from "@/utils/clockValues";
 import { quickStart } from "@/content/landingCopy";
+import { track } from "@/utils/analytics";
 
 const SLIDE_MS = 260;
 const DEFAULT_BOOSTS = [{ id: "shine" }];
@@ -57,6 +58,11 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
         setDirection(next > step ? 1 : -1);
         setLeaving(step);
         setStep(next);
+
+        // Funnel top: the first time a visitor moves off slide 1 the wizard is genuinely started.
+        if (step === 0 && next > 0) {
+            track("wizard_started");
+        }
 
         clearTimeout(slideTimer.current);
         slideTimer.current = setTimeout(() => setLeaving(null), SLIDE_MS);

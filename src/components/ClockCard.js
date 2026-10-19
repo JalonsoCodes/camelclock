@@ -11,6 +11,7 @@ import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { levelFromCount } from "@/utils/boost";
 import { checkLiveLimit } from "@/utils/liveLimit";
 import { supabase } from "@/lib/supabase/client";
+import { track } from "@/utils/analytics";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -71,6 +72,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
             refreshLiveCount();
             onDeleted();
             setShareOpen(true);
+            track("clock_published", { source: "dashboard" });
         }
     };
 

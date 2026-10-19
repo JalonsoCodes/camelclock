@@ -6,6 +6,7 @@ import { Bell, UserPlus } from "lucide-react";
 import AuthModal from "./auth/AuthModal";
 import WaitlistModal from "./WaitlistModal";
 import { wearables as wearableData } from "@/utils/grids";
+import { track } from "@/utils/analytics";
 
 const WEARABLE_COUNT = Object.keys(wearableData).length;
 
@@ -43,8 +44,12 @@ export const PRO_FEATURES = [
         detail: "Keep as many live embeds running as you need.",
     },
     {
-        label: "Full Wearables Closet",
-        detail: "Access all premium cosmetics, hats, and seasonal gear.",
+        label: "No Watermark",
+        detail: "Your clocks and embeds drop the 'Create your CamelClock' credit.",
+    },
+    {
+        label: "Background Scenes",
+        detail: "Place your camel in a scene instead of on a plain background.",
     },
 ];
 
@@ -98,7 +103,10 @@ export default function Pricing() {
                     <button
                         className="pricing-button"
                         type="button"
-                        onClick={() => setShowWaitlist(true)}
+                        onClick={() => {
+                            track("upgrade_clicked", { source: "pricing" });
+                            setShowWaitlist(true);
+                        }}
                     >
                         <Bell className="button-icon" />
                         Join Waitlist

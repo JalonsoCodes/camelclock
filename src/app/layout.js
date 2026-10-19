@@ -1,7 +1,20 @@
 import Link from "next/link";
+import Script from "next/script";
+import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
+const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
+
+// Self-hosted at build time so a visitor's browser never contacts Google (no IP leak, no runtime
+// request, no render-blocking @import). The generated variable is wired to --pixelated-font in
+// globals.css and must sit on <html>, since that is where the class lands.
+const pixelFont = Press_Start_2P({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-press-start",
+});
 
 export const metadata = {
   metadataBase: new URL(siteUrl),
@@ -27,10 +40,8 @@ export const viewport = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={pixelFont.variable} suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Plain inline script in <head>, not next/script: beforeInteractive inline scripts
             are moved to <head> on the server but render a body <script> on the client, so React
             creates it fresh during hydration and React 19.3 warns. A head script is identical on
@@ -52,6 +63,16 @@ export default function RootLayout({ children }) {
           <Link href="/privacy">Privacy Policy</Link>
           <Link href="/terms">Terms of Service</Link>
         </footer>
+        {umamiWebsiteId && (
+          <Script
+            defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id={umamiWebsiteId}
+            data-domains="camelclock.com"
+            data-do-not-track="true"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

@@ -15,10 +15,13 @@ export default function TermsPage() {
             <main className="legal-page">
                 <div className="legal-content nbtc">
                     <h1>Terms of Service</h1>
-                    <p className="legal-updated">Last updated: August 2026</p>
+                    <p className="legal-updated">Last updated: October 2026</p>
 
                     <h2>1. Acceptance of Terms</h2>
                     <p>By creating an account or using CamelClock, you agree to these Terms of Service. If you do not agree, please do not use the service.</p>
+
+                    <h2>2. Age Requirement</h2>
+                    <p>You must be at least 13 years old to create an account. If you are under the age of majority where you live, you may only use CamelClock with the involvement of a parent or guardian.</p>
 
                     <h2>2. Account Responsibility</h2>
                     <p>You are responsible for maintaining the security of your account credentials.</p>
@@ -41,7 +44,10 @@ export default function TermsPage() {
                     <h2>8. Changes to These Terms</h2>
                     <p>We may update these terms from time to time. Continued use of the service after changes constitutes acceptance of the updated terms.</p>
 
-                    <h2>9. Contact</h2>
+                    <h2>9. Governing Law</h2>
+                    <p>These terms are governed by the laws of England and Wales, and any disputes will be subject to the exclusive jurisdiction of its courts.</p>
+
+                    <h2>10. Contact</h2>
                     <p>For questions about these terms, contact us at: <strong>hello@camelclock.com</strong></p>
 
                     <Link href="/" className="btn-link"><ArrowLeft className="button-icon" />Back to CamelClock</Link>

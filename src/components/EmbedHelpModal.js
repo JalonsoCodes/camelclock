@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Check, Copy, X } from "lucide-react";
 import OptionSlider from "./OptionSlider";
 import useFocusTrap from "@/hooks/useFocusTrap";
+import { track } from "@/utils/analytics";
 
 const THEME_OPTIONS = [
     { value: "light", label: "LIGHT" },
@@ -37,6 +38,7 @@ export default function EmbedHelpModal({ url, onClose }) {
             await navigator.clipboard.writeText(embedSrc);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+            track("embed_copied_notion", { theme, card });
         } catch (error) {
             console.error("Failed to copy:", error);
         }

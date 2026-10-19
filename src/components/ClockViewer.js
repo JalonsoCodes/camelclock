@@ -23,6 +23,7 @@ import LevelPollBanner from "@/components/LevelPollBanner";
 import ClockTour from "@/components/ClockTour";
 import { BOOSTS } from "@/utils/grids";
 import { boostDefsByCategory, categoryProgress, questState, unlockedBoostIdsFor, computeDropLeft, hydrateNoteText } from "@/utils/boost";
+import { track } from "@/utils/analytics";
 
 const CATEGORY_LABEL = { exercise: "EXERCISE", aura: "AURA", weather: "WEATHER" };
 
@@ -175,6 +176,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         setStatusOverride("live");
         setCapNudge(false);
         setShareOpen(true);
+        track("clock_published", { source: "viewer" });
         router.refresh();
     };
 

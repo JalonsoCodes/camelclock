@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { Check, Copy, X } from "lucide-react";
 import OptionSlider from "./OptionSlider";
 import useFocusTrap from "@/hooks/useFocusTrap";
+import { track } from "@/utils/analytics";
 
 const THEME_OPTIONS = [
     { value: "light", label: "LIGHT" },
@@ -98,6 +99,8 @@ export default function EmbedSiteModal({ url, title, onClose }) {
             await navigator.clipboard.writeText(text);
             setCopied(type);
             setTimeout(() => setCopied(null), 2000);
+            // North-star event: an embed actually handed to a website.
+            track("embed_copied_site", { kind: type, size, theme, card });
         } catch (error) {
             console.error("Failed to copy:", error);
         }

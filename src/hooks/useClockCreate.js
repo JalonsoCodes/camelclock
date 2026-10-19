@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase/client";
 import { getConfiguredTarget } from "@/utils/time";
 import { validateClock } from "@/utils/validation";
 import { shuffleBoostOrder } from "@/utils/boost";
+import { track } from "@/utils/analytics";
 
 export const PENDING_KEY = "camelClock.pending";
 
@@ -118,6 +119,10 @@ export default function useClockCreate({ clockId = null } = {}) {
             const savedId = data?.[0]?.id ?? clockId;
             if (savedId) {
                 setCreatedId(savedId);
+            }
+
+            if (isNew) {
+                track("clock_created");
             }
 
             router.push(`/clock/${savedId}?created=1`);
