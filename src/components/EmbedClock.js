@@ -1,91 +1,49 @@
 "use client";
 
-import { useState } from "react";
 import CamelClock from "./CamelClock";
-import AuthModal from "./auth/AuthModal";
-import ShareDialog from "./ShareDialog";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
-import useHydrateInteraction from "@/hooks/useHydrate";
-import useHydrateStats from "@/hooks/useHydrateStats";
-import { computeDropLeft } from "@/utils/boost";
+import { track } from "@/utils/analytics";
 
-export default function EmbedClock({ clock, id, showWatermark = true, titleHref, titleExternal = true, entitlements = {} }) {
+// An embed is a pure timer and a doorway. It cannot hydrate: the embed lives in a cross-origin
+// iframe where the Supabase session cookie is not reliably sent, so tapping the camel could only
+// ever produce a sign-in wall at the moment of peak intent. Instead a tap navigates out to the
+// clock's own page (target="_top"), where hydration works properly and the signup flow lives.
+export default function EmbedClock({ clock, id, showWatermark = true, titleHref, titleExternal = true }) {
     const target = new Date(clock.target_at);
-    const viewerHydrates = clock.viewer_hydrates === true;
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
-    const [capOpen, setCapOpen] = useState(false);
-    // The title links out to the clock's own page; the embed passes an absolute
-    // href with target="_top" so it breaks out of the iframe, while the landing's
-    // showcase examples link relatively in the same tab. A caller with no such
-    // page (the landing's empty-state fallbacks) passes null.
+    // The title links out to the clock's own page; the embed passes an absolute href with
+    // target="_top" so it breaks out of the iframe. A caller with no such page passes null.
     const resolvedTitleHref = titleHref === undefined ? `${siteUrl}/clock/${id}` : titleHref;
-    const {
-        camelRef,
-        hydrateCount,
-        serverCount,
-        level,
-        beginHydrate,
-        applyServer,
-        hydratePromptOpen,
-        setHydratePromptOpen,
-    } = useHydrateInteraction(clock, viewerHydrates, {
-        isOwner: false,
-        drop: entitlements.drop ?? 0,
-        onBlocked: () => setCapOpen(true),
-    });
+    const clockUrl = `${siteUrl}/clock/${id}`;
 
-    useHydrateStats(clock.id, serverCount, (data) => {
-        applyServer({
-            drop: computeDropLeft(data?.drop_day, data?.drop_used),
-        });
-    });
+    const handleCamelTap = () => {
+        track("embed_tapped");
+        window.open(clockUrl, "_top");
+    };
 
     return (
-        <>
-            <CamelClock
-                ref={camelRef}
-                title={clock.title}
-                month={target.getMonth()}
-                day={target.getDate()}
-                time={formatClockTime(target)}
-                targetAt={clock.target_at}
-                introText={clock.intro_text}
-                celebrationMessage={clock.celebration_message}
-                primaryColour={clock.primary_colour}
-                secondaryColour={clock.secondary_colour}
-                wearables={clock.wearables || []}
-                boosts={clock.boosts || []}
-                showWatermark={showWatermark}
-                watermarkExternal
-                watermarkHref={siteUrl}
-                titleHref={resolvedTitleHref}
-                titleExternal={titleExternal}
-                hydrateCount={hydrateCount}
-                level={level}
-                finishRowText={formatFinishRow(target)}
-                hideLevelBanner
-                {...(viewerHydrates
-                    ? { viewerHydrates: true, onHydrateClick: beginHydrate }
-                    : {})}
-            />
-            {hydratePromptOpen && (
-                <AuthModal
-                    mode="signup"
-                    next={`/clock/${id}`}
-                    onClose={() => setHydratePromptOpen(false)}
-                    onSuccess={() => setHydratePromptOpen(false)}
-                />
-            )}
-            {capOpen && (
-                <ShareDialog
-                    clockId={clock.id}
-                    title={clock.title}
-                    mode="saved"
-                    heading="THAT'S TODAY'S HYDRATIONS"
-                    subline="You've used your daily hydrations for this CamelClock. Come back tomorrow to keep it climbing."
-                    onClose={() => setCapOpen(false)}
-                />
-            )}
-        </>
+        <CamelClock
+            title={clock.title}
+            month={target.getMonth()}
+            day={target.getDate()}
+            time={formatClockTime(target)}
+            targetAt={clock.target_at}
+            introText={clock.intro_text}
+            celebrationMessage={clock.celebration_message}
+            primaryColour={clock.primary_colour}
+            secondaryColour={clock.secondary_colour}
+            wearables={clock.wearables || []}
+            boosts={clock.boosts || []}
+            showWatermark={showWatermark}
+            watermarkExternal
+            watermarkHref={siteUrl}
+            titleHref={resolvedTitleHref}
+            titleExternal={titleExternal}
+            finishRowText={formatFinishRow(target)}
+            hideLevelBanner
+            {...(clock.viewer_hydrates === true
+                ? { viewerHydrates: true, onHydrateClick: handleCamelTap }
+                : {})}
+        />
     );
 }

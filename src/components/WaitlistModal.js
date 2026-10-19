@@ -2,14 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Check, Infinity as InfinityIcon, Shirt, X } from "lucide-react";
+import { Bell, Check, Infinity as InfinityIcon, EyeOff, Mountain, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import { PRO_FEATURES } from "./Pricing";
 
 const FEATURE_ICONS = {
     "Unlimited Active Camel Clocks": InfinityIcon,
-    "Full Wearables Closet": Shirt,
+    "No Watermark": EyeOff,
+    "Background Scenes": Mountain,
 };
 
 export default function WaitlistModal({
@@ -40,7 +41,7 @@ export default function WaitlistModal({
 
         const { error: insertError } = await supabase
             .from("waitlist")
-            .insert({ email: email.trim().toLowerCase() });
+            .insert({ email: email.trim().toLowerCase(), feature: highlightFeature });
 
         setLoading(false);
 

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import EmbedShell from "@/components/EmbedShell";
 import { createClient } from "@/lib/supabase/server";
-import { dailyDropQuota, computeDropLeft } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
@@ -57,26 +56,13 @@ export default async function EmbedPage({ params, searchParams }) {
         notFound();
     }
 
-    // A signed-in visitor's embed taps draw on the same shared daily pool, so hand the embed the
-    // caller's remaining drop up front rather than letting it start from 0 and block the first tap.
-    const { data: { user } } = await supabase.auth.getUser();
-    const entitlements = user
-        ? await (async () => {
-              const { data: uh } = await supabase
-                  .from("user_hydrates")
-                  .select("drop_day, drop_used")
-                  .eq("user_id", user.id)
-                  .maybeSingle();
-              return {
-                  drop: computeDropLeft(uh?.drop_day, uh?.drop_used) ?? dailyDropQuota(),
-              };
-          })()
-        : {};
+    // An embed is a pure timer and a doorway — it never hydrates in place (see EmbedClock), so it
+    // needs no entitlement read at all. A tap navigates out to the clock's own page instead.
 
     return (
         <main className="public-clock">
             <script dangerouslySetInnerHTML={{ __html: noFlashScript(embedTheme, embedCard, embedSize, embedNotion) }} />
-            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} initialCard={embedCard} initialSize={embedSize} initialNotion={embedNotion} entitlements={entitlements} />
+            <EmbedShell clock={clock} id={id} initialTheme={embedTheme} initialCard={embedCard} initialSize={embedSize} initialNotion={embedNotion} />
         </main>
     );
 }

@@ -293,7 +293,10 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
             )}
 
             {proOpen && (
-                <WaitlistModal onClose={() => setProOpen(false)} />
+                <WaitlistModal
+                    highlightFeature="Unlimited Active Camel Clocks"
+                    onClose={() => setProOpen(false)}
+                />
             )}
         </nav>
     );

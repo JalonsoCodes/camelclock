@@ -124,7 +124,12 @@ export default function Pricing() {
                     }}
                 />
             )}
-            {showWaitlist && <WaitlistModal onClose={() => setShowWaitlist(false)} />}
+            {showWaitlist && (
+                <WaitlistModal
+                    highlightFeature="Unlimited Active Camel Clocks"
+                    onClose={() => setShowWaitlist(false)}
+                />
+            )}
         </section>
     );
 }

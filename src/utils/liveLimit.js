@@ -10,6 +10,19 @@ export async function checkLiveLimit() {
         return { ok: false, reason: "auth", error: "You need to be signed in." };
     }
 
+    // Pro (and admin) lift the cap entirely. profiles is owner-read-only, so this read only ever
+    // resolves for the signed-in owner — which is the only caller that matters here. The trigger
+    // enforce_live_clock_limit() is the hard backstop; this is just so Pro users never see the cap.
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin, is_pro")
+        .eq("id", user.id)
+        .single();
+
+    if (profile?.is_admin || profile?.is_pro) {
+        return { ok: true };
+    }
+
     let { data: count, error } = await supabase.rpc("count_my_live_clocks");
 
     if (error && /jwt.*future/i.test(error.message)) {
