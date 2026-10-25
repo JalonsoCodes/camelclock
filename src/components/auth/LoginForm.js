@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { auth } from "@/content/auth";
 
 export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
     const router = useRouter();
@@ -21,7 +22,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
         const { error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-            setError(error.message);
+            setError(error.message || auth.login.errors.generic);
             setLoading(false);
             return;
         }
@@ -37,7 +38,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
     return (
         <form className="auth-form" onSubmit={handleSubmit}>
             <label className="auth-label">
-                EMAIL
+                {auth.login.emailLabel}
                 <input
                     className="auth-input nbtc"
                     type="email"
@@ -50,7 +51,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
             </label>
 
             <label className="auth-label">
-                PASSWORD
+                {auth.login.passwordLabel}
                 <input
                     className="auth-input nbtc"
                     type="password"
@@ -62,21 +63,21 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
             </label>
 
             <p className="auth-forgot">
-                <Link href="/forgot-password">Forgot password?</Link>
+                <Link href="/forgot-password">{auth.login.forgot}</Link>
             </p>
 
             {error && <p className="auth-error">{error}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
                 <LogIn className="button-icon" />
-                {loading ? "SIGNING IN..." : "SIGN IN"}
+                {loading ? auth.login.signingIn : auth.login.signIn}
             </button>
 
             <p className="auth-switch">
                 New to CamelClock?{" "}
                 {onSwitchMode ? (
                     <button className="auth-switch-link" type="button" onClick={onSwitchMode}>
-                        Create an account
+                        {auth.signup.signUp.toLowerCase().includes("account") ? "Create an account" : auth.signup.signUp}
                     </button>
                 ) : (
                     <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Script from "next/script";
 import { Press_Start_2P } from "next/font/google";
 import "./globals.css";
+import { navigation } from "@/content/navigation";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
 const umamiWebsiteId = process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID;
@@ -16,18 +17,18 @@ const pixelFont = Press_Start_2P({
   variable: "--font-press-start",
 });
 
+import { seo } from "@/content/faq";
+
 export const metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "CamelClock — Embeddable Pixel Camel Countdown Timer",
-    template: "%s | CamelClock",
+    default: seo.rootTitleDefault,
+    template: seo.rootTitleTemplate,
   },
-  description:
-    "An interactive, stylish way to count down any big day: a pixel camel clock you customise, then share or embed on your site or Notion page — and let your crowd tap along.",
+  description: seo.rootDescription,
   openGraph: {
-    title: "CamelClock — Embeddable Pixel Camel Countdown Timer",
-    description:
-      "An interactive, stylish pixel camel countdown you can customise, share and embed — and let your crowd tap along.",
+    title: seo.rootOgTitle,
+    description: seo.rootOgDescription,
     siteName: "CamelClock",
     type: "website",
   },
@@ -59,9 +60,9 @@ export default function RootLayout({ children }) {
           {children}
         </div>
         <footer className="site-footer">
-          <Link href="/faq">FAQ</Link>
-          <Link href="/privacy">Privacy Policy</Link>
-          <Link href="/terms">Terms of Service</Link>
+          <Link href="/faq">{navigation.footer.faq}</Link>
+          <Link href="/privacy">{navigation.footer.privacy}</Link>
+          <Link href="/terms">{navigation.footer.terms}</Link>
         </footer>
         {umamiWebsiteId && (
           <Script

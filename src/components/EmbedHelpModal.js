@@ -93,7 +93,7 @@ export default function EmbedHelpModal({ url, onClose }) {
 
                 <p className="embed-help-note">
                     The embed is live — it keeps counting down in place, no refresh needed. The clock must stay Live
-                    with EMBEDDING switched ON.
+                    for the embed to work.
                 </p>
             </div>
         </div>,

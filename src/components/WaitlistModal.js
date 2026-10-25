@@ -5,19 +5,19 @@ import { createPortal } from "react-dom";
 import { Bell, Check, Infinity as InfinityIcon, EyeOff, Mountain, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
-import { PRO_FEATURES } from "./Pricing";
+import { PRO_FEATURES } from "@/content/pricing";
+import { waitlist } from "@/content/pricing";
 
 const FEATURE_ICONS = {
-    "Unlimited Active Camel Clocks": InfinityIcon,
-    "No Watermark": EyeOff,
-    "Background Scenes": Mountain,
+    "unlimited-clocks": InfinityIcon,
+    "no-watermark": EyeOff,
+    "scenes": Mountain,
 };
 
 export default function WaitlistModal({
     onClose,
-    heading = "CAMELCLOCK PRO IS COMING",
-    subline = "Be first in line for early access to CamelClock Pro.",
-    highlightFeature = null,
+    heading = waitlist.heading,
+    subline = waitlist.subline,
 }) {
     const trapRef = useFocusTrap(true);
     const [email, setEmail] = useState("");
@@ -41,7 +41,7 @@ export default function WaitlistModal({
 
         const { error: insertError } = await supabase
             .from("waitlist")
-            .insert({ email: email.trim().toLowerCase(), feature: highlightFeature });
+            .insert({ email: email.trim().toLowerCase() });
 
         setLoading(false);
 
@@ -51,7 +51,7 @@ export default function WaitlistModal({
                 return;
             }
             console.error("Failed to join waitlist:", insertError.message);
-            setError("Something went wrong. Please try again.");
+            setError(waitlist.genericError);
             return;
         }
 
@@ -68,21 +68,20 @@ export default function WaitlistModal({
                 {joined ? (
                     <>
                         <p className="auth-subtitle">
-                            You&apos;re on the list! We&apos;ll email you when CamelClock Pro
-                            launches.
+                            {waitlist.joinedBody}
                         </p>
                         <button className="auth-button" type="button" onClick={onClose}>
                             <X className="button-icon" />
-                            CLOSE
+                            {waitlist.closeLabel}
                         </button>
                     </>
                 ) : (
                     <form className="waitlist-form" onSubmit={handleSubmit}>
                         <ul className="waitlist-features">
                             {PRO_FEATURES.map((feature) => (
-                                <li key={feature.label} className={feature.label === highlightFeature ? "highlighted" : ""}>
+                                <li key={feature.id}>
                                     {(() => {
-                                        const Icon = FEATURE_ICONS[feature.label] ?? Bell;
+                                        const Icon = FEATURE_ICONS[feature.id] ?? Bell;
                                         return <span className="waitlist-feature-icon"><Icon aria-hidden="true" /></span>;
                                     })()}
                                     {feature.label}
@@ -91,7 +90,7 @@ export default function WaitlistModal({
                         </ul>
                         <p className="auth-subtitle">{subline}</p>
                         <label className="auth-label">
-                            EMAIL
+                            {waitlist.emailLabel}
                             <input
                                 className="auth-input nbtc"
                                 type="email"
@@ -109,7 +108,7 @@ export default function WaitlistModal({
                             disabled={loading}
                         >
                             {joined ? <Check className="button-icon" /> : <Bell className="button-icon" />}
-                            {loading ? "JOINING..." : "JOIN WAITLIST"}
+                            {loading ? waitlist.joiningLabel : waitlist.joinLabel}
                         </button>
                     </form>
                 )}

@@ -23,7 +23,7 @@ function formatTimeLeft(ms) {
     return days === 1 ? "1 day" : `${days} days`;
 }
 
-export default function SocialShareRow({ url, title, targetDate = null, showLabel = true, onNotion = null, onMore = null, layout = "icons" }) {
+export default function SocialShareRow({ url, title, targetDate = null, showLabel = true, onNotion = null, onMore = null, layout = "icons", rootRef = null }) {
     const [copied, setCopied] = useState(false);
     const [timeLeft, setTimeLeft] = useState(null);
     const encodedUrl = encodeURIComponent(url);
@@ -116,7 +116,7 @@ export default function SocialShareRow({ url, title, targetDate = null, showLabe
     );
 
     return (
-        <div className="social-share-block">
+        <div className="social-share-block" ref={rootRef}>
             {showLabel && <span className="share-field-label">SHARE VIA</span>}
             {layout === "stacked" ? (
                 <>

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import EmbedClock from "./EmbedClock";
-import { examples } from "@/content/landingCopy";
+import { examples } from "@/content/landing";
 
 /* How far off screen a card's clock may be before it starts ticking. Every
    CamelClock runs its own countdown interval and boost engine, so starting five

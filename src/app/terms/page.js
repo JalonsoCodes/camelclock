@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { legal } from "@/content/faq";
 
 export const metadata = {
-    title: "Terms of Service",
-    description: "Terms of Service for CamelClock",
+    title: legal.terms.title,
+    description: legal.terms.metaDescription,
     alternates: { canonical: "/terms" },
 };
 
@@ -14,7 +15,7 @@ export default function TermsPage() {
             <Navbar />
             <main className="legal-page">
                 <div className="legal-content nbtc">
-                    <h1>Terms of Service</h1>
+                    <h1>{legal.terms.title}</h1>
                     <p className="legal-updated">Last updated: October 2026</p>
 
                     <h2>1. Acceptance of Terms</h2>

@@ -52,12 +52,19 @@ export default async function DashboardPage() {
         }
     }
 
+    const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", user.id)
+        .maybeSingle();
+
     return (
         <DashboardView
             clocks={clocks}
             hydratedClocks={hydratedClocks}
             emailConfirmed={Boolean(user.email_confirmed_at)}
             userEmail={user.email ?? ""}
+            hasHandle={Boolean(profile?.username)}
         />
     );
 }

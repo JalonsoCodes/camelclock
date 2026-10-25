@@ -6,6 +6,7 @@ import { KeyRound } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { validatePassword } from "@/utils/passwordValidation";
 import PasswordRequirements from "@/components/PasswordRequirements";
+import { auth } from "@/content/auth";
 
 function getTokenParams(searchParams) {
     const hashParams = typeof window !== "undefined"
@@ -30,7 +31,7 @@ export default function ResetPasswordForm() {
     const [loading, setLoading] = useState(false);
     const [verifying, setVerifying] = useState(false);
     const [verified, setVerified] = useState(false);
-    const [linkError, setLinkError] = useState(hasLink ? "" : "This reset link is invalid or expired.");
+    const [linkError, setLinkError] = useState(hasLink ? "" : auth.reset.invalidBody);
 
     const handleVerify = async () => {
         setVerifying(true);
@@ -49,7 +50,7 @@ export default function ResetPasswordForm() {
             if (session) {
                 setVerified(true);
             } else {
-                setLinkError("This reset link is invalid, expired, or has already been used.");
+                setLinkError(auth.reset.invalidBody);
             }
             setVerifying(false);
             return;
@@ -64,7 +65,7 @@ export default function ResetPasswordForm() {
         setError("");
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+            setError(auth.reset.errors.mismatch);
             return;
         }
 
@@ -81,7 +82,7 @@ export default function ResetPasswordForm() {
         setLoading(false);
 
         if (error) {
-            setError(error.message);
+            setError(error.message || auth.reset.errors.generic);
         } else {
             router.push("/dashboard");
             router.refresh();
@@ -127,8 +128,8 @@ export default function ResetPasswordForm() {
     return (
         <div className="auth-page">
             <div className="auth-card nbtc">
-                <h2 className="auth-title">NEW PASSWORD</h2>
-                <p className="auth-subtitle">Enter your new password below.</p>
+                        <h2 className="auth-title">{auth.reset.title}</h2>
+                        <p className="auth-subtitle">{auth.reset.subtitle}</p>
 
                 <form className="auth-form" onSubmit={handleSubmit}>
                     <label className="auth-label">

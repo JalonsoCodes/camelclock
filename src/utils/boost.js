@@ -17,6 +17,10 @@ export const QUEST_LEVELS = [
 
 export const MAX_LEVEL = QUEST_LEVELS.length;
 
+// How long the hydration splash washes over the camel. Shared so the tour can wait for the wash
+// to finish before it puts the next tip on screen.
+export const HYDRATION_SPLASH_MS = 675;
+
 // Two new effects per level reached, which is what makes a ladder of 4 gated pairs exactly
 // right for the 5 levels above. Level 1 is the free one (shine) and has no pair.
 export const UNLOCK_PAIR_SIZE = 2;

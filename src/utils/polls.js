@@ -4,3 +4,6 @@
 export const POLL_QUORUM = 10;
 export const POLL_MIN_OPEN_MS = 30 * 60 * 1000;
 export const POLL_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const POLL_TUTORIAL_WINDOW_MS = 24 * 60 * 60 * 1000;
+export const POLL_TUTORIAL_QUORUM = 2;
+export const POLL_TUTORIAL_MIN_OPEN_MS = 0;

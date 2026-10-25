@@ -107,12 +107,14 @@ export default async function ClockPage({ params }) {
     const { data: creator } = await supabase.rpc("get_clock_creator", { p_clock_id: clock.id });
     const creatorUsername = creator?.[0]?.username ?? null;
 
-    // First-run tour. Shown to the owner of EVERY clock until THAT clock has been toured, on a
-    // clock that is either still untouched (< 10 hydrations, so the build steps make sense) or
+    // First-run tour. Shown to the owner of EVERY live clock until THAT clock has been toured.
+    // A draft never opens the tour: publishing is explained by the "WHAT HAPPENS WHEN YOU PUBLISH?"
+    // note under the draft banner's PUBLISH button instead, so the tour only starts once the clock
+    // is live. On a live clock the tour shows while it is still untouched (< 10 hydrations) or
     // carries the tutorial poll that marks a tour already in progress — which is what lets it
     // resume after an abandon.
     let showTour = false;
-    if (isOwner && clock.tutorial_completed !== true) {
+    if (isOwner && clock.status === "live" && clock.tutorial_completed !== true) {
         if (clock.hydrate_count < 10) {
             showTour = true;
         } else {

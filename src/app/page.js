@@ -4,17 +4,18 @@ import LandingHero from "@/components/LandingHero";
 import ClockCreationWizard from "@/components/ClockCreationWizard";
 import ExampleGrid from "@/components/ExampleGrid";
 import Pricing from "@/components/Pricing";
-import { quickStart } from "@/content/landingCopy";
+import { quickStart } from "@/content/landing";
 import { levelFromCount, unlockedBoostIdsFor } from "@/utils/boost";
 
 export const dynamic = "force-dynamic";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com";
 
+import { seo } from "@/content/faq";
+
 export const metadata = {
-    title: "Create a Free Embeddable Countdown Clock",
-    description:
-        "CamelClock is an interactive, stylish way to count down any big day — a pixel camel clock you customise, then share or embed on your site or Notion page. Free, and your crowd can tap along.",
+    title: seo.homeTitle,
+    description: seo.homeDescription,
     alternates: { canonical: "/" },
 };
 

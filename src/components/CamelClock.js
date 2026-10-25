@@ -5,12 +5,12 @@ import Link from "next/link";
 import { RotateCcw } from "lucide-react";
 import { drawCamel, drawCamelBoost, drawGrid, drawWearables, buildCamelGrid, makeShineShade, makeSunShade, drawSun, drawRainCloud, drawRainDrops, drawSandstorm, drawSparkles, drawFireworks, makeHydrationShade, resolveWearableColours } from "@/utils/drawing";
 import { camelTemplate, celebrationFrames, celebrationFrameDurationMs, wearables as wearableData, BOOSTS } from "@/utils/grids";
-import { hydrateNoteText, questState, QUEST_LEVELS } from "@/utils/boost";
+import { hydrateNoteText, questState, QUEST_LEVELS, HYDRATION_SPLASH_MS } from "@/utils/boost";
 import { getConfiguredTarget, getNextTarget } from "@/utils/time";
 import { createBoostEngine } from "@/utils/boostEngine";
 import styles from "./CamelClock.module.css";
 
-export const HYDRATION_SPLASH_MS = 675;
+export { HYDRATION_SPLASH_MS };
 
 const LEVEL_BANNER_COLS = 25;
 const LEVEL_BANNER_ROWS = 4;
@@ -99,7 +99,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, ref }) {
+export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, levelBannerRef = null, titleRef = null, levelLabelRef = null, camelArtRef = null, onAnimatingChange = null, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -138,6 +138,10 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
     const [hydrateSplash, setHydrateSplash] = useState({ active: false, t: 0, wash: 0 });
     const prevHydrateCountRef = useRef(hydrateCount);
     const splashTimersRef = useRef([]);
+    // The boosts the reader started by hand (a preview), so a run can be told apart from the
+    // clock's own ambient cadence.
+    const previewIdsRef = useRef(new Set());
+    const animatingRef = useRef(false);
 
     useEffect(() => {
         if (hydrateCount > prevHydrateCountRef.current) {
@@ -168,6 +172,40 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             timers.forEach((t) => clearTimeout(t));
         };
     }, []);
+
+    // Reports the animations the reader caused: the hydration splash, the hop/legend reactions
+    // and a boost they previewed by hand. The clock's own ambient cadence is deliberately left
+    // out - it must never blink a tour tip out from under the reader.
+    useEffect(() => {
+        const snap = boostEngineRef.current?.snapshot();
+        const running = new Set();
+        if (snap?.motion) running.add(snap.motion.id);
+        if (snap?.effects) for (const id of snap.effects.keys()) running.add(id);
+        for (const id of [...previewIdsRef.current]) {
+            if (!running.has(id)) previewIdsRef.current.delete(id);
+        }
+        let previewRunning = false;
+        for (const id of previewIdsRef.current) {
+            if (running.has(id)) {
+                previewRunning = true;
+                break;
+            }
+        }
+        const reactiveRunning = Boolean(snap?.motion) && Boolean(BOOSTS[snap.motion.id]?.reactive);
+        const busy = hydrateSplash.active || previewRunning || reactiveRunning;
+        if (busy !== animatingRef.current) {
+            animatingRef.current = busy;
+            onAnimatingChange?.(busy);
+        }
+    }, [boostFrame, hydrateSplash.active, onAnimatingChange]);
+
+    useEffect(() => {
+        return () => {
+            if (!animatingRef.current) return;
+            animatingRef.current = false;
+            onAnimatingChange?.(false);
+        };
+    }, [onAnimatingChange]);
 
     if (boostEngineRef.current == null) {
         boostEngineRef.current = createBoostEngine(() => setBoostFrame((f) => f + 1));
@@ -575,7 +613,10 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
         preview: startPreview,
         triggerNow: (id) => {
             const def = BOOSTS[id];
-            if (def) boostEngineRef.current?.start(id);
+            if (!def) return;
+            // A hand-triggered run, so it can be told apart from the clock's own cadence.
+            previewIdsRef.current.add(id);
+            boostEngineRef.current?.start(id);
         },
         stopNow: (id) => {
             boostEngineRef.current?.stop(id);
@@ -596,7 +637,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
 
     return (
         <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": displayScale, "--reveal": revealT }}>
-            <h2 className={styles.clockTitle}>
+            <h2 ref={titleRef} className={styles.clockTitle}>
                 {titleHref ? (
                     <Link
                         href={titleHref}
@@ -615,7 +656,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             )}
 
             <div className={styles.wrapper}>
-                <div className={styles.canvasWrap}>
+                <div className={styles.canvasWrap} ref={camelArtRef}>
                     <canvas ref={canvasRef} style={{ imageRendering: "pixelated", width: "100%", display: "block" }} />
                     {phase === "counting" && (
                         viewerHydrates && onHydrateClick ? (
@@ -682,8 +723,8 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             )}
 
             {!hideLevelBanner && viewerHydrates && (
-                <div className={styles.levelBanner} style={{ "--per-row": questPerRow }}>
-                    <span className={styles.levelBannerLabel}>LEVEL {quest.level}</span>
+                <div ref={levelBannerRef} className={styles.levelBanner} style={{ "--per-row": questPerRow }}>
+                    <span ref={levelLabelRef} className={styles.levelBannerLabel}>LEVEL {quest.level}</span>
                     <span className={styles.levelTrackWrap} role="presentation">
                         <span className={styles.levelTrack}>
                             {Array.from({ length: questBoxes }, (_, i) => (

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertTriangle, MailCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { auth } from "@/content/auth";
 
 export default function EmailConfirmBanner({ email }) {
     const [status, setStatus] = useState("");
@@ -26,7 +27,7 @@ export default function EmailConfirmBanner({ email }) {
                 <AlertTriangle aria-hidden="true" />
             </div>
             <div className="email-confirm-banner-copy">
-                <strong>CONFIRM YOUR EMAIL</strong>
+                <strong>{auth.emailConfirmBanner.title}</strong>
                 <p>
                     Your account is not fully verified. Until you confirm <em>{email}</em>, you could be
                     locked out if you sign out, and your clocks may be at risk. Confirm now to keep your

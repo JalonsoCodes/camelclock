@@ -179,6 +179,35 @@ button:disabled:hover,
   color: white;
 }
 
+/*
+ * A quiet text link for an action that should not read as a button - the tour's
+ * SKIP TUTORIAL. It drops the button chrome (fill, border, hard shadow) and the
+ * shared press motion, so it needs its own hover rule: `button:hover` is more
+ * specific than a bare class would be. This is the one place a control opts out
+ * of the shared press treatment - everything else uses the rules above.
+ */
+.text-link {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-size: 0.85rem;
+  font-weight: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  color: inherit;
+  opacity: 0.7;
+  transform: none;
+}
+
+.text-link:hover {
+  transform: none;
+  box-shadow: none;
+  opacity: 1;
+}
+
 ::selection {
   background-color: var(--secondary-colour);
   color: white;
@@ -520,6 +549,7 @@ input.colour-swatch::-webkit-color-swatch {
   justify-content: center;
   z-index: 1000;
   padding: 2.4rem;
+  overflow-y: auto;
 }
 
 .share-dialog {
@@ -527,6 +557,10 @@ input.colour-swatch::-webkit-color-swatch {
   background-color: var(--card-colour);
   width: 100%;
   max-width: 52rem;
+  /* The welcome mode carries the tour copy on top of the share block, so the dialog can outgrow
+     a short viewport - it scrolls rather than clipping the buttons. */
+  max-height: calc(100vh - 4.8rem);
+  overflow-y: auto;
   padding: 3.2rem;
   display: flex;
   flex-direction: column;
@@ -546,6 +580,39 @@ input.colour-swatch::-webkit-color-swatch {
   align-self: flex-start;
   font-size: 1.1rem;
   padding: 0.8rem 1.6rem;
+}
+
+/* The post-publish welcome: the tour's opening card, the share block it sits on, and the two
+   ways out of it (skip the tour / start the tour). */
+.share-dialog-welcome {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.share-dialog-welcome-line {
+  font-size: 1.2rem;
+  font-weight: normal;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.share-dialog-tour-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.6rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* The welcome dialog's START TUTORIAL is the loudest control on the screen: green, like the
+   PUBLISH button, and bigger than the quiet skip link beside it. */
+.share-dialog-tour-start {
+  background-color: #4caf50;
+  color: #06140a;
+  font-size: 1.15rem;
+  letter-spacing: 0.08em;
+  padding: 1.1rem 1.8rem;
 }
 
 .share-embed-buttons {
@@ -1498,7 +1565,6 @@ body.show-navbar .quick-start-stage {
   flex-direction: column;
   gap: 2.4rem;
   padding: 2.4rem;
-  background-color: var(--card-colour);
 }
 
 /* The preview is the widest thing the wizard ever shows, so it centres rather
@@ -1693,16 +1759,6 @@ body.show-navbar .quick-start-stage {
   text-align: left;
   padding: 0.4rem 0.6rem;
   border: 0.4rem solid transparent;
-}
-
-.waitlist-features li.highlighted {
-  border-color: var(--border-colour);
-  background: #fff8e1;
-  box-shadow: 0.4rem 0.4rem 0 var(--border-colour);
-}
-
-.dark .waitlist-features li.highlighted {
-  background: #2a2510;
 }
 
 .waitlist-feature-icon {
@@ -2250,6 +2306,13 @@ body.show-navbar .quick-start-stage {
   text-align: center;
 }
 
+.auth-hint {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  opacity: 0.75;
+  margin-top: -0.6rem;
+}
+
 .auth-switch {
   font-size: 1.2rem;
   text-align: center;
@@ -2357,6 +2420,69 @@ button:disabled {
   .email-confirm-banner {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+.handle-nudge {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  background-color: var(--card-colour);
+  padding: 1.6rem 2.0rem;
+}
+
+.handle-nudge-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  padding: 0.8rem;
+  background-color: var(--primary-colour);
+  color: white;
+  border: 4px solid var(--border-colour);
+}
+
+.handle-nudge-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.handle-nudge-title {
+  font-size: 1.4rem;
+  letter-spacing: 0.1rem;
+}
+
+.handle-nudge-copy {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  opacity: 0.85;
+}
+
+.handle-nudge-cta {
+  flex-shrink: 0;
+  background-color: var(--primary-colour);
+  color: white;
+  padding: 1.0rem 1.6rem;
+  font-size: 1.2rem;
+  letter-spacing: 0.1rem;
+  white-space: nowrap;
+}
+
+.handle-nudge-dismiss {
+  flex-shrink: 0;
+  width: 3.2rem;
+  height: 3.2rem;
+  display: grid;
+  place-items: center;
+}
+
+@media (max-width: 768px) {
+  .handle-nudge {
+    flex-wrap: wrap;
   }
 }
 
@@ -2595,7 +2721,7 @@ button:disabled {
   align-items: stretch;
   gap: 1.2rem;
   max-width: 150rem;
-  margin-bottom: 2.0rem;
+  margin-bottom: 1.2rem;
 }
 
 .draft-banner-row .draft-banner {
@@ -2625,6 +2751,69 @@ button:disabled {
   padding: 1.6rem 2.0rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The publish explainer sits under PUBLISH as plain text, not as a button: a <button> would
+   pick up the shared press motion (translate + shadow collapse) and read as a call to action
+   instead of a note. <details>/<summary> gives the same collapse without that treatment. */
+.draft-explain {
+  max-width: 150rem;
+  margin-bottom: 2.0rem;
+}
+
+.draft-explain-summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: fit-content;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--fg-colour);
+  cursor: pointer;
+  list-style: none;
+}
+
+.draft-explain-summary::-webkit-details-marker {
+  display: none;
+}
+
+.draft-explain-summary::marker {
+  content: "";
+}
+
+.draft-explain-summary svg {
+  transition: transform 0.2s ease;
+}
+
+.draft-explain[open] .draft-explain-summary svg {
+  transform: rotate(180deg);
+}
+
+.draft-explain-body {
+  margin-top: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border: 3px dashed rgba(0, 0, 0, 0.35);
+  font-size: 1.1rem;
+  font-weight: normal;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  text-align: center;
+  line-height: 1.9;
+}
+
+.draft-explain-body p + p {
+  margin-top: 1.0rem;
+}
+
+.draft-explain-body strong {
+  font-weight: bold;
 }
 
 .live-clock {
@@ -3304,8 +3493,8 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
 }
 
 .community-note-claim {
-  color: #2e7d32;
-  background-color: rgba(76, 175, 80, 0.1);
+  color: #43a047;
+  background-color: rgba(76, 175, 80, 0.22);
 }
 
 .community-note-grow {
@@ -3314,7 +3503,8 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
 }
 
 .dark .community-note-claim {
-  color: #81c784;
+  color: #a5d6a7;
+  background-color: rgba(76, 175, 80, 0.18);
 }
 
 .dark .community-note-grow {
@@ -4135,6 +4325,18 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   z-index: 998;
   background-color: rgba(0, 0, 0, 0.6);
   pointer-events: none;
+  /* Every pixel behind the scrim desaturates; the lifted .clock-tour-peek target is painted above
+     it, so the one thing being explained stays in full colour. */
+  -webkit-backdrop-filter: grayscale(1);
+  backdrop-filter: grayscale(1);
+}
+
+/* While the camel is playing an animation the reader caused, the scrim gives up its greyscale
+   and softens, so the effect is seen in full colour instead of behind a grey filter. */
+.clock-tour-scrim.is-colour {
+  background-color: rgba(0, 0, 0, 0.25);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 /* Applied to the currently-highlighted control (never to the tip). position: relative on an
@@ -4152,18 +4354,87 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   flex-direction: column;
   gap: 1.0rem;
   width: min(22rem, calc(100vw - 2rem));
-  max-height: calc(100vh - 2rem);
-  overflow-y: auto;
   padding: 1.6rem;
   background-color: var(--card-colour);
   color: var(--fg-colour);
+  /* The tip is a caption, not a barrier: it never takes the pointer, so the control it
+     explains stays clickable even when the tip has to sit over it (a short viewport can
+     push it back over the camel). Its own buttons take the pointer back. */
+  pointer-events: none;
+}
+
+.clock-tour-tip button,
+.clock-tour-tip a {
   pointer-events: auto;
+}
+
+/* The tip steps out of the shot while the camel plays an animation the reader caused. It is
+   hidden rather than unmounted, so it keeps its box and the measured placement stays valid. */
+.clock-tour-tip.is-hidden {
+  visibility: hidden;
+}
+
+/* The scrolling happens on the inner wrapper, never on .clock-tour-tip itself - an overflow on the
+   tip would clip the tail, which sits at a negative offset outside the padding box.
+   overflow-x is pinned to hidden because overflow-y:auto alone implies overflow-x:auto, which
+   would let the shared button hover-translate (8px right/down) open a horizontal scrollbar. The
+   scrollbar itself is hidden too: the tip is a caption, not a scrollable region. */
+.clock-tour-tip-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1.0rem;
+  max-height: calc(100vh - 6rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 1rem 1rem;
+  margin: 0 -1rem;
+  scrollbar-width: none;
+}
+
+.clock-tour-tip-inner::-webkit-scrollbar {
+  display: none;
 }
 
 .clock-tour-tip.is-centered {
   top: 50%;
   left: 50%;
   translate: -50% -50%;
+}
+
+/* The pointer is a 2.4rem square rotated 45deg. Its centre has to sit on the tip's border box
+   edge, so the offset is 18px (half the square, 12px, plus the 4px border it has to clear). */
+.clock-tour-tail {
+  position: absolute;
+  width: 2.4rem;
+  height: 2.4rem;
+  background-color: var(--card-colour);
+  border: 4px solid var(--border-colour);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.clock-tour-tail-top {
+  top: -1.8rem;
+  border-right: none;
+  border-bottom: none;
+}
+
+.clock-tour-tail-bottom {
+  bottom: -1.8rem;
+  border-left: none;
+  border-top: none;
+}
+
+.clock-tour-tail-left {
+  left: -1.8rem;
+  border-right: none;
+  border-top: none;
+}
+
+.clock-tour-tail-right {
+  right: -1.8rem;
+  border-left: none;
+  border-bottom: none;
 }
 
 .clock-tour-head {
@@ -4182,8 +4453,7 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
 
 .clock-tour-skip {
   font-size: 0.8rem;
-  padding: 0.4rem 0.8rem;
-  gap: 0.4rem;
+  white-space: nowrap;
 }
 
 .clock-tour-title {
@@ -4217,7 +4487,36 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   opacity: 0.6;
 }
 
+/* The action-gated steps (drink, level up, vote) carry no button: the live status line IS
+   the control, so it reads a little louder than the plain hint. */
+.clock-tour-hint--action {
+  font-size: 0.95rem;
+  text-align: center;
+  opacity: 0.85;
+}
+
 .clock-tour-actions {
   display: flex;
   justify-content: flex-end;
+}
+
+.clock-tour-actions--soft {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1.0rem;
+}
+
+.clock-tour-hint--soft {
+  text-align: right;
+  max-width: 26rem;
+}
+
+.clock-tour-primary {
+  background-color: var(--primary-colour);
+  color: #1a1206;
+  border: var(--nbtc-border);
+  font-weight: bold;
+  padding: 0.9rem 1.4rem;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
 }

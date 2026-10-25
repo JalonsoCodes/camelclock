@@ -1,0 +1,42 @@
+/* Embed copy. */
+
+export const embed = {
+    siteModal: {
+        title: "EMBED ON YOUR SITE",
+        theme: "THEME",
+        cardStyle: "CARD STYLE",
+        size: "SIZE",
+        light: "LIGHT",
+        dark: "DARK",
+        card: "CARD",
+        transparent: "TRANSPARENT",
+        small: "SMALL",
+        medium: "MEDIUM",
+        large: "LARGE",
+        urlLabel: "EMBED URL",
+        codeLabel: "IFRAME CODE",
+        copy: "Copy",
+        copied: "Copied!",
+        copyTitle: "Copy to clipboard",
+    },
+    helpModal: {
+        title: "EMBED IN NOTION",
+        theme: "THEME",
+        cardStyle: "CARD STYLE",
+        light: "LIGHT",
+        dark: "DARK",
+        card: "CARD",
+        transparent: "TRANSPARENT",
+        note: "The frame picks up Notion's own page colour, so CARD and TRANSPARENT both sit flush on Notion's light and dark pages.",
+        urlLabel: "EMBED URL",
+        copy: "Copy",
+        copied: "Copied!",
+        copyTitle: "Copy to clipboard",
+        steps: [
+            "Pick your look above, then copy the embed URL.",
+            "In Notion, type /embed and press Enter.",
+            "Paste the URL into the embed block, then drag a corner to size it.",
+        ],
+        liveNote: "The embed is live — it keeps counting down in place, no refresh needed. The clock must stay Live for the embed to work.",
+    },
+};

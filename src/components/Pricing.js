@@ -7,61 +7,19 @@ import AuthModal from "./auth/AuthModal";
 import WaitlistModal from "./WaitlistModal";
 import { wearables as wearableData } from "@/utils/grids";
 import { track } from "@/utils/analytics";
+import { FREE_FEATURES, PRO_FEATURES, pricing } from "@/content/pricing";
 
 const WEARABLE_COUNT = Object.keys(wearableData).length;
-
-// ============================================================
-// EDIT YOUR PRICING FEATURES HERE
-//   label:  the visible bullet text
-//   detail: shown on hover (the dotted-underline tooltip)
-// ============================================================
-const FREE_FEATURES = [
-    {
-        label: "3 Active Live Camel Clocks",
-        detail: "Seamless website embedding and shareable directly links.",
-    },
-    {
-        label: "Unlimited Drafts",
-        detail: "Experiment and design as many personal Camel Clocks as you like.",
-    },
-    {
-        label: "Core Customisation",
-        detail: `Choose your primary colors and access all ${WEARABLE_COUNT} wearables.`,
-    },
-    {
-        label: "Celebration Animation",
-        detail: "Triggers 10 frame animation when your countdown hits zero.",
-    },
-    {
-        label: "Subtle Watermark",
-        detail: "A 'Create your CamelClock' link sits under your clock — and you can let visitors tap the camel.",
-    },
-];
-
-export const PRO_FEATURES = [
-    {
-        label: "Unlimited Active Camel Clocks",
-        detail: "Keep as many live embeds running as you need.",
-    },
-    {
-        label: "No Watermark",
-        detail: "Your clocks and embeds drop the 'Create your CamelClock' credit.",
-    },
-    {
-        label: "Background Scenes",
-        detail: "Place your camel in a scene instead of on a plain background.",
-    },
-];
 
 function FeatureList({ features }) {
     return (
         <ul>
             {features.map((feature) => (
-                <li key={feature.label}>
+                <li key={feature.id}>
                     <span className="feature-term" tabIndex={0}>
                         {feature.label}
                         <span className="feature-tooltip" role="tooltip">
-                            {feature.detail}
+                            {feature.detail.replace("{wearableCount}", WEARABLE_COUNT)}
                         </span>
                     </span>
                 </li>
@@ -77,15 +35,12 @@ export default function Pricing() {
 
     return (
         <section id="pricing">
-            <h2 className="section-title">Pricing</h2>
-            <p className="section-subtitle">
-                Free to get started today. Paid plans are coming soon — join the waitlist for
-                early access.
-            </p>
+            <h2 className="section-title">{pricing.sectionTitle}</h2>
+            <p className="section-subtitle">{pricing.sectionSubtitle}</p>
             <div className="pricing-grid">
                 <div className="pricing-card nbtc pricing-free">
-                    <h3>Free</h3>
-                    <p className="pricing-price">£0</p>
+                    <h3>{pricing.freeHeading}</h3>
+                    <p className="pricing-price">{pricing.freePrice}</p>
                     <FeatureList features={FREE_FEATURES} />
                     <button
                         className="pricing-button"
@@ -93,12 +48,12 @@ export default function Pricing() {
                         onClick={() => setAuthOpen(true)}
                     >
                         <UserPlus className="button-icon" />
-                        Create Account
+                        {pricing.createAccountLabel}
                     </button>
                 </div>
 
                 <div className="pricing-card nbtc pricing-pro">
-                    <span className="pricing-badge">COMING SOON</span>
+                    <span className="pricing-badge">{pricing.proBadge}</span>
                     <FeatureList features={PRO_FEATURES} />
                     <button
                         className="pricing-button"
@@ -109,7 +64,7 @@ export default function Pricing() {
                         }}
                     >
                         <Bell className="button-icon" />
-                        Join Waitlist
+                        {pricing.joinWaitlistLabel}
                     </button>
                 </div>
             </div>
@@ -126,7 +81,6 @@ export default function Pricing() {
             )}
             {showWaitlist && (
                 <WaitlistModal
-                    highlightFeature="Unlimited Active Camel Clocks"
                     onClose={() => setShowWaitlist(false)}
                 />
             )}

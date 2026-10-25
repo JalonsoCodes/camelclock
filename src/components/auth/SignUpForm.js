@@ -1,29 +1,32 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { UserPlus } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { validatePassword } from "@/utils/passwordValidation";
+import { validateUsername, normalizeUsername } from "@/utils/usernameValidation";
 import PasswordRequirements from "@/components/PasswordRequirements";
+import { auth } from "@/content/auth";
 
-export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
+const PENDING_KEY = "camelClock.pending";
+
+export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMode, onAwaitingConfirm }) {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
+    const [handle, setHandle] = useState("");
     const [error, setError] = useState("");
-    const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
-        setMessage("");
 
         if (password !== confirmPassword) {
-            setError("Passwords do not match.");
+            setError(auth.signup.errors.mismatch);
             return;
         }
 
@@ -31,6 +34,15 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
         if (passwordError) {
             setError(passwordError);
             return;
+        }
+
+        const trimmedHandle = normalizeUsername(handle);
+        if (trimmedHandle) {
+            const handleError = validateUsername(trimmedHandle);
+            if (handleError) {
+                setError(handleError);
+                return;
+            }
         }
 
         setLoading(true);
@@ -42,7 +54,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
         });
 
         if (error) {
-            setError(error.message);
+            setError(error.message || auth.signup.errors.generic);
             setLoading(false);
             return;
         }
@@ -56,15 +68,25 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
                 router.push(next);
                 router.refresh();
             }
-        } else {
-            setMessage("Check your email to confirm your account before signing in.");
+            return;
         }
+
+        if (trimmedHandle) {
+            try {
+                const pending = JSON.parse(localStorage.getItem(PENDING_KEY) ?? "null") ?? {};
+                localStorage.setItem(PENDING_KEY, JSON.stringify({ ...pending, handle: trimmedHandle }));
+            } catch {
+                // ignore
+            }
+        }
+
+        onAwaitingConfirm?.(email);
     };
 
     return (
         <form className="auth-form" onSubmit={handleSubmit}>
             <label className="auth-label">
-                EMAIL
+                {auth.signup.emailLabel}
                 <input
                     className="auth-input nbtc"
                     type="email"
@@ -77,7 +99,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
             </label>
 
             <label className="auth-label">
-                PASSWORD
+                {auth.signup.passwordLabel}
                 <input
                     className="auth-input nbtc"
                     type="password"
@@ -91,7 +113,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
             <PasswordRequirements password={password} />
 
             <label className="auth-label">
-                CONFIRM PASSWORD
+                {auth.signup.confirmLabel}
                 <input
                     className="auth-input nbtc"
                     type="password"
@@ -103,23 +125,37 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
                 />
             </label>
 
+            <label className="auth-label">
+                {auth.signup.handleLabel}
+                <input
+                    className="auth-input nbtc"
+                    type="text"
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                    minLength={3}
+                    maxLength={20}
+                    autoComplete="off"
+                    placeholder={auth.signup.handlePlaceholder}
+                />
+            </label>
+            <p className="auth-hint">{auth.signup.handleHint}</p>
+
             {error && <p className="auth-error">{error}</p>}
-            {message && <p className="auth-message">{message}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
                 <UserPlus className="button-icon" />
-                {loading ? "CREATING ACCOUNT..." : "CREATE ACCOUNT"}
+                {loading ? auth.signup.signingUp : auth.signup.signUp}
             </button>
 
             <p className="auth-switch">
-                Already have an account?{" "}
+                {auth.signup.hasAccount}{" "}
                 {onSwitchMode ? (
                     <button className="auth-switch-link" type="button" onClick={onSwitchMode}>
-                        Sign in
+                        {auth.login.signIn}
                     </button>
                 ) : (
                     <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}>
-                        Sign in
+                        {auth.login.signIn}
                     </Link>
                 )}
             </p>

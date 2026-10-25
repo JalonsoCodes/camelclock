@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Pencil, Rocket, Check, Lock, Unlock, HelpCircle, CircleMinus, CirclePlus, Trash2, User, Flame, Users, Sun, Share2, TriangleAlert } from "lucide-react";
+import { Pencil, Rocket, Check, Lock, Unlock, HelpCircle, CircleMinus, CirclePlus, Trash2, User, Flame, Users, Sun, Share2, TriangleAlert, ChevronDown } from "lucide-react";
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
 import ConfirmDialog from "./ConfirmDialog";
@@ -22,7 +22,7 @@ import useClockPoll from "@/hooks/useClockPoll";
 import LevelPollBanner from "@/components/LevelPollBanner";
 import ClockTour from "@/components/ClockTour";
 import { BOOSTS } from "@/utils/grids";
-import { boostDefsByCategory, categoryProgress, questState, unlockedBoostIdsFor, computeDropLeft, hydrateNoteText } from "@/utils/boost";
+import { boostDefsByCategory, categoryProgress, questState, unlockedBoostIdsFor, computeDropLeft, hydrateNoteText, levelFromCount } from "@/utils/boost";
 import { track } from "@/utils/analytics";
 
 const CATEGORY_LABEL = { exercise: "EXERCISE", aura: "AURA", weather: "WEATHER" };
@@ -33,6 +33,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const [isOwner, setIsOwner] = useState(initialOwner);
     const [statusOverride, setStatusOverride] = useState(null);
     const [shareOpen, setShareOpen] = useState(false);
+    const [shareMode, setShareMode] = useState("live");
     const [savedOpen, setSavedOpen] = useState(false);
     const [publishing, setPublishing] = useState(false);
     const [publishError, setPublishError] = useState("");
@@ -56,12 +57,20 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [tourOpen, setTourOpen] = useState(showTour);
-    const [camelHydrated, setCamelHydrated] = useState(false);
-    const tourPublishRef = useRef(null);
+    const [tourDone, setTourDone] = useState(false);
+    // True while the camel is playing an animation the reader caused - the hydration splash or a
+    // boost they previewed. The tour steps out of the shot while one plays.
+    const [camelAnimating, setCamelAnimating] = useState(false);
     const tourCardRef = useRef(null);
-    const tourHydrateRef = useRef(null);
+    const tourCamelRef = useRef(null);
     const tourPollRef = useRef(null);
     const tourPanelRef = useRef(null);
+    const tourLevelRef = useRef(null);
+    const tourTitleRef = useRef(null);
+    const tourLevelLabelRef = useRef(null);
+    const tourDailyRef = useRef(null);
+    const tourTopRef = useRef(null);
+    const tourShareRef = useRef(null);
 
     useEffect(() => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -123,19 +132,27 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     });
 
     // A level-up opens the poll server-side in the same transaction as the hydration. That INSERT
-    // can be missed on Realtime (clock_polls' RLS reads through clocks), so refetch the moment the
-    // level moves — which is exactly when a fresh poll exists — instead of waiting for a reload.
-    const lastPollLevelRef = useRef(level);
+    // can be missed on Realtime (clock_polls' RLS reads through clocks), so refetch when the level
+    // moves - watching both the confirmed level and the optimistic levelFromCount(hydrateCount).
+    // The count can cross the threshold before hydrate_clock's debounce + commit creates the poll,
+    // so retry once after that.
+    const pollLevel = Math.max(level, levelFromCount(hydrateCount));
+    const lastPollLevelRef = useRef(pollLevel);
     useEffect(() => {
-        if (level > lastPollLevelRef.current) reloadPolls();
-        lastPollLevelRef.current = level;
-    }, [level, reloadPolls]);
+        if (pollLevel <= lastPollLevelRef.current) {
+            lastPollLevelRef.current = pollLevel;
+            return;
+        }
+        lastPollLevelRef.current = pollLevel;
+        reloadPolls();
+        const id = setTimeout(() => reloadPolls(), 1500);
+        return () => clearTimeout(id);
+    }, [pollLevel, reloadPolls]);
 
     // The tour tells the owner they can hydrate by clicking the camel too. The camel and the rail
     // button both call beginHydrate, so wrap the camel's handler to record that this path was used.
     // Both wrappers clear any previous cap notice: beginHydrate re-sets it if the pool is still dry.
     const hydrateFromCamel = useCallback(() => {
-        setCamelHydrated(true);
         setCapNotice(false);
         beginHydrate();
     }, [beginHydrate]);
@@ -175,6 +192,9 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         refreshLiveCount();
         setStatusOverride("live");
         setCapNudge(false);
+        // Publishing is the one moment the welcome belongs to: the share dialog opens in its
+        // welcome mode, and the tour starts from there (START TUTORIAL) or on dismissal.
+        setShareMode("welcome");
         setShareOpen(true);
         track("clock_published", { source: "viewer" });
         router.refresh();
@@ -201,10 +221,27 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     // immediately and the server write is best-effort. Other clocks keep their own tour.
     const finishTour = useCallback(() => {
         setTourOpen(false);
+        setTourDone(true);
         supabase.rpc("complete_tutorial", { p_clock_id: clock.id }).then(({ error }) => {
             if (error) console.error("complete_tutorial failed:", error.message);
         });
     }, [clock.id]);
+
+    // The tour opens by itself once the clock has been published, and again when the level-2 poll
+    // lands - the poll is what the boost rungs explain, so it is the moment the tour is worth
+    // resuming for. Edge triggered on the tutorial poll appearing so it can't reopen every render.
+    const hadTutorialPollRef = useRef(false);
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
+        const hasTutorialPoll = polls.some((p) => p.tutorial);
+        const had = hadTutorialPollRef.current;
+        hadTutorialPollRef.current = hasTutorialPoll;
+        if (!hasTutorialPoll || had) return;
+        if (!isOwner || status !== "live" || tourDone) return;
+        if (clock.tutorial_completed === true) return;
+        setTourOpen(true);
+    }, [polls, isOwner, status, tourDone, clock.tutorial_completed]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const handleDelete = async () => {
         setDeleteError("");
@@ -304,7 +341,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         router.refresh();
     };
 
-    const capSubline = `You\u2019re out of claimable hydrations today. Share \u201C${clock.title}\u201D so others can hydrate it and it keeps levelling up.`;
+    const capSubline = `Share \u201C${clock.title}\u201D so others can hydrate it and it keeps levelling up. You\u2019re out of claimable hydrations for today \u2014 your allowance resets tomorrow.`;
 
     return (
         <div className="clock-viewer">
@@ -312,7 +349,9 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                 <>
                     <div className="draft-banner-row">
                         <div className="draft-banner nbtc">
-                            This CamelClock is in your Drafts &mdash; only you can see it.
+                            <span className="draft-banner-note">
+                                This CamelClock is in your Drafts &mdash; only you can see it.
+                            </span>
                         </div>
                         <button
                             className="draft-publish-button nbtc"
@@ -320,12 +359,29 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             title="Make this clock publicly visible"
                             onClick={publishClock}
                             disabled={publishing}
-                            ref={tourPublishRef}
                         >
                             <Rocket className="button-icon" />
                             {publishing ? "PUBLISHING..." : "PUBLISH"}
                         </button>
                     </div>
+                    <details className="draft-explain">
+                        <summary className="draft-explain-summary">
+                            WHAT HAPPENS WHEN YOU PUBLISH?
+                            <ChevronDown size={16} strokeWidth={3} aria-hidden="true" />
+                        </summary>
+                        <div className="draft-explain-body">
+                            <p>
+                                Publishing makes your clock <strong>live</strong> so anyone
+                                with the link can see it and hydrate it. Live clocks also get
+                                their own shareable page and can be embedded on a website or
+                                in Notion.
+                            </p>
+                            <p>
+                                You can keep editing a live clock, and unpublish it again
+                                from your dashboard whenever you like.
+                            </p>
+                        </div>
+                    </details>
                     {publishError && <p className="card-error">{publishError}</p>}
                 </>
             )}
@@ -347,12 +403,12 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                                 </span>
                             </div>
                             {note && (
-                                <p className={`community-note community-note-${noteTone}`}>
+                                <p ref={tourDailyRef} className={`community-note community-note-${noteTone}`}>
                                     <NoteIcon className="community-note-icon" size={14} strokeWidth={3} aria-hidden="true" />
                                     <span className="community-note-text">{note}</span>
                                 </p>
                             )}
-                            <div className="community-top">
+                            <div className="community-top" ref={tourTopRef}>
                                 <span className="community-detail-label">TOP HYDRATORS</span>
                                 {!stats ? (
                                     <span className="viewer-stats-empty">Loading...</span>
@@ -382,6 +438,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             targetDate={clock.target_at}
                             showLabel={false}
                             layout="stacked"
+                            rootRef={tourShareRef}
                             onNotion={() => setEmbedHelpOpen(true)}
                             onMore={() => setEmbedSiteOpen(true)}
                         />
@@ -409,6 +466,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                         </div>
                         <CamelClock
                             ref={camelRef}
+                            camelArtRef={tourCamelRef}
                             title={clock.title}
                             month={target.getMonth()}
                             day={target.getDate()}
@@ -429,6 +487,10 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             dropLeft={dropLeft}
                             hideHydrateNote
                             finishRowText={formatFinishRow(target)}
+                            levelBannerRef={tourLevelRef}
+                            titleRef={tourTitleRef}
+                            levelLabelRef={tourLevelLabelRef}
+                            onAnimatingChange={setCamelAnimating}
                             {...(viewerHydrates
                                 ? { viewerHydrates: true, onHydrateClick: hydrateFromCamel }
                                 : {})}
@@ -443,14 +505,13 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                                 className="post-actions-hydrate nbtc"
                                 onClick={handleHydrate}
                                 title="Hydrate this CamelClock"
-                                ref={tourHydrateRef}
                             >
                                 <Flame className="button-icon" aria-hidden="true" />
                                 <span>HYDRATE</span>
                             </button>
                         )}
                     </div>
-                    <div className="viewer-poll" ref={tourPollRef}>
+                    <div className="viewer-poll">
                         <LevelPollBanner
                             polls={polls}
                             now={pollNow}
@@ -459,6 +520,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             onPreview={previewRackBoost}
                             onPreviewEnd={stopPreviewBoost}
                             onSignIn={() => setHydratePromptOpen(true)}
+                            rootRef={tourPollRef}
                         />
                     </div>
                     {hydrateError && (
@@ -542,17 +604,22 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
 
             {tourOpen && isOwner && (
                 <ClockTour
-                    status={status}
+                    clockId={clock.id}
                     hydrateCount={hydrateCount}
-                    camelHydrated={camelHydrated}
+                    animating={camelAnimating}
                     polls={polls}
                     shareOpen={shareOpen || savedOpen}
                     targets={{
-                        publish: tourPublishRef,
                         card: tourCardRef,
-                        hydrate: tourHydrateRef,
+                        camel: tourCamelRef,
                         poll: tourPollRef,
                         panel: tourPanelRef,
+                        level: tourLevelRef,
+                        title: tourTitleRef,
+                        levelLabel: tourLevelLabelRef,
+                        daily: tourDailyRef,
+                        top: tourTopRef,
+                        share: tourShareRef,
                     }}
                     onComplete={finishTour}
                 />
@@ -562,7 +629,27 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                 <ShareDialog
                     clockId={clock.id}
                     title={clock.title}
-                    onClose={() => { setShareOpen(false); setCapNudge(false); }}
+                    mode={shareMode}
+                    onClose={() => {
+                        setShareOpen(false);
+                        setCapNudge(false);
+                        // Dismissing the post-publish welcome still leads into the tour: the
+                        // clock is live and untoured, so the steps are the next thing to show.
+                        if (shareMode === "welcome") {
+                            setShareMode("live");
+                            setTourOpen(true);
+                        }
+                    }}
+                    onTourStart={() => {
+                        setShareOpen(false);
+                        setShareMode("live");
+                        setTourOpen(true);
+                    }}
+                    onTourSkip={() => {
+                        setShareOpen(false);
+                        setShareMode("live");
+                        finishTour("skipped");
+                    }}
                     heading={capNudge ? "SHARE TO KEEP GROWING" : undefined}
                     subline={capNudge ? capSubline : undefined}
                 />
@@ -607,7 +694,6 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                 <WaitlistModal
                     heading="YOU'VE HIT THE FREE LIMIT"
                     subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-                    highlightFeature="Unlimited Active Camel Clocks"
                     onClose={() => setProOpen(false)}
                 />
             )}

@@ -8,6 +8,7 @@ import PasswordRequirements from "./PasswordRequirements";
 import { supabase } from "@/lib/supabase/client";
 import { validatePassword } from "@/utils/passwordValidation";
 import { validateUsername } from "@/utils/usernameValidation";
+import { track } from "@/utils/analytics";
 import EmailConfirmBanner from "./EmailConfirmBanner";
 
 const PASSWORD_MESSAGES = {
@@ -58,6 +59,7 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
         if (result?.ok) {
             setHasHandle(true);
             setHandleStatus({ type: "ok", text: `HANDLE SAVED — @${result.username}` });
+            track("handle_set", { source: "settings" });
         } else {
             setHandleStatus({ type: "error", text: result?.error ?? "Something went wrong." });
         }

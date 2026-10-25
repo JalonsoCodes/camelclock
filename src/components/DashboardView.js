@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { AtSign, ChevronDown, X } from "lucide-react";
 import Navbar from "./Navbar";
 import ClockCard from "./ClockCard";
 import EmptyState from "./EmptyState";
 import EmailConfirmBanner from "./EmailConfirmBanner";
+
+const HANDLE_NUDGE_KEY = "camelClock.handleNudgeDismissed";
 
 function isExpired(clock, now) {
     return clock.status !== "draft" && new Date(clock.target_at) <= now;
@@ -26,11 +28,33 @@ function getStats(clocks) {
     return { total: clocks.length, drafts, live, expired };
 }
 
-export default function DashboardView({ clocks, hydratedClocks = [], emailConfirmed = true, userEmail = "" }) {
+export default function DashboardView({ clocks, hydratedClocks = [], emailConfirmed = true, userEmail = "", hasHandle = true }) {
     const router = useRouter();
     const [upcomingOpen, setUpcomingOpen] = useState(true);
     const [expiredOpen, setExpiredOpen] = useState(true);
+    const [nudgeDismissed, setNudgeDismissed] = useState(false);
     const { total, drafts, live, expired } = getStats(clocks);
+
+    const showHandleNudge = !hasHandle && !nudgeDismissed;
+
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
+        try {
+            if (localStorage.getItem(HANDLE_NUDGE_KEY) === "1") setNudgeDismissed(true);
+        } catch {
+            // ignore
+        }
+    }, []);
+    /* eslint-enable react-hooks/set-state-in-effect */
+
+    const dismissHandleNudge = () => {
+        setNudgeDismissed(true);
+        try {
+            localStorage.setItem(HANDLE_NUDGE_KEY, "1");
+        } catch {
+            // A failed write just means the nudge shows again next time.
+        }
+    };
 
     const ownIds = new Set(clocks.map((c) => c.id));
     const hydratedIds = new Set(hydratedClocks.map((c) => c.id));
@@ -46,6 +70,28 @@ export default function DashboardView({ clocks, hydratedClocks = [], emailConfir
             <Navbar />
 
             {!emailConfirmed && <EmailConfirmBanner email={userEmail} />}
+
+            {showHandleNudge && (
+                <div className="handle-nudge nbtc" role="status">
+                    <AtSign className="handle-nudge-icon" aria-hidden="true" />
+                    <div className="handle-nudge-body">
+                        <span className="handle-nudge-title">PICK A HANDLE</span>
+                        <span className="handle-nudge-copy">
+                            Show a @name on hydration leaderboards. Optional — set it whenever you like.
+                        </span>
+                    </div>
+                    <Link href="/settings" className="handle-nudge-cta nbtc">SET HANDLE</Link>
+                    <button
+                        type="button"
+                        className="handle-nudge-dismiss"
+                        onClick={dismissHandleNudge}
+                        title="Dismiss"
+                        aria-label="Dismiss this suggestion"
+                    >
+                        <X size={16} strokeWidth={3} aria-hidden="true" />
+                    </button>
+                </div>
+            )}
 
             <div className="stats-row">
                 <div className="stat-card nbtc stat-total">

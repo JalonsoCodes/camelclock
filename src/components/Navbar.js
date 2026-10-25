@@ -19,6 +19,7 @@ import WaitlistModal from "./WaitlistModal";
 import { MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
 import { LIVE_COUNT_EVENT } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
+import { navigation } from "@/content/navigation";
 
 export default function Navbar() {
     const router = useRouter();
@@ -159,7 +160,7 @@ export default function Navbar() {
             <Link href={user ? "/dashboard" : "/"} className="logo">
                 <Image 
                     src="/logo.png" 
-                    alt="CamelClock logo" 
+                    alt={navigation.brandAlt} 
                     width={40} 
                     height={40} 
                     priority 
@@ -169,38 +170,38 @@ export default function Navbar() {
             <div className={`nav-links ${open ? "open" : ""}`}>
                 {user ? (
                     <>
-                        <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>My CamelClocks</Link>
-                        {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>Showcases</Link>}
+                        <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>{navigation.myClocks}</Link>
+                        {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>{navigation.showcases}</Link>}
                         {liveCount !== null && (
                             <button
                                 className="nav-live-pill mobile-only"
                                 type="button"
-title={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks \u2014 Pro lifts the cap`}
-aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro unlocks.`}
+                                title={navigation.livePillTitle(liveCount, MAX_LIVE_CLOCKS)}
+                                aria-label={navigation.livePillAria(liveCount, MAX_LIVE_CLOCKS)}
                                 onClick={() => { setProOpen(true); setOpen(false); }}
                             >
                                 <Rocket className="button-icon" />
                                 {liveCount}/{MAX_LIVE_CLOCKS}
                             </button>
                         )}
-                        <Link href="/new" className="btn-link mobile-only" onClick={() => setOpen(false)}><Plus className="button-icon" />New Clock</Link>
-                        <Link href="/settings" className="btn-link mobile-only" onClick={() => setOpen(false)}><SettingsIcon className="button-icon" />Settings</Link>
+                        <Link href="/new" className="btn-link mobile-only" onClick={() => setOpen(false)}><Plus className="button-icon" />{navigation.newClock}</Link>
+                        <Link href="/settings" className="btn-link mobile-only" onClick={() => setOpen(false)}><SettingsIcon className="button-icon" />{navigation.settings}</Link>
                         <button type="button" className="btn-link mobile-only" onClick={() => { handleSignOut(); setOpen(false); }}>
                             <LogOut className="button-icon" />
-                            Sign out
+                            {navigation.signOut}
                         </button>
                     </>
                 ) : (
                     <>
-                        <a href="#create" onClick={(e) => handleSectionNav(e, "create")}>Make a clock</a>
-                        <a href="#pricing" onClick={(e) => handleSectionNav(e, "pricing")}>Pricing</a>
+                        <a href="#create" onClick={(e) => handleSectionNav(e, "create")}>{navigation.makeAClock}</a>
+                        <a href="#pricing" onClick={(e) => handleSectionNav(e, "pricing")}>{navigation.pricing}</a>
                         <button className="btn-link btn-secondary mobile-only" type="button" onClick={() => { setAuthMode("login"); setAuthOpen(true); setOpen(false); }}>
                             <LogIn className="button-icon" />
-                            Sign In
+                            {navigation.signIn}
                         </button>
                         <button className="btn-link mobile-only" type="button" onClick={() => { setAuthMode("signup"); setAuthOpen(true); setOpen(false); }}>
                             <UserPlus className="button-icon" />
-                            Create Account
+                            {navigation.createAccount}
                         </button>
                     </>
                 )}
@@ -213,8 +214,8 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
                     <button
                         className="nav-live-pill"
                         type="button"
-                        title={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks \u2014 Pro lifts the cap`}
-                        aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro unlocks.`}
+                        title={navigation.livePillTitle(liveCount, MAX_LIVE_CLOCKS)}
+                        aria-label={navigation.livePillAria(liveCount, MAX_LIVE_CLOCKS)}
                         onClick={() => setProOpen(true)}
                     >
                         <Rocket className="button-icon" />
@@ -224,28 +225,28 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
 
                 {user ? (
                     <>
-                        <Link href="/new" className="btn-link" title="Create a new countdown clock" onClick={() => setOpen(false)}><Plus className="button-icon" />New</Link>
+                        <Link href="/new" className="btn-link" title={navigation.newClockTitle} onClick={() => setOpen(false)}><Plus className="button-icon" />{navigation.newShort}</Link>
                         <div className="account-menu" ref={accountRef}>
                             <button
                                 className="account-trigger"
                                 type="button"
-                                title="Account options"
+                                title={navigation.accountOptions}
                                 aria-haspopup="true"
                                 aria-expanded={accountOpen}
                                 onClick={() => setAccountOpen((o) => !o)}
                             >
-                                Account
+                                {navigation.account}
                                 <ChevronDown className="button-icon account-chevron" aria-hidden={accountOpen ? "true" : undefined} />
                             </button>
                             {accountOpen && (
                                 <div className="account-dropdown nbtc">
                                     <Link href="/settings" onClick={() => setAccountOpen(false)}>
                                         <SettingsIcon className="button-icon" />
-                                        Settings
+                                        {navigation.settings}
                                     </Link>
                                     <button type="button" onClick={handleSignOut}>
                                         <LogOut className="button-icon" />
-                                        Sign out
+                                        {navigation.signOut}
                                     </button>
                                 </div>
                             )}
@@ -256,20 +257,20 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
                         <button
                             className="btn-link btn-secondary"
                             type="button"
-                            title="Log in to your account"
+                            title={navigation.logInTitle}
                             onClick={() => { setAuthMode("login"); setAuthOpen(true); }}
                         >
                             <LogIn className="button-icon" />
-                            Sign In
+                            {navigation.signIn}
                         </button>
                         <button
                             className="btn-link"
                             type="button"
-                            title="Sign up for a free account"
+                            title={navigation.signUpTitle}
                             onClick={() => { setAuthMode("signup"); setAuthOpen(true); }}
                         >
                             <UserPlus className="button-icon" />
-                            Create Account
+                            {navigation.createAccount}
                         </button>
                     </>
                 )}
@@ -277,8 +278,8 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
                 <button
                     className="hamburger"
                     type="button"
-                    aria-label="Toggle menu"
-                    title="Toggle menu"
+                    aria-label={navigation.toggleMenu}
+                    title={navigation.toggleMenu}
                     aria-expanded={open}
                     onClick={() => setOpen((o) => !o)}
                 >
@@ -294,7 +295,6 @@ aria-label={`${liveCount} of ${MAX_LIVE_CLOCKS} live Camel Clocks. See what Pro 
 
             {proOpen && (
                 <WaitlistModal
-                    highlightFeature="Unlimited Active Camel Clocks"
                     onClose={() => setProOpen(false)}
                 />
             )}

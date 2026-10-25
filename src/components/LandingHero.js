@@ -7,7 +7,7 @@ import useShowcaseSteps from "@/hooks/useShowcaseSteps";
 import useShowcaseHydrate from "@/hooks/useShowcaseHydrate";
 import useHeroBuild from "@/hooks/useHeroBuild";
 import useHeroSentinels from "@/hooks/useHeroSentinels";
-import { hero as heroCopy } from "@/content/landingCopy";
+import { hero as heroCopy } from "@/content/landing";
 import "./landing-hero.css";
 
 /* The build-up, in the order it can actually happen. Two constraints are baked in
@@ -27,7 +27,7 @@ const DEMO_GAP = 900;
    the breakpoint where the two-column hero stops fitting. */
 const SIMPLE_QUERY = "(max-width: 1200px)";
 
-/* Prose lives in src/content/landingCopy.js. What stays here is the behaviour a
+/* Prose lives in src/content/landing.js. What stays here is the behaviour a
    step carries — which effects it demos, whether it fires the finale — joined to
    that copy by the step's `id`. That is what lets the copy be reordered or
    rewritten in one place without ever detaching an animation from the words

@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Check, MailCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { normalizeUsername } from "@/utils/usernameValidation";
+import { track } from "@/utils/analytics";
+import { auth } from "@/content/auth";
 
 const PENDING_KEY = "camelClock.pending";
 
@@ -26,7 +29,7 @@ export default function ConfirmForm() {
 
     const [verifying, setVerifying] = useState(false);
     const [confirmed, setConfirmed] = useState(false);
-    const [error, setError] = useState(hasLink ? "" : "This confirmation link is incomplete.");
+    const [error, setError] = useState(hasLink ? "" : auth.confirm.errorInvalid);
     const [saveError, setSaveError] = useState("");
 
     const savePendingClock = async () => {
@@ -36,12 +39,38 @@ export default function ConfirmForm() {
         } catch {
             pending = null;
         }
-        if (!pending?.payload) return { ok: true };
+
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return { ok: true };
+
+        // The optional handle chosen at signup rides the pending stash. Write it now the account
+        // exists; a taken handle is non-fatal (the user can set one in Settings).
+        if (pending?.handle) {
+            const { error: handleError } = await supabase
+                .from("profiles")
+                .update({ username: normalizeUsername(pending.handle) })
+                .eq("id", user.id);
+            if (handleError && handleError.code !== "23505") {
+                console.error("ConfirmForm: failed to save handle:", handleError.message);
+            } else if (!handleError) {
+                track("handle_set", { source: "signup" });
+            }
+        }
+
+        if (!pending?.payload) {
+            if (pending?.handle) {
+                try {
+                    localStorage.removeItem(PENDING_KEY);
+                } catch {
+                    // ignore
+                }
+            }
+            return { ok: true };
+        }
+
         try {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-            if (!user) return { ok: true };
             const { error: insertError } = await supabase
                 .from("clocks")
                 .insert([{ ...pending.payload, status: "draft", user_id: user.id }]);
@@ -76,7 +105,7 @@ export default function ConfirmForm() {
                 setSaveError(saved.ok ? "" : "Your clock couldn't be saved. You can rebuild it from the builder.");
                 setConfirmed(true);
             } else {
-                setError("This confirmation link is invalid, expired, or has already been used.");
+                setError(auth.confirm.errorInvalid);
             }
             setVerifying(false);
             return;
@@ -95,11 +124,12 @@ export default function ConfirmForm() {
                     <div className="confirm-check">
                         <Check aria-hidden="true" />
                     </div>
-                    <h2 className="auth-title">EMAIL CONFIRMED</h2>
-                    <p className="auth-subtitle">You&apos;re all set. Your account is verified.</p>
+                    <h2 className="auth-title">{auth.confirm.confirmedTitle}</h2>
+                    <p className="auth-subtitle">{auth.confirm.confirmedSubtitle}</p>
                     {saveError && <p className="auth-error">{saveError}</p>}
                     <button className="auth-button" type="button" onClick={() => router.push("/dashboard")}>
-                        GO TO DASHBOARD
+                        <Check className="button-icon" />
+                        {auth.confirm.goDashboard}
                     </button>
                 </div>
             </div>
@@ -110,7 +140,7 @@ export default function ConfirmForm() {
         return (
             <div className="auth-page">
                 <div className="auth-card nbtc">
-                    <h2 className="auth-title">EMAIL CONFIRMATION</h2>
+                    <h2 className="auth-title">{auth.confirm.checkingTitle}</h2>
                     <p className="auth-error">{error}</p>
                     <p className="auth-back">
                         <a href="/login">← Back to sign in</a>
@@ -123,7 +153,7 @@ export default function ConfirmForm() {
     return (
         <div className="auth-page">
             <div className="auth-card nbtc">
-                <h2 className="auth-title">CONFIRM YOUR EMAIL</h2>
+                <h2 className="auth-title">{auth.confirm.confirmTitle}</h2>
                 <p className="auth-subtitle">
                     Press the button below to finish confirming your email address.
                 </p>

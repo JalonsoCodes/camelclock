@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import { auth as authCopy } from "@/content/auth";
 
 export default function ForgotPasswordForm() {
     const [email, setEmail] = useState("");
@@ -17,28 +18,28 @@ export default function ForgotPasswordForm() {
         setMessage("");
         setLoading(true);
 
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
             redirectTo: `${window.location.origin}/reset-password`,
         });
 
         setLoading(false);
 
-        if (error) {
-            setError(error.message);
+        if (resetError) {
+            setError(resetError.message || authCopy.forgot.errors.generic);
         } else {
-            setMessage("Check your email for a password reset link.");
+            setMessage(authCopy.forgot.success);
         }
     };
 
     return (
         <div className="auth-page">
             <div className="auth-card nbtc">
-                <h2 className="auth-title">RESET PASSWORD</h2>
-                <p className="auth-subtitle">Enter your email and we&apos;ll send you a reset link.</p>
+                <h2 className="auth-title">{authCopy.forgot.title}</h2>
+                <p className="auth-subtitle">{authCopy.forgot.subtitle}</p>
 
                 <form className="auth-form" onSubmit={handleSubmit}>
                     <label className="auth-label">
-                        EMAIL
+                        {authCopy.forgot.emailLabel}
                         <input
                             className="auth-input nbtc"
                             type="email"
@@ -55,12 +56,12 @@ export default function ForgotPasswordForm() {
 
                     <button className="auth-button" type="submit" disabled={loading}>
                         <Send className="button-icon" />
-                        {loading ? "SENDING..." : "SEND RESET LINK"}
+                        {loading ? authCopy.forgot.sending : authCopy.forgot.send}
                     </button>
                 </form>
 
-                <p className="auth-back">
-                    <Link href="/login">← Back to sign in</Link>
+                <p className="auth-switch">
+                    <Link href="/login">{authCopy.forgot.backToSignIn}</Link>
                 </p>
             </div>
         </div>

@@ -1,0 +1,95 @@
+/* Auth, account, and confirmation copy. */
+
+export const auth = {
+    modal: {
+        closeLabel: "Close",
+        awaitingTitle: "CHECK YOUR INBOX",
+        awaitingBody: (email) =>
+            `We sent a confirmation link to ${email}. Click it to finish creating your account.`,
+        awaitingHint: "Nothing in your inbox? Check spam, or close this and try again.",
+        gotIt: "GOT IT",
+        signInTitle: "SIGN IN",
+        createTitle: "CREATE ACCOUNT",
+        signInSubtitle: "Manage your clocks",
+        createSubtitle: "Create your CamelClock account",
+    },
+    login: {
+        emailLabel: "EMAIL",
+        passwordLabel: "PASSWORD",
+        forgot: "Forgot password?",
+        signIn: "SIGN IN",
+        signingIn: "SIGNING IN...",
+        switchToSignUp: "Create account",
+        errors: {
+            generic: "Failed to sign in.",
+        },
+    },
+    signup: {
+        emailLabel: "EMAIL",
+        passwordLabel: "PASSWORD",
+        confirmLabel: "CONFIRM PASSWORD",
+        handleLabel: "HANDLE (OPTIONAL)",
+        handlePlaceholder: "e.g. camel_fan",
+        handleHint: "Shown on hydration leaderboards. You can add or change it later in Settings.",
+        signUp: "CREATE ACCOUNT",
+        signingUp: "CREATING ACCOUNT...",
+        switchToSignIn: "Sign in",
+        errors: {
+            mismatch: "Passwords do not match.",
+            generic: "Failed to sign up.",
+        },
+    },
+    confirm: {
+        checkingTitle: "EMAIL CONFIRMATION",
+        confirmedTitle: "EMAIL CONFIRMED",
+        confirmedSubtitle: "You're all set. Your account is verified.",
+        goDashboard: "GO TO DASHBOARD",
+        confirmTitle: "CONFIRM YOUR EMAIL",
+        confirmBody: "Click the button below to confirm your email address and finish setting up your account.",
+        confirmButton: "CONFIRM EMAIL",
+        confirming: "CONFIRMING...",
+        errorInvalid:
+            "This confirmation link is invalid, expired, or has already been used.",
+        errorGeneric: "Something went wrong while confirming your email.",
+    },
+    forgot: {
+        title: "RESET PASSWORD",
+        subtitle: "Enter your email and we'll send you a reset link.",
+        emailLabel: "EMAIL",
+        send: "SEND RESET LINK",
+        sending: "SENDING...",
+        success: "Check your inbox for a reset link.",
+        backToSignIn: "Back to sign in",
+        errors: {
+            generic: "Failed to send reset link.",
+        },
+    },
+    reset: {
+        invalidTitle: "RESET PASSWORD",
+        invalidBody: "This reset link is invalid or has expired.",
+        requestNew: "Request a new reset link",
+        title: "NEW PASSWORD",
+        subtitle: "Enter your new password below.",
+        newLabel: "NEW PASSWORD",
+        confirmLabel: "CONFIRM NEW PASSWORD",
+        update: "UPDATE PASSWORD",
+        updating: "UPDATING...",
+        success: "Password updated successfully.",
+        goSignIn: "GO TO SIGN IN",
+        errors: {
+            mismatch: "Passwords do not match.",
+            generic: "Failed to update password.",
+        },
+    },
+    passwordRequirements: {
+        title: "Password must contain:",
+        min: "At least 8 characters",
+        upper: "At least one uppercase letter",
+        lower: "At least one lowercase letter",
+        number: "At least one number",
+    },
+    emailConfirmBanner: {
+        title: "CONFIRM YOUR EMAIL",
+        body: "Please check your inbox and click the confirmation link to verify your account.",
+    },
+};

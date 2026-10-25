@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Moon, Sun } from "lucide-react";
+import { navigation } from "@/content/navigation";
 
 export default function ThemeToggle() {
     const [dark, setDark] = useState(false);
@@ -26,8 +27,8 @@ export default function ThemeToggle() {
         <button
             className="theme-toggle"
             type="button"
-            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
-            title={dark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={dark ? navigation.themeLightLabel : navigation.themeDarkLabel}
+            title={dark ? navigation.themeLightLabel : navigation.themeDarkLabel}
             onClick={toggle}
         >
             {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}

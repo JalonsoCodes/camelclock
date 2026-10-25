@@ -12,7 +12,7 @@ import useClockCreate from "@/hooks/useClockCreate";
 import { randomisePalette } from "@/utils/colour";
 import { getNextTarget } from "@/utils/time";
 import { formatFinishRow } from "@/utils/clockValues";
-import { quickStart } from "@/content/landingCopy";
+import { quickStart } from "@/content/landing";
 import { track } from "@/utils/analytics";
 
 const SLIDE_MS = 260;

@@ -1,7 +1,7 @@
 "use client";
 
 import { BOOSTS } from "@/utils/grids";
-import { POLL_QUORUM } from "@/utils/polls";
+import { POLL_QUORUM, POLL_TUTORIAL_QUORUM } from "@/utils/polls";
 
 const RESOLVED_FLASH_MS = 12000;
 
@@ -87,16 +87,16 @@ function PollCard({ poll, now, signedIn, onVote, onPreview, onPreviewEnd, onSign
             <div className="level-poll-head">
                 <span className="level-poll-title">LEVEL {poll.level} REACHED</span>
                 <span className="level-poll-timer">
-                    {tutorial
-                        ? "YOUR VOTE DECIDES"
-                        : closed
-                            ? "TALLYING\u2026"
+                    {closed
+                        ? "TALLYING\u2026"
+                        : tutorial
+                            ? `${total}/${POLL_TUTORIAL_QUORUM} VOTES`
                             : `CLOSES IN ${formatCountdown(poll.closes_at, now)}`}
                 </span>
             </div>
             <p className="level-poll-sub">
                 {tutorial
-                    ? "Two effects unlocked \u2014 pick the one that joins the show. This first vote is yours alone, so it settles the moment you choose."
+                    ? "Two effects unlocked \u2014 pick the one that joins the show. Your vote is one; share your CamelClock to bring in a second voter and settle it."
                     : "Two effects unlocked \u2014 vote for the one that joins the show. Hover one to preview it."}
             </p>
             {!tutorial && (
@@ -137,7 +137,7 @@ function PollCard({ poll, now, signedIn, onVote, onPreview, onPreviewEnd, onSign
     );
 }
 
-export default function LevelPollBanner({ polls, now, signedIn, onVote, onPreview, onPreviewEnd, onSignIn }) {
+export default function LevelPollBanner({ polls, now, signedIn, onVote, onPreview, onPreviewEnd, onSignIn, rootRef = null }) {
     const visible = polls.filter((p) => (
         p.resolved_at
             ? now - new Date(p.resolved_at).getTime() < RESOLVED_FLASH_MS
@@ -146,7 +146,7 @@ export default function LevelPollBanner({ polls, now, signedIn, onVote, onPrevie
     if (visible.length === 0) return null;
 
     return (
-        <div className="level-poll-banner">
+        <div className="level-poll-banner" ref={rootRef}>
             {visible.map((poll) => (
                 <PollCard
                     key={poll.id}
