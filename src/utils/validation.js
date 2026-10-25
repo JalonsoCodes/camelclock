@@ -1,4 +1,5 @@
 import { wearables, BOOSTS } from "./grids";
+import { cleanText } from "./text";
 
 const MAX_TITLE = 72;
 const MAX_LABEL = 15;
@@ -69,18 +70,21 @@ export function validateBoostOrder(order) {
 export function validateClock(values) {
     const errors = [];
 
-    const title = (values.title ?? "").trim();
+    const title = cleanText(values.title);
+    const introText = cleanText(values.introText);
+    const celebrationMessage = cleanText(values.celebrationMessage);
+
     if (!title) {
         errors.push("Title is required.");
     } else if (title.length > MAX_TITLE) {
         errors.push(`Title must be ${MAX_TITLE} characters or fewer.`);
     }
 
-    if ((values.introText ?? "").length > MAX_LABEL) {
+    if (introText.length > MAX_LABEL) {
         errors.push(`Label must be ${MAX_LABEL} characters or fewer.`);
     }
 
-    if ((values.celebrationMessage ?? "").length > MAX_MESSAGE) {
+    if (celebrationMessage.length > MAX_MESSAGE) {
         errors.push(`Completion message must be ${MAX_MESSAGE} characters or fewer.`);
     }
 

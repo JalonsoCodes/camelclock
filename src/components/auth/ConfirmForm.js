@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Check, MailCheck } from "lucide-react";
+import { Check } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
-import { normalizeUsername } from "@/utils/usernameValidation";
+import { normalizeUsername, validateUsername } from "@/utils/usernameValidation";
 import { track } from "@/utils/analytics";
 import { auth } from "@/content/auth";
+import LoadingSpinner from "../LoadingSpinner";
 
 const PENDING_KEY = "camelClock.pending";
 
@@ -48,14 +49,17 @@ export default function ConfirmForm() {
         // The optional handle chosen at signup rides the pending stash. Write it now the account
         // exists; a taken handle is non-fatal (the user can set one in Settings).
         if (pending?.handle) {
-            const { error: handleError } = await supabase
-                .from("profiles")
-                .update({ username: normalizeUsername(pending.handle) })
-                .eq("id", user.id);
-            if (handleError && handleError.code !== "23505") {
-                console.error("ConfirmForm: failed to save handle:", handleError.message);
-            } else if (!handleError) {
-                track("handle_set", { source: "signup" });
+            const handle = normalizeUsername(pending.handle);
+            if (!validateUsername(handle)) {
+                const { error: handleError } = await supabase
+                    .from("profiles")
+                    .update({ username: handle })
+                    .eq("id", user.id);
+                if (handleError && handleError.code !== "23505") {
+                    console.error("ConfirmForm: failed to save handle:", handleError.message);
+                } else if (!handleError) {
+                    track("handle_set", { source: "signup" });
+                }
             }
         }
 
@@ -161,7 +165,7 @@ export default function ConfirmForm() {
                 {error && <p className="auth-error">{error}</p>}
 
                 <button className="auth-button" type="button" onClick={handleConfirm} disabled={verifying}>
-                    <MailCheck className="button-icon" />
+                    {verifying ? <LoadingSpinner size="sm" inline /> : <Check className="button-icon" />}
                     {verifying ? "CONFIRMING..." : "CONFIRM MY EMAIL"}
                 </button>
 

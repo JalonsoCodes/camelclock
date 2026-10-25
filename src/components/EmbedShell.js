@@ -8,7 +8,7 @@ export default function EmbedShell({ clock, id, initialTheme, initialCard, initi
         <>
             <EmbedMode theme={initialTheme} card={initialCard} size={initialSize} notion={initialNotion} />
             <div className="public-clock-card nbtc">
-                <EmbedClock clock={clock} id={id} />
+                <EmbedClock clock={clock} id={id} newTab />
             </div>
         </>
     );

@@ -79,7 +79,7 @@ export const legal = {
             {
                 title: "2. Public Clocks",
                 body: [
-                    "Published clocks are public. Anyone with the share link can view a live clock, and a clock you embed can be seen by anyone who visits that page. Drafts are private to you. Do not put anything in a clock title or message that you would not want a stranger to read.",
+                    "Published clocks are public. Anyone with the share link can view a live clock, and a clock you embed can be seen by anyone who visits that page. Drafts are private to you. Do not put anything in a clock title or message that you would not want a stranger to read. Reports you submit are stored with your account and the clock you reported, and are visible only to site administrators.",
                 ],
             },
             {
@@ -146,7 +146,7 @@ export const legal = {
             { title: "2. Age Requirement", body: ["You must be at least 13 years old to use CamelClock."] },
             { title: "2. Account Responsibility", body: ["You are responsible for maintaining the security of your account and for all activities that occur under it."] },
             { title: "3. Your Content", body: ["You retain ownership of the content you create (clocks, titles, messages). By publishing a clock, you grant us permission to display it publicly as part of the service."] },
-            { title: "4. Acceptable Use", body: ["Do not use CamelClock for unlawful purposes, spam, or content that is hateful, abusive, or infringing. We reserve the right to remove content that violates these terms."] },
+            { title: "4. Acceptable Use", body: ["Do not use CamelClock for unlawful purposes, spam, or content that is hateful, abusive, or infringing. We reserve the right to remove content that violates these terms. To report a clock, use the REPORT THIS CLOCK link on its page or email hello@camelclock.com."] },
             { title: "5. Service Availability", body: ["The service is provided as-is. We may modify or discontinue features at any time without notice."] },
             { title: "6. Limitation of Liability", body: ["CamelClock is provided without warranties of any kind. To the fullest extent permitted by law, we are not liable for any damages arising from your use of the service."] },
             { title: "7. Termination", body: ["We may suspend or terminate your account if you violate these terms. You may delete your account at any time from Settings."] },

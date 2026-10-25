@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import { PRO_FEATURES } from "@/content/pricing";
 import { waitlist } from "@/content/pricing";
+import LoadingSpinner from "./LoadingSpinner";
 
 const FEATURE_ICONS = {
     "unlimited-clocks": InfinityIcon,
@@ -107,7 +108,7 @@ export default function WaitlistModal({
                             type="submit"
                             disabled={loading}
                         >
-                            {joined ? <Check className="button-icon" /> : <Bell className="button-icon" />}
+                            {loading ? <LoadingSpinner size="sm" inline /> : joined ? <Check className="button-icon" /> : <Bell className="button-icon" />}
                             {loading ? waitlist.joiningLabel : waitlist.joinLabel}
                         </button>
                     </form>

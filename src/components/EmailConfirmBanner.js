@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, MailCheck } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
+import LoadingSpinner from "./LoadingSpinner";
 import { auth } from "@/content/auth";
 
 export default function EmailConfirmBanner({ email }) {
@@ -36,7 +37,7 @@ export default function EmailConfirmBanner({ email }) {
                 {status && <p className="email-confirm-banner-status">{status}</p>}
             </div>
             <button className="auth-button" type="button" onClick={handleResend} disabled={sending}>
-                <MailCheck className="button-icon" />
+                {sending ? <LoadingSpinner size="sm" inline /> : <MailCheck className="button-icon" />}
                 {sending ? "SENDING..." : "RESEND CONFIRMATION"}
             </button>
         </div>

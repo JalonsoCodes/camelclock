@@ -10,6 +10,7 @@ import { validatePassword } from "@/utils/passwordValidation";
 import { validateUsername } from "@/utils/usernameValidation";
 import { track } from "@/utils/analytics";
 import EmailConfirmBanner from "./EmailConfirmBanner";
+import LoadingSpinner from "./LoadingSpinner";
 
 const PASSWORD_MESSAGES = {
     "New password should be different from the old password.": "Choose a password you haven't used before.",
@@ -202,7 +203,7 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
                                 We&apos;ll email you a 6-digit code to confirm it&apos;s you.
                             </p>
                             <button className="auth-button" type="submit" disabled={sendingCode}>
-                                <KeyRound className="button-icon" />
+                                {sendingCode ? <LoadingSpinner size="sm" inline /> : <KeyRound className="button-icon" />}
                                 {sendingCode ? "SENDING..." : "SEND CODE"}
                             </button>
                         </>
@@ -228,11 +229,12 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
                                 <p className={pwStatus.type === "ok" ? "settings-ok" : "auth-error"}>{pwStatus.text}</p>
                             )}
                             <button className="auth-button" type="submit" disabled={savingPassword}>
-                                <KeyRound className="button-icon" />
+                                {savingPassword ? <LoadingSpinner size="sm" inline /> : <KeyRound className="button-icon" />}
                                 {savingPassword ? "SAVING..." : "UPDATE PASSWORD"}
                             </button>
                             <div className="settings-password-actions">
                                 <button className="btn-link" type="button" onClick={handleResendCode} disabled={sendingCode}>
+                                    {sendingCode ? <LoadingSpinner size="sm" inline /> : null}
                                     {sendingCode ? "SENDING..." : "RESEND CODE"}
                                 </button>
                                 <button className="btn-link btn-secondary" type="button" onClick={restartPasswordFlow}>
@@ -270,10 +272,10 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
                     {handleStatus && (
                         <p className={handleStatus.type === "ok" ? "settings-ok" : "auth-error"}>{handleStatus.text}</p>
                     )}
-                    <button className="auth-button" type="submit" disabled={savingHandle}>
-                        <AtSign className="button-icon" />
-                        {savingHandle ? "SAVING..." : hasHandle ? "UPDATE HANDLE" : "SET HANDLE"}
-                    </button>
+                            <button className="auth-button" type="submit" disabled={savingHandle}>
+                                {savingHandle ? <LoadingSpinner size="sm" inline /> : <User className="button-icon" />}
+                                {savingHandle ? "SAVING..." : "SAVE HANDLE"}
+                            </button>
                 </form>
             </section>
 

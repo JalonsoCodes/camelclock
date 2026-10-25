@@ -1,6 +1,64 @@
-import { eyeOne, eyeTwo, eyeThree, eyeFour, wearables as wearableData } from "@/utils/grids";
+import { camelTemplate, eyeOne, eyeTwo, eyeThree, eyeFour, wearables as wearableData } from "@/utils/grids";
 
-export function buildCamelGrid(template, levelNumbers, eyeFrame) {
+const CTA_ICON_BOX = (() => {
+    let minR = Infinity;
+    let minC = Infinity;
+    let maxR = -1;
+    let maxC = -1;
+    for (let r = 0; r < camelTemplate.length; r++) {
+        for (let c = 0; c < camelTemplate[r].length; c++) {
+            if (camelTemplate[r][c] !== 9) continue;
+            minR = Math.min(minR, r);
+            minC = Math.min(minC, c);
+            maxR = Math.max(maxR, r);
+            maxC = Math.max(maxC, c);
+        }
+    }
+    return maxR < 0 ? null : { row: minR, col: minC, rows: maxR - minR + 1, cols: maxC - minC + 1 };
+})();
+
+const CTA_ICONS = {
+    open: [
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 1, 0],
+        [0, 0, 0, 1, 1, 0],
+        [0, 0, 1, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+    ],
+};
+
+function applyCtaIcon(grid, icon) {
+    const glyph = CTA_ICONS[icon];
+    if (!glyph || !CTA_ICON_BOX) return grid;
+
+    let hasPlus = false;
+    for (let r = 0; r < CTA_ICON_BOX.rows && !hasPlus; r++) {
+        for (let c = 0; c < CTA_ICON_BOX.cols; c++) {
+            if (grid[CTA_ICON_BOX.row + r]?.[CTA_ICON_BOX.col + c] === 9) {
+                hasPlus = true;
+                break;
+            }
+        }
+    }
+    if (!hasPlus) return grid;
+
+    for (let r = 0; r < CTA_ICON_BOX.rows; r++) {
+        for (let c = 0; c < CTA_ICON_BOX.cols; c++) {
+            const targetRow = CTA_ICON_BOX.row + r;
+            const targetCol = CTA_ICON_BOX.col + c;
+            if (grid[targetRow]?.[targetCol] === undefined) continue;
+            if (glyph[r]?.[c]) {
+                grid[targetRow][targetCol] = 9;
+            } else if (grid[targetRow][targetCol] === 9) {
+                grid[targetRow][targetCol] = 2;
+            }
+        }
+    }
+    return grid;
+}
+
+export function buildCamelGrid(template, levelNumbers, eyeFrame, ctaIcon = null) {
     const newCamel = template.map(row => [...row]);
     const startRow = 60;
     const numHumps = levelNumbers.length;
@@ -104,6 +162,8 @@ export function buildCamelGrid(template, levelNumbers, eyeFrame) {
         }
     }
 
+    applyCtaIcon(newCamel, ctaIcon);
+
     return newCamel;
 }
 
@@ -169,12 +229,12 @@ export function makeHydrationShade(grid, spread, strength = 1) {
     };
 }
 
-export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000", ctaState = null) {
+export function drawCamel(canvas, template, levelNumbers, eyeFrame, scale, primaryColour, secondaryColour, pixelDark = "#000000", ctaState = null, ctaIcon = null) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.imageSmoothingEnabled = false;
 
-    const newCamel = buildCamelGrid(template, levelNumbers, eyeFrame);
+    const newCamel = buildCamelGrid(template, levelNumbers, eyeFrame, ctaIcon);
 
     drawGrid(canvas, newCamel, scale, primaryColour, secondaryColour, pixelDark, boostIconColour(ctaState, primaryColour, pixelDark));
 }

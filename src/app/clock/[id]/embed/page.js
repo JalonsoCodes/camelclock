@@ -57,7 +57,7 @@ export default async function EmbedPage({ params, searchParams }) {
     }
 
     // An embed is a pure timer and a doorway — it never hydrates in place (see EmbedClock), so it
-    // needs no entitlement read at all. A tap navigates out to the clock's own page instead.
+    // needs no entitlement read at all. A tap opens the clock's own page in a new tab instead.
 
     return (
         <main className="public-clock">

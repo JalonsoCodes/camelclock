@@ -14,6 +14,7 @@ import { getNextTarget } from "@/utils/time";
 import { formatFinishRow } from "@/utils/clockValues";
 import { quickStart } from "@/content/landing";
 import { track } from "@/utils/analytics";
+import LoadingSpinner from "./LoadingSpinner";
 
 const SLIDE_MS = 260;
 const DEFAULT_BOOSTS = [{ id: "shine" }];
@@ -287,6 +288,7 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
                         )}
                         {isLastStep ? (
                             <button className="share-button nbtc quick-start-create" type="button" onClick={() => submit(currentValues())} disabled={isSaving}>
+                                {isSaving ? <LoadingSpinner size="sm" inline /> : null}
                                 {isSaving ? "Creating..." : "Create"}
                             </button>
                         ) : (

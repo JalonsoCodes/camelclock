@@ -31,7 +31,7 @@ export default function TermsPage() {
                     <p>You retain full ownership of the clocks and content you create. By using CamelClock, you grant us a limited licence to display your published clocks to visitors via the share link and embed features.</p>
 
                     <h2>4. Acceptable Use</h2>
-                    <p>You may not use CamelClock to create content that is illegal, hateful, harassing, or that infringes on the rights of others. We reserve the right to remove content that violates these terms.</p>
+                    <p>You may not use CamelClock to create content that is illegal, hateful, harassing, or that infringes on the rights of others. We reserve the right to remove content that violates these terms. To report a clock, use the REPORT THIS CLOCK link on its page or email <strong>hello@camelclock.com</strong>.</p>
 
                     <h2>5. Service Availability</h2>
                     <p>We aim to keep CamelClock running reliably, but we do not guarantee uninterrupted access. We may modify or discontinue features with reasonable notice.</p>

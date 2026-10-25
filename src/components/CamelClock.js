@@ -99,7 +99,7 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, levelBannerRef = null, titleRef = null, levelLabelRef = null, camelArtRef = null, onAnimatingChange = null, ref }) {
+export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, ctaIcon = null, ctaLabel = "Hydrate this CamelClock", revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, levelBannerRef = null, titleRef = null, levelLabelRef = null, camelArtRef = null, onAnimatingChange = null, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
     const phaseRef = useRef("counting");
@@ -431,8 +431,8 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             const wearablesActive = (wearableRevealProgress != null && wearableRevealProgress < 1 && wearables.length > 0);
             if ((revealActive || wearablesActive) && !celebrating) {
                 const levelNumbers = levels.map(l => l.level);
-                const grid = buildCamelGrid(template, levelNumbers, eyeFrame);
-                const sig = `${levelNumbers.join(",")}|${eyeFrame}`;
+                const grid = buildCamelGrid(template, levelNumbers, eyeFrame, ctaIcon);
+                const sig = `${levelNumbers.join(",")}|${eyeFrame}|${ctaIcon ?? ""}`;
 
                 let fillPixels = revealPixelsRef.current;
 
@@ -545,7 +545,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             const ctaState = viewerHydrates ? (hydrateSplash.active ? "hydrating" : hydrationHover ? "hover" : "idle") : null;
 
             if (motion || hasEffects || hydrateSplash.active) {
-                const grid = buildCamelGrid(template, levelNumbers, eyeFrame);
+                const grid = buildCamelGrid(template, levelNumbers, eyeFrame, ctaIcon);
                 const shadeFns = [];
                 let sparkleColour = null;
                 let sparkleProgress = 0;
@@ -593,14 +593,14 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                     else drawSandstorm(ctx, grid, calculatedScale, weather.progress, weather.profile);
                 }
             } else {
-                drawCamel(canvas, template, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark, ctaState);
+                drawCamel(canvas, template, levelNumbers, eyeFrame, calculatedScale, primaryColour, secondaryColour, pixelDark, ctaState, ctaIcon);
             }
         }
 
         if (!celebrating && !motion && !hasEffects && wearables.length > 0) {
             drawWearables(canvas, wearables, calculatedScale);
         }
-    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, wearables, boostFrame, viewerHydrates, hydrationHover, revealProgress, wearableRevealProgress, hydrateSplash]);
+    }, [levels, eyeFrame, calculatedScale, themeToken, phase, frameIndex, primaryColour, secondaryColour, wearables, boostFrame, viewerHydrates, hydrationHover, revealProgress, wearableRevealProgress, hydrateSplash, ctaIcon]);
 
     const startPreview = () => {
         setIsPreview(true);
@@ -642,7 +642,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                     <Link
                         href={titleHref}
                         className={styles.clockTitleLink}
-                        {...(titleExternal ? { target: "_top" } : {})}
+                        {...(titleExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     >
                         {title}
                     </Link>
@@ -663,8 +663,8 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                             <button
                                 className={styles.ctaOverlay}
                                 type="button"
-                                title="Hydrate this CamelClock"
-                                aria-label="Hydrate this CamelClock"
+                                title={ctaLabel}
+                                aria-label={ctaLabel}
                                 onClick={onHydrateClick}
                                 onMouseEnter={() => setHydrationHover(true)}
                                 onMouseLeave={() => setHydrationHover(false)}
@@ -749,7 +749,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                         <Link
                             href={watermarkHref ?? "/"}
                             className={styles.watermarkLink}
-                            {...(watermarkExternal ? { target: "_top" } : {})}
+                            {...(watermarkExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                         >
                             Create your CamelClock
                         </Link>

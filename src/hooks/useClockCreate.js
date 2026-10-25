@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase/client";
 import { getConfiguredTarget } from "@/utils/time";
+import { cleanText } from "@/utils/text";
 import { validateClock } from "@/utils/validation";
 import { shuffleBoostOrder } from "@/utils/boost";
 import { track } from "@/utils/analytics";
@@ -22,10 +23,10 @@ export function buildClockPayload(values) {
     }
 
     return {
-        title: values.title,
+        title: cleanText(values.title),
         target_at: targetDate.toISOString(),
-        intro_text: values.introText,
-        celebration_message: values.celebrationMessage,
+        intro_text: cleanText(values.introText),
+        celebration_message: cleanText(values.celebrationMessage),
         primary_colour: values.primaryColour,
         secondary_colour: values.secondaryColour,
         celebration_type: "spit",

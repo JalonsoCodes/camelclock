@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Send } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { auth as authCopy } from "@/content/auth";
+import LoadingSpinner from "../LoadingSpinner";
 
 export default function ForgotPasswordForm() {
     const [email, setEmail] = useState("");
@@ -55,7 +56,7 @@ export default function ForgotPasswordForm() {
                     {message && <p className="auth-message">{message}</p>}
 
                     <button className="auth-button" type="submit" disabled={loading}>
-                        <Send className="button-icon" />
+                        {loading ? <LoadingSpinner size="sm" inline /> : <Send className="button-icon" />}
                         {loading ? authCopy.forgot.sending : authCopy.forgot.send}
                     </button>
                 </form>

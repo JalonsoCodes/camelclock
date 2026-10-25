@@ -2239,6 +2239,13 @@ body.show-navbar .quick-start-stage {
   box-shadow: 8px 8px 0px var(--secondary-colour);
 }
 
+.report-reason {
+  height: auto;
+  min-height: 12rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
 .password-reqs {
   list-style: none;
   margin: 0 0 0.4rem;
@@ -3038,6 +3045,59 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   margin: 0;
 }
 
+.report-list {
+  max-width: 90rem;
+  margin: 0 auto;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2.0rem;
+}
+
+.report-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 2.0rem;
+}
+
+.report-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.6rem;
+  flex-wrap: wrap;
+}
+
+.report-card-top .admin-showcase-link {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.report-meta {
+  margin: 0;
+  font-size: 1.0rem;
+  opacity: 0.65;
+  overflow-wrap: anywhere;
+}
+
+.report-reason-body {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: normal;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 1.6rem;
+}
+
 .builder-status-message {
   margin-top: 0.5rem;
   text-align: center;
@@ -3400,6 +3460,92 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   height: 2.0rem;
 }
 
+/* Camel-eye pixel spinner - 4 frames matching eyeOne→eyeTwo→eyeThree→eyeFour */
+.camel-spinner {
+  display: inline-flex;
+  flex-direction: column;
+  gap: var(--spinner-gap, 1px);
+  width: var(--spinner-width, 8px);
+  height: var(--spinner-height, 8px);
+  flex-shrink: 0;
+}
+
+.camel-spinner--inline {
+  vertical-align: middle;
+}
+
+.camel-spinner__row {
+  display: flex;
+  gap: var(--spinner-gap, 1px);
+}
+
+.camel-spinner__pixel {
+  width: var(--spinner-pixel-size, 3px);
+  height: var(--spinner-pixel-size, 3px);
+  background: var(--border-colour);
+}
+
+.camel-spinner--sm {
+  --spinner-pixel-size: 3px;
+  --spinner-gap: 1px;
+  --spinner-width: 8px;
+  --spinner-height: 8px;
+}
+
+.camel-spinner--md {
+  --spinner-pixel-size: 4px;
+  --spinner-gap: 2px;
+  --spinner-width: 12px;
+  --spinner-height: 12px;
+}
+
+.camel-spinner--lg {
+  --spinner-pixel-size: 6px;
+  --spinner-gap: 3px;
+  --spinner-width: 18px;
+  --spinner-height: 18px;
+}
+
+/* Frame patterns for camel-eye spinner - 4 frames matching eyeOne→eyeTwo→eyeThree→eyeFour */
+/* Default state (frame0) - eyeOne: first column */
+.camel-spinner .camel-spinner__pixel {
+  background: transparent;
+}
+.camel-spinner .camel-spinner__row:first-child .camel-spinner__pixel:first-child,
+.camel-spinner .camel-spinner__row:last-child .camel-spinner__pixel:first-child {
+  background: var(--border-colour);
+}
+
+/* eyeTwo: first row */
+.camel-spinner--frame1 .camel-spinner__row:first-child .camel-spinner__pixel:first-child,
+.camel-spinner--frame1 .camel-spinner__row:first-child .camel-spinner__pixel:last-child {
+  background: var(--border-colour);
+}
+.camel-spinner--frame1 .camel-spinner__row:last-child .camel-spinner__pixel:first-child,
+.camel-spinner--frame1 .camel-spinner__row:last-child .camel-spinner__pixel:last-child {
+  background: transparent;
+}
+
+/* eyeThree: second column */
+.camel-spinner--frame2 .camel-spinner__row:first-child .camel-spinner__pixel:first-child,
+.camel-spinner--frame2 .camel-spinner__row:last-child .camel-spinner__pixel:first-child {
+  background: transparent;
+}
+.camel-spinner--frame2 .camel-spinner__row:first-child .camel-spinner__pixel:last-child,
+.camel-spinner--frame2 .camel-spinner__row:last-child .camel-spinner__pixel:last-child {
+  background: var(--border-colour);
+}
+
+/* eyeFour: second row */
+.camel-spinner--frame3 .camel-spinner__row:first-child .camel-spinner__pixel:first-child,
+.camel-spinner--frame3 .camel-spinner__row:first-child .camel-spinner__pixel:last-child {
+  background: transparent;
+}
+.camel-spinner--frame3 .camel-spinner__row:last-child .camel-spinner__pixel:first-child,
+.camel-spinner--frame3 .camel-spinner__row:last-child .camel-spinner__pixel:last-child {
+  background: var(--border-colour);
+}
+
 /* ---- Boost levels & show board ---- */
 
 .card-hydrate-row {
@@ -3479,6 +3625,11 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   flex-direction: column;
   align-items: flex-start;
   gap: 1.4rem;
+}
+
+.viewer-report-link {
+  align-self: flex-start;
+  margin-top: 0.4rem;
 }
 
 .community-note {
@@ -4312,6 +4463,12 @@ snaps back on failure, so without this a rejected hydrate is indistinguishable f
   background-color: var(--card-colour);
   border: var(--nbtc-border);
   box-shadow: var(--nbtc-shadow);
+}
+
+.admin-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.2rem;
 }
 
 /* First-run guided tour. A dimming scrim over the whole viewport with the highlighted element

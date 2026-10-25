@@ -26,6 +26,9 @@ export async function updateUsername(input) {
         if (error.code === "23505") {
             return { error: "That handle is taken." };
         }
+        if (error.code === "23514") {
+            return { error: "That handle is reserved." };
+        }
         console.error("updateUsername:", error.message);
         return { error: "Could not update your handle. Please try again." };
     }

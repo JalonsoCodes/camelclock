@@ -63,6 +63,7 @@ export default function RootLayout({ children }) {
           <Link href="/faq">{navigation.footer.faq}</Link>
           <Link href="/privacy">{navigation.footer.privacy}</Link>
           <Link href="/terms">{navigation.footer.terms}</Link>
+          <a href="https://discord.gg/pGFMEZTw4X" target="_blank" rel="noopener noreferrer">Discord</a>
         </footer>
         {umamiWebsiteId && (
           <Script

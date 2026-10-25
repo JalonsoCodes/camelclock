@@ -7,6 +7,7 @@ import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import ShareDialog from "./ShareDialog";
 import LevelChip from "./LevelChip";
+import LoadingSpinner from "./LoadingSpinner";
 import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { levelFromCount } from "@/utils/boost";
 import { checkLiveLimit } from "@/utils/liveLimit";
@@ -164,7 +165,8 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
                             onClick={publishClock}
                             disabled={toggling}
                         >
-                            <Rocket className="button-icon" />{toggling ? "..." : "PUBLISH"}
+                            {toggling ? <LoadingSpinner size="sm" inline /> : <Rocket className="button-icon" />}
+                            {toggling ? "PUBLISHING..." : "PUBLISH"}
                         </button>
                     ) : (
                         <>
@@ -184,8 +186,8 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
                                 disabled={toggling}
                                 aria-label="Unpublish"
                             >
-                                {toggling ? "..." : <EyeOff className="button-icon" aria-hidden="true" />}
-                                <span className="card-action-label">UNPUBLISH</span>
+                                {toggling ? <LoadingSpinner size="sm" inline /> : <EyeOff className="button-icon" aria-hidden="true" />}
+                                <span className="card-action-label">{toggling ? "UNPUBLISHING..." : "UNPUBLISH"}</span>
                             </button>
                         </>
                     )}
@@ -197,8 +199,8 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
                         disabled={deleting}
                         aria-label="Delete"
                     >
-                        {deleting ? "..." : <Trash2 className="button-icon" aria-hidden="true" />}
-                        <span className="card-action-label">DELETE</span>
+                        {deleting ? <LoadingSpinner size="sm" inline /> : <Trash2 className="button-icon" aria-hidden="true" />}
+                        <span className="card-action-label">{deleting ? "DELETING..." : "DELETE"}</span>
                     </button>
                 </div>
             )}

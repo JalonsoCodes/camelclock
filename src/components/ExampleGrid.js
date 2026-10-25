@@ -27,7 +27,7 @@ function ExampleCard({ clock }) {
     }, []);
 
     /* A fallback has no real clock row, so its title links nowhere. A real showcase
-       is a live clock, so its title opens the clock's own viewing page in this tab. */
+       is a live clock, so its links open the clock's own viewing page in a new tab. */
     const isFallback = clock.is_fallback === true;
 
     return (
@@ -39,7 +39,7 @@ function ExampleCard({ clock }) {
                         id={clock.id}
                         showWatermark={!isFallback}
                         titleHref={isFallback ? null : `/clock/${clock.id}`}
-                        titleExternal={false}
+                        newTab={!isFallback}
                     />
                 ) : (
                     /* Holds the space the canvas would take, so the grid does not

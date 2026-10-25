@@ -50,9 +50,14 @@ export default async function AdminShowcasesPage() {
         <>
             <Navbar />
             <div className="page-container">
-                <Link className="pressable admin-boost-test-link" href="/admin/boost-test">
-                    BOOST TEST
-                </Link>
+                <div className="admin-link-row">
+                    <Link className="pressable admin-boost-test-link" href="/admin/boost-test">
+                        BOOST TEST
+                    </Link>
+                    <Link className="pressable admin-boost-test-link" href="/admin/reports">
+                        REPORTS
+                    </Link>
+                </div>
             </div>
             <AdminShowcases clocks={clocks} />
         </>

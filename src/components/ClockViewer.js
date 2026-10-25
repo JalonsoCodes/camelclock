@@ -7,10 +7,12 @@ import { Pencil, Rocket, Check, Lock, Unlock, HelpCircle, CircleMinus, CirclePlu
 import CamelClock from "./CamelClock";
 import ShareDialog from "./ShareDialog";
 import ConfirmDialog from "./ConfirmDialog";
+import ReportClockDialog from "./ReportClockDialog";
 import SocialShareRow from "./SocialShareRow";
 import EmbedHelpModal from "./EmbedHelpModal";
 import EmbedSiteModal from "./EmbedSiteModal";
 import AuthModal from "./auth/AuthModal";
+import LoadingSpinner from "./LoadingSpinner";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
 import { MAX_LIVE_CLOCKS, checkLiveLimit } from "@/utils/liveLimit";
 import WaitlistModal from "./WaitlistModal";
@@ -54,6 +56,8 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const [capNotice, setCapNotice] = useState(false);
     const [visitorCapOpen, setVisitorCapOpen] = useState(false);
     const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+    const [reportOpen, setReportOpen] = useState(false);
+    const [reportAuthOpen, setReportAuthOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
     const [deleteError, setDeleteError] = useState("");
     const [tourOpen, setTourOpen] = useState(showTour);
@@ -341,6 +345,14 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         router.refresh();
     };
 
+    const openReport = () => {
+        if (!signedIn) {
+            setReportAuthOpen(true);
+            return;
+        }
+        setReportOpen(true);
+    };
+
     const capSubline = `Share \u201C${clock.title}\u201D so others can hydrate it and it keeps levelling up. You\u2019re out of claimable hydrations for today \u2014 your allowance resets tomorrow.`;
 
     return (
@@ -360,7 +372,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             onClick={publishClock}
                             disabled={publishing}
                         >
-                            <Rocket className="button-icon" />
+                            {publishing ? <LoadingSpinner size="sm" inline /> : <Rocket className="button-icon" />}
                             {publishing ? "PUBLISHING..." : "PUBLISH"}
                         </button>
                     </div>
@@ -442,6 +454,11 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             onNotion={() => setEmbedHelpOpen(true)}
                             onMore={() => setEmbedSiteOpen(true)}
                         />
+                        {!isOwner && (
+                            <button className="text-link viewer-report-link" type="button" onClick={openReport}>
+                                REPORT THIS CLOCK
+                            </button>
+                        )}
                     </div>
                 )}
                 <div className="viewer-center">
@@ -704,6 +721,26 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                     next={`/clock/${clock.id}`}
                     onClose={() => setHydratePromptOpen(false)}
                     onSuccess={() => setHydratePromptOpen(false)}
+                />
+            )}
+
+            {reportAuthOpen && (
+                <AuthModal
+                    mode="login"
+                    next={`/clock/${clock.id}`}
+                    onClose={() => setReportAuthOpen(false)}
+                    onSuccess={() => {
+                        setReportAuthOpen(false);
+                        setReportOpen(true);
+                    }}
+                />
+            )}
+
+            {reportOpen && (
+                <ReportClockDialog
+                    clockId={clock.id}
+                    clockTitle={clock.title}
+                    onClose={() => setReportOpen(false)}
                 />
             )}
 
