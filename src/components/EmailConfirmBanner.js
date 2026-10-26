@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, Send } from "lucide-react";
+import { AlertTriangle, MailCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import LoadingSpinner from "./LoadingSpinner";
 import { auth } from "@/content/auth";

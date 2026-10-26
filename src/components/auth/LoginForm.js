@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { auth } from "@/content/auth";
 import LoadingSpinner from "../LoadingSpinner";

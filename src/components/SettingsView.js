@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AtSign, KeyRound, Mail, Trash2 } from "lucide-react";
+import { AtSign, KeyRound, Mail, Trash2, User } from "lucide-react";
 import ConfirmDialog from "./ConfirmDialog";
 import { deleteAccount, updateUsername } from "@/app/settings/actions";
 import PasswordRequirements from "./PasswordRequirements";
@@ -35,7 +35,6 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
     const [savingPassword, setSavingPassword] = useState(false);
 
     const [handle, setHandle] = useState(username ?? "");
-    const [hasHandle, setHasHandle] = useState(Boolean(username));
     const [handleStatus, setHandleStatus] = useState(null);
     const [savingHandle, setSavingHandle] = useState(false);
 
@@ -58,7 +57,6 @@ export default function SettingsView({ email, emailConfirmed = true, username = 
         setSavingHandle(false);
 
         if (result?.ok) {
-            setHasHandle(true);
             setHandleStatus({ type: "ok", text: `HANDLE SAVED — @${result.username}` });
             track("handle_set", { source: "settings" });
         } else {
