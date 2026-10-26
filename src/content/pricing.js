@@ -18,13 +18,13 @@ export const pricing = {
 export const FREE_FEATURES = [
     {
         id: "live-clocks",
-        label: "3 Active Live Camel Clocks",
-        detail: "Seamless website embedding and shareable directly links.",
+        label: "3 Active Live CamelClocks",
+        detail: "Seamless website embedding and shareable links.",
     },
     {
         id: "drafts",
         label: "Unlimited Drafts",
-        detail: "Experiment and design as many personal Camel Clocks as you like.",
+        detail: "Experiment and design as many personal CamelClocks as you like.",
     },
     {
         id: "customisation",

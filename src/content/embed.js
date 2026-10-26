@@ -34,9 +34,9 @@ export const embed = {
         copyTitle: "Copy to clipboard",
         steps: [
             "Pick your look above, then copy the embed URL.",
-            "In Notion, type /embed and press Enter.",
-            "Paste the URL into the embed block, then drag a corner to size it.",
+            "In Notion, paste the link and select Embed.",
+            "Drag the corners to resize it to your liking.",
         ],
-        liveNote: "The embed is live — it keeps counting down in place, no refresh needed. The clock must stay Live for the embed to work.",
+        liveNote: "The embed is live — it keeps counting down in place, no refresh needed. The clock must stay PUBLISHED for the embed to work.",
     },
 };

@@ -5,7 +5,7 @@ export const clock = {
         publishTitle: "Make this clock publicly visible",
         publishBodyBefore: "Publishing makes your clock ",
         publishBodyStrong: "live",
-        publishBodyAfter: " so anyone with the link can view it and hydrate it. You can unpublish it later.",
+        publishBodyAfter: " so anyone with the link can view it, hydrate it, and vote for new effects. You can unpublish it later.",
         publish: "PUBLISH",
         publishing: "PUBLISHING...",
         editTitle: "Edit this clock",
@@ -59,8 +59,8 @@ export const clock = {
         moreOptions: "More share options",
     },
     poll: {
-        winner: (name) => `<strong>${name}</strong> joined the show.`,
-        noVotes: "No votes came in \u2014 this one is back on the ballot later.",
+        winner: (name) => `<strong>${name}</strong> Boost was added.`,
+        noVotes: "No votes came in \u2014 this Boost will show soon in another poll.",
         tutorialShare: "CAST YOUR VOTE TO CONTINUE - SHARE FOR MORE VOTES",
         closesIn: "CLOSES IN",
         votesSoFar: "VOTES SO FAR",
@@ -70,9 +70,9 @@ export const clock = {
         previewHint: "Preview the effect",
     },
     empty: {
-        title: "NO CLOCKS YET",
+        title: "NO CAMELCLOCKS YET",
         body: "Build your first CamelClock and it will show up here.",
-        cta: "CREATE YOUR FIRST CLOCK",
+        cta: "CREATE YOUR FIRST CAMELCLOCK",
     },
     confirmDelete: {
         title: "Delete this clock?",
@@ -112,7 +112,7 @@ export const clock = {
     },
     dashboard: {
         title: "DASHBOARD",
-        newClock: "NEW CLOCK",
+        newClock: "NEW CAMELCLOCK",
         stats: {
             total: "TOTAL",
             live: "LIVE",

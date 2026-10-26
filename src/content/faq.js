@@ -37,9 +37,9 @@ export const faq = {
             ],
         },
         {
-            q: "Can I hydrate clocks and get notified when they end?",
+            q: "Can I hydrate clocks?",
             a: [
-                "Yes. Any live clock shows a HYDRATE button, so you can add it to your dashboard — and the hydrate icon on the camel lets your own viewers join in one click.",
+                "Yes. Any live clock shows a + button. Clicking it gives your camel a well-needed drink.",
             ],
         },
         {

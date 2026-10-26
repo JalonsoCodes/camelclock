@@ -17,11 +17,11 @@ export const navigation = {
     accountOptions: "Account options",
     logInTitle: "Log in to your account",
     signUpTitle: "Sign up for a free account",
-    newClockTitle: "Create a new countdown clock",
+    newClockTitle: "Create a new CamelClock",
     livePillTitle: (liveCount, max) =>
-        `${liveCount} of ${max} live Camel Clocks \u2014 Pro lifts the cap`,
+        `${liveCount} of ${max} live CamelClocks \u2014 Pro lifts the cap`,
     livePillAria: (liveCount, max) =>
-        `${liveCount} of ${max} live Camel Clocks. See what Pro unlocks.`,
+        `${liveCount} of ${max} live CamelClocks. See what Pro unlocks.`,
     themeLightLabel: "Switch to light mode",
     themeDarkLabel: "Switch to dark mode",
     footer: {
