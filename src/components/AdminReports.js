@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ExternalLink, X } from "lucide-react";
 import { resolveReport } from "@/app/admin/reports/actions";
-import LoadingSpinner from "./LoadingSpinner";
 
 export default function AdminReports({ reports: initialReports }) {
     const [reports, setReports] = useState(initialReports);
@@ -78,11 +77,7 @@ export default function AdminReports({ reports: initialReports }) {
                                     onClick={() => resolve(report, "resolved")}
                                     disabled={!!busyId}
                                 >
-                                    {busyId === report.id ? (
-                                        <LoadingSpinner size="sm" inline />
-                                    ) : (
-                                        <Check className="button-icon" aria-hidden="true" />
-                                    )}
+                                    <Check className="button-icon" aria-hidden="true" />
                                     RESOLVE
                                 </button>
                                 <button
@@ -91,11 +86,7 @@ export default function AdminReports({ reports: initialReports }) {
                                     onClick={() => resolve(report, "dismissed")}
                                     disabled={!!busyId}
                                 >
-                                    {busyId === report.id ? (
-                                        <LoadingSpinner size="sm" inline />
-                                    ) : (
-                                        <X className="button-icon" aria-hidden="true" />
-                                    )}
+                                    <X className="button-icon" aria-hidden="true" />
                                     DISMISS
                                 </button>
                             </div>

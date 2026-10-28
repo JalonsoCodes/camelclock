@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase/client";
 import { validatePassword } from "@/utils/passwordValidation";
 import PasswordRequirements from "@/components/PasswordRequirements";
 import { auth } from "@/content/auth";
-import LoadingSpinner from "../LoadingSpinner";
 
 function getTokenParams(searchParams) {
     const hashParams = typeof window !== "undefined"
@@ -100,7 +99,7 @@ export default function ResetPasswordForm() {
                     </p>
 
                     <button className="auth-button" type="button" onClick={handleVerify} disabled={verifying}>
-                        {verifying ? <LoadingSpinner size="sm" inline /> : <KeyRound className="button-icon" />}
+                        <KeyRound className="button-icon" />
                         {verifying ? "VERIFYING..." : "VERIFY RESET LINK"}
                     </button>
 
@@ -164,7 +163,7 @@ export default function ResetPasswordForm() {
                     {error && <p className="auth-error">{error}</p>}
 
                     <button className="auth-button" type="submit" disabled={loading}>
-                        {loading ? <LoadingSpinner size="sm" inline /> : <KeyRound className="button-icon" />}
+                        <KeyRound className="button-icon" />
                         {loading ? "SAVING..." : "UPDATE PASSWORD"}
                     </button>
                 </form>

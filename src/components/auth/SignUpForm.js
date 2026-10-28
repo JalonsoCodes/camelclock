@@ -9,7 +9,6 @@ import { validatePassword } from "@/utils/passwordValidation";
 import { validateUsername, normalizeUsername } from "@/utils/usernameValidation";
 import PasswordRequirements from "@/components/PasswordRequirements";
 import { auth } from "@/content/auth";
-import LoadingSpinner from "../LoadingSpinner";
 
 const PENDING_KEY = "camelClock.pending";
 
@@ -144,7 +143,7 @@ export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMod
             {error && <p className="auth-error">{error}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
-                {loading ? <LoadingSpinner size="sm" inline /> : <UserPlus className="button-icon" />}
+                <UserPlus className="button-icon" />
                 {loading ? auth.signup.signingUp : auth.signup.signUp}
             </button>
 

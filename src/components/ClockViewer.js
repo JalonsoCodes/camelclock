@@ -12,7 +12,6 @@ import SocialShareRow from "./SocialShareRow";
 import EmbedHelpModal from "./EmbedHelpModal";
 import EmbedSiteModal from "./EmbedSiteModal";
 import AuthModal from "./auth/AuthModal";
-import LoadingSpinner from "./LoadingSpinner";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
 import { MAX_LIVE_CLOCKS, checkLiveLimit } from "@/utils/liveLimit";
 import WaitlistModal from "./WaitlistModal";
@@ -372,7 +371,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             onClick={publishClock}
                             disabled={publishing}
                         >
-                            {publishing ? <LoadingSpinner size="sm" inline /> : <Rocket className="button-icon" />}
+                            <Rocket className="button-icon" />
                             {publishing ? "PUBLISHING..." : "PUBLISH"}
                         </button>
                     </div>

@@ -6,7 +6,6 @@ import Link from "next/link";
 import { LogIn } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { auth } from "@/content/auth";
-import LoadingSpinner from "../LoadingSpinner";
 
 export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode }) {
     const router = useRouter();
@@ -70,7 +69,7 @@ export default function LoginForm({ next = "/dashboard", onSuccess, onSwitchMode
             {error && <p className="auth-error">{error}</p>}
 
             <button className="auth-button" type="submit" disabled={loading}>
-                {loading ? <LoadingSpinner size="sm" inline /> : <LogIn className="button-icon" />}
+                <LogIn className="button-icon" />
                 {loading ? auth.login.signingIn : auth.login.signIn}
             </button>
 

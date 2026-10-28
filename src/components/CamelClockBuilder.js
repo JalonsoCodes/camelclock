@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabase/client";
 import TitleField from "./builder-fields/TitleField";
 import WhenFields from "./builder-fields/WhenFields";
 import ColourField from "./builder-fields/ColourField";
-import LoadingSpinner from "./LoadingSpinner";
 import useClockCreate, { PENDING_KEY } from "@/hooks/useClockCreate";
 import { randomisePalette } from "@/utils/colour";
 import { formatClockTime } from "@/utils/clockValues";
@@ -247,7 +246,7 @@ const isSelected = selectedWearables.includes(item.id);
                 <button
                     className="share-button nbtc" type="submit" disabled={isSaving}
                     title={effectiveId ? "Save your changes" : "Create your clock"}>
-                    {isSaving ? <LoadingSpinner size="sm" inline /> : <Save className="button-icon" />}
+                    <Save className="button-icon" />
                     {isSaving ? "Saving..." : (effectiveId ? "Save changes" : createLabel)}
                 </button>
 

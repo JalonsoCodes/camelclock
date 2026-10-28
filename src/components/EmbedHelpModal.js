@@ -19,7 +19,7 @@ const CARD_OPTIONS = [
 
 export default function EmbedHelpModal({ url, onClose }) {
     const trapRef = useFocusTrap(true);
-    const [theme, setTheme] = useState("dark");
+    const [theme, setTheme] = useState("light");
     const [card, setCard] = useState("card");
     const [copied, setCopied] = useState(false);
 

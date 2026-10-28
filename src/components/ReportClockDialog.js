@@ -6,7 +6,6 @@ import { Check, Flag, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import { cleanText } from "@/utils/text";
-import LoadingSpinner from "./LoadingSpinner";
 
 const MAX_REASON = 500;
 
@@ -110,7 +109,7 @@ export default function ReportClockDialog({ clockId, clockTitle, onClose }) {
                         {error && <p className="auth-error">{error}</p>}
                         <div className="confirm-actions">
                             <button className="auth-button" type="button" onClick={submit} disabled={!canSend}>
-                                {busy ? <LoadingSpinner size="sm" inline /> : <Flag className="button-icon" />}
+                                <Flag className="button-icon" />
                                 {busy ? "SENDING..." : "SEND REPORT"}
                             </button>
                             <button className="auth-close nbtc" type="button" onClick={onClose} disabled={busy}>

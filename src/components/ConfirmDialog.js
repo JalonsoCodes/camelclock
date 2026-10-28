@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, X } from "lucide-react";
 import useFocusTrap from "@/hooks/useFocusTrap";
-import LoadingSpinner from "./LoadingSpinner";
 
 export default function ConfirmDialog({
     message,
@@ -51,7 +50,7 @@ export default function ConfirmDialog({
                         disabled={!confirmed || busy}
                         onClick={onConfirm}
                     >
-                        {busy ? <LoadingSpinner size="sm" inline /> : <Check className="button-icon" />}
+                        <Check className="button-icon" />
                         {confirmLabel}
                     </button>
                     <button className="auth-close nbtc" type="button" onClick={onCancel} disabled={busy}>

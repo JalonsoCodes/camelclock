@@ -8,7 +8,7 @@ export const metadata = {
     robots: { index: false, follow: false },
 };
 
-const VALID_THEMES = ["dark"];
+const VALID_THEMES = ["light", "dark"];
 const VALID_CARDS = ["transparent"];
 const VALID_SIZES = ["sm", "md", "lg"];
 

@@ -7,7 +7,6 @@ import { supabase } from "@/lib/supabase/client";
 import { normalizeUsername, validateUsername } from "@/utils/usernameValidation";
 import { track } from "@/utils/analytics";
 import { auth } from "@/content/auth";
-import LoadingSpinner from "../LoadingSpinner";
 
 const PENDING_KEY = "camelClock.pending";
 
@@ -165,7 +164,7 @@ export default function ConfirmForm() {
                 {error && <p className="auth-error">{error}</p>}
 
                 <button className="auth-button" type="button" onClick={handleConfirm} disabled={verifying}>
-                    {verifying ? <LoadingSpinner size="sm" inline /> : <Check className="button-icon" />}
+                    <Check className="button-icon" />
                     {verifying ? "CONFIRMING..." : "CONFIRM MY EMAIL"}
                 </button>
 
