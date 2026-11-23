@@ -24,6 +24,7 @@ Built with **Next.js 16 (App Router)** and **Supabase** (Postgres, Auth, Row-Lev
 - [Getting started](#getting-started)
 - [Scripts](#scripts)
 - [Deployment](#deployment)
+- [License](#license)
 
 ---
 
@@ -38,7 +39,7 @@ Built with **Next.js 16 (App Router)** and **Supabase** (Postgres, Auth, Row-Lev
 
 ### Publish & share
 
-- **Draft / live publishing** with a free-tier cap of **3 live clocks** and a waitlist modal when you hit it.
+- **Draft / live publishing** — free and unlimited; publish whenever you're ready.
 - **Public viewing page** per clock with hydrator counts, a top-hydrators leaderboard, and a community note.
 - **Share dialog** with a link, social share row (WhatsApp, X, Facebook, Email), and copy-link.
 - **Per-clock Open Graph images** generated on the fly for rich link previews.
@@ -90,7 +91,7 @@ camelclock/
 ├─ public/                     Static assets
 ├─ src/
 │  ├─ app/                     Routes (App Router) — direct Supabase access, no REST layer
-│  │  ├─ page.js               Landing: hero + create wizard + examples + pricing
+│  │  ├─ page.js               Landing: hero + create wizard + examples
 │  │  ├─ new/                  Create a clock (wizard)
 │  │  ├─ edit/[id]/            Edit an existing clock
 │  │  ├─ clock/[id]/           Public viewer + OG image + error boundary
@@ -175,7 +176,7 @@ npx supabase link
 npx supabase db push
 ```
 
-This creates the tables (`profiles`, `clocks`, `hydrations`, `user_hydrates`, `clock_polls`, `clock_poll_votes`, `waitlist`), Row-Level Security policies, the RPCs (`hydrate_clock`, `vote_poll`, `finalise_poll`, `get_clock_hydrate_stats`, …) and the live-clock-limit trigger.
+This creates the tables (`profiles`, `clocks`, `hydrations`, `user_hydrates`, `clock_polls`, `clock_poll_votes`), Row-Level Security policies and the RPCs (`hydrate_clock`, `vote_poll`, `finalise_poll`, `get_clock_hydrate_stats`, …).
 
 ### 4. Run the dev server
 
@@ -214,3 +215,9 @@ Deploys as a standard Next.js app (a `netlify.toml` is included; Vercel works to
 1. Set all four environment variables in your hosting dashboard.
 2. Point `NEXT_PUBLIC_SITE_URL` at your production domain.
 3. Match Supabase Auth's **Site URL** and redirect allowlist to that domain.
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE). This repository is a personal showcase; contributions are not accepted, but you're welcome to view and fork it under the MIT license.

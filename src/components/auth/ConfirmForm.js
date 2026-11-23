@@ -7,8 +7,7 @@ import { supabase } from "@/lib/supabase/client";
 import { normalizeUsername, validateUsername } from "@/utils/usernameValidation";
 import { track } from "@/utils/analytics";
 import { auth } from "@/content/auth";
-
-const PENDING_KEY = "camelClock.pending";
+import { PENDING_KEY } from "@/hooks/useClockCreate";
 
 function getTokenParams(searchParams) {
     const hashParams = typeof window !== "undefined"

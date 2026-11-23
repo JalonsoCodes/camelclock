@@ -10,8 +10,6 @@ import { getConfiguredTarget, getNextTarget } from "@/utils/time";
 import { createBoostEngine } from "@/utils/boostEngine";
 import styles from "./CamelClock.module.css";
 
-export { HYDRATION_SPLASH_MS };
-
 const LEVEL_BANNER_COLS = 25;
 const LEVEL_BANNER_ROWS = 4;
 

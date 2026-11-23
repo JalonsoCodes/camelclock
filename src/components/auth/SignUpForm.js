@@ -9,8 +9,7 @@ import { validatePassword } from "@/utils/passwordValidation";
 import { validateUsername, normalizeUsername } from "@/utils/usernameValidation";
 import PasswordRequirements from "@/components/PasswordRequirements";
 import { auth } from "@/content/auth";
-
-const PENDING_KEY = "camelClock.pending";
+import { PENDING_KEY } from "@/hooks/useClockCreate";
 
 export default function SignUpForm({ next = "/dashboard", onSuccess, onSwitchMode, onAwaitingConfirm }) {
     const router = useRouter();

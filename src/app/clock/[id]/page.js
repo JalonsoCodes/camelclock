@@ -107,14 +107,6 @@ export default async function ClockPage({ params }) {
     const { data: creator } = await supabase.rpc("get_clock_creator", { p_clock_id: clock.id });
     const creatorUsername = creator?.[0]?.username ?? null;
 
-    // Fetch is_pro for the clock owner to gate background theming
-    const { data: ownerProfile } = await supabase
-        .from("profiles")
-        .select("is_pro")
-        .eq("id", clock.user_id)
-        .maybeSingle();
-    const isPro = Boolean(ownerProfile?.is_pro);
-
     // First-run tour. Shown to the owner of EVERY live clock until THAT clock has been toured.
     // A draft never opens the tour: publishing is explained by the "WHAT HAPPENS WHEN YOU PUBLISH?"
     // note under the draft banner's PUBLISH button instead, so the tour only starts once the clock
@@ -147,7 +139,6 @@ export default async function ClockPage({ params }) {
                     creatorUsername={creatorUsername}
                     entitlements={entitlements}
                     showTour={showTour}
-                    isPro={isPro}
                 />
             </main>
         </>

@@ -24,7 +24,7 @@
 
 ## Build & Publish
 - **Drafts by default.** `/new` (ClockCreationWizard) and creates save as `draft`. Edits never touch `status` or `viewer_hydrates`.
-- **Publish gated.** Max **3 live clocks** per user. Call `checkLiveLimit()` before setting `status: "live"`. Pro/admin exempt. Over limit → open waitlist modal.
+- **Free and unlimited.** No live-clock cap, Pro tier or waitlist. Publishing writes `status: "live"` directly.
 - **Viewer hydrates ON by default.** No UI toggle; edits never change it.
 
 ## Security & DB

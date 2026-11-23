@@ -33,7 +33,7 @@ export const faq = {
             q: "What's the difference between a draft and a live clock? Are there limits?",
             a: [
                 "A draft is private — only you can see it while you design. Publishing makes it live, publicly visible and shareable.",
-                "The free plan allows up to 3 live clocks at once (drafts are unlimited). Going live past the limit opens the Pro waitlist, which removes the cap.",
+                "Drafts and live clocks are both unlimited. You can publish, unpublish and redesign as many as you like.",
             ],
         },
         {
@@ -57,7 +57,7 @@ export const faq = {
         {
             q: "Is CamelClock free?",
             a: [
-                "CamelClock is free for personal use, including building unlimited drafts, keeping up to 3 live clocks, and interactive visitor hydrations. Pro — with unlimited live clocks, the full wearables closet and more — is coming soon; join the waitlist to get early access.",
+                "Yes — CamelClock is completely free. Build and publish as many clocks as you like, embed them anywhere, and let visitors hydrate them. There are no paid plans.",
             ],
         },
     ],
@@ -175,49 +175,4 @@ export const seo = {
     settingsTitle: "Settings | CamelClock",
     newTitle: "New Clock | CamelClock",
     dashboardTitle: "Dashboard | CamelClock",
-};
-
-export const errors = {
-    notFoundTitle: "Page not found",
-    notFoundBody: "This page doesn't exist.",
-    backHome: "Back to home",
-    somethingWrong: "SOMETHING WENT WRONG",
-    unexpected: "An unexpected error occurred.",
-    dashboardError: "We couldn't load your dashboard.",
-    tryAgain: "Try again",
-};
-
-export const admin = {
-    showcases: {
-        title: "Showcase Order",
-        hint: "Drag order with the arrows below. A clock appears on the landing page when it's live and has",
-        hintCode: "is_showcase = true",
-        hintSuffix: "on its row in the database, then set its order here.",
-        order: "ORDER",
-        clock: "CLOCK",
-        target: "TARGET",
-        hydrations: "HYDRATIONS",
-        moveUp: "Move up",
-        moveDown: "Move down",
-        empty: "No clocks are flagged as showcases. Set",
-        emptyCode: "is_showcase = true",
-        emptySuffix: "on a live clock to feature it here.",
-    },
-    boostTest: {
-        wearables: "WEARABLES",
-        wearablesSub: "One per slot. Wearables are drawn under every effect.",
-        clear: "CLEAR",
-        camelTitle: "BOOST TEST",
-        camelIntro: "One run per click.",
-        camelCelebrate: "TARGET!",
-        effects: "BOOST EFFECTS",
-        effectsSub: "One per category. Click to fit it and watch a single run.",
-        hydrate: "HYDRATE +1",
-        levelUp: "LEVEL UP",
-        reset: "RESET",
-        shuffleOrder: "SHUFFLE ORDER",
-        theme: "THEME",
-        currentOrder: "CURRENT BOOST ORDER",
-        unlockedAt: (level) => `UNLOCKED AT LEVEL ${level}`,
-    },
 };

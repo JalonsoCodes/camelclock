@@ -17,9 +17,8 @@ import { tour } from "@/content/tour";
 // after publishing, with the tour's welcome copy on top and the tour's two buttons at the bottom
 // - the introduction and the share link live in one place, never one after the other. It carries
 // no embed buttons: the welcome is about the tour, and embedding waits until the clock is shared.
-// Publishing itself is not this dialog's job - the PUBLISH buttons write status directly through
-// checkLiveLimit(). There is no status toggle and no embed-code builder here; that lives in
-// EmbedSiteModal / EmbedHelpModal.
+// Publishing itself is not this dialog's job - the PUBLISH buttons write status directly. There is
+// no status toggle and no embed-code builder here; that lives in EmbedSiteModal / EmbedHelpModal.
 export default function ShareDialog({
     clockId,
     title,

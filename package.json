@@ -1,7 +1,16 @@
 {
-  "name": "camelclocks",
+  "name": "camelclock",
   "version": "0.1.0",
   "private": true,
+  "description": "Build pixel-art countdown clocks, earn effects as people hydrate them, and embed them anywhere.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JalonsoCoder/camelclock.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,16 +20,15 @@
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
     "@supabase/supabase-js": "^2.112.3",
-    "globals": "^15.15.0",
     "lucide-react": "^1.33.0",
-    "next": "16.3.2",
+    "next": "16.4.6",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-icons": "^5.7.0"
   },
   "devDependencies": {
     "eslint": "^9",
-    "eslint-config-next": "16.3.2",
+    "eslint-config-next": "16.4.6",
     "supabase": "^2.118.0"
   }
 }

@@ -13,11 +13,8 @@ import EmbedHelpModal from "./EmbedHelpModal";
 import EmbedSiteModal from "./EmbedSiteModal";
 import AuthModal from "./auth/AuthModal";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
-import { MAX_LIVE_CLOCKS, checkLiveLimit } from "@/utils/liveLimit";
 import { getBackgroundBgVar } from "@/content/backgrounds";
-import WaitlistModal from "./WaitlistModal";
 import { supabase } from "@/lib/supabase/client";
-import { refreshLiveCount } from "@/utils/liveCountEvents";
 import useHydrateInteraction from "@/hooks/useHydrate";
 import useHydrateStats from "@/hooks/useHydrateStats";
 import useClockPoll from "@/hooks/useClockPoll";
@@ -29,7 +26,7 @@ import { track } from "@/utils/analytics";
 
 const CATEGORY_LABEL = { exercise: "EXERCISE", aura: "AURA", weather: "WEATHER" };
 
-export default function ClockViewer({ clock, isOwner: initialOwner, entitlements = {}, creatorUsername = null, showTour = false, isPro = false }) {
+export default function ClockViewer({ clock, isOwner: initialOwner, entitlements = {}, creatorUsername = null, showTour = false }) {
     const router = useRouter();
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com").replace(/\/+$/, "");
     const [isOwner, setIsOwner] = useState(initialOwner);
@@ -39,7 +36,6 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
     const [savedOpen, setSavedOpen] = useState(false);
     const [publishing, setPublishing] = useState(false);
     const [publishError, setPublishError] = useState("");
-    const [proOpen, setProOpen] = useState(false);
     const [embedHelpOpen, setEmbedHelpOpen] = useState(false);
     const [embedSiteOpen, setEmbedSiteOpen] = useState(false);
     const [rackSelection, setRackSelection] = useState(clock.boosts || []);
@@ -155,13 +151,13 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
 
     // Sync grid colour to document root for the fixed body::before grid
     useEffect(() => {
-        if (isPro && clock.background) {
+        if (clock.background) {
             document.documentElement.style.setProperty('--grid-colour', getBackgroundBgVar(clock.background));
         } else {
             document.documentElement.style.removeProperty('--grid-colour');
         }
         return () => document.documentElement.style.removeProperty('--grid-colour');
-    }, [isPro, clock.background]);
+    }, [clock.background]);
 
     // The tour tells the owner they can hydrate by clicking the camel too. The camel and the rail
     // button both call beginHydrate, so wrap the camel's handler to record that this path was used.
@@ -176,23 +172,12 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         beginHydrate();
     }, [beginHydrate]);
 
-    // Publishing writes status directly through the checkLiveLimit() gate - no go-live modal in
-    // between. On success the simplified "YOUR CLOCK IS LIVE" dialog opens so the owner can share
-    // or embed; on the cap it opens the waitlist modal instead.
+    // Publishing writes status directly - no go-live modal in between. On success the simplified
+    // "YOUR CLOCK IS LIVE" dialog opens so the owner can share or embed straight away.
     const publishClock = async () => {
         if (publishing) return;
         setPublishError("");
         setPublishing(true);
-        const check = await checkLiveLimit();
-        if (!check.ok) {
-            setPublishing(false);
-            if (check.reason === "limit") {
-                setProOpen(true);
-            } else {
-                setPublishError(check.error);
-            }
-            return;
-        }
         const { error } = await supabase
             .from("clocks")
             .update({ status: "live" })
@@ -203,7 +188,6 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
             setPublishError("Failed to publish. Please try again.");
             return;
         }
-        refreshLiveCount();
         setStatusOverride("live");
         setCapNudge(false);
         // Publishing is the one moment the welcome belongs to: the share dialog opens in its
@@ -269,7 +253,6 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
             return;
         }
         setConfirmDeleteOpen(false);
-        refreshLiveCount();
         router.push("/dashboard");
     };
 
@@ -472,7 +455,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                     </div>
                 )}
                 <div className="viewer-center">
-                    <div className="public-clock-card nbtc" ref={tourCardRef} style={{ backgroundColor: isPro && clock.background ? getBackgroundBgVar(clock.background) : undefined }}>
+                    <div className="public-clock-card nbtc" ref={tourCardRef} style={{ backgroundColor: clock.background ? getBackgroundBgVar(clock.background) : undefined }}>
                         {isOwner && (
                             <>
                                 <Link href={`/edit/${clock.id}`} className="edit-fab nbtc" title="Edit this clock">
@@ -717,14 +700,6 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                     url={`${siteUrl}/clock/${clock.id}/embed`}
                     title={clock.title}
                     onClose={() => setEmbedSiteOpen(false)}
-                />
-            )}
-
-            {proOpen && (
-                <WaitlistModal
-                    heading="YOU'VE HIT THE FREE LIMIT"
-                    subline={`Free covers ${MAX_LIVE_CLOCKS} live Camel Clocks. Pro lifts the cap \u2014 join the waitlist for early access.`}
-                    onClose={() => setProOpen(false)}
                 />
             )}
 

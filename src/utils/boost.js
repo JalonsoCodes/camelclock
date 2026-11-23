@@ -86,12 +86,6 @@ export function clicksToNextLevel(count) {
     return 0;
 }
 
-// Hydrations needed to REACH a level. Level 1 is the free starting point, so it costs nothing.
-export function hydratesForLevel(level) {
-    const l = Math.max(1, Math.min(MAX_LEVEL, Number(level) || 1));
-    return l <= 1 ? 0 : QUEST_LEVELS[l - 2].hydrations;
-}
-
 /* Effect partition. FREE_BOOST_IDS is the level-1 rung every clock already has; GATED_BOOST_IDS
    is the pool a clock's own ladder is drawn from. Reactive effects are in neither — they are not
    unlockable, they are reactions. */

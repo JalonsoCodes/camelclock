@@ -3,7 +3,6 @@ import Navbar from "@/components/Navbar";
 import LandingHero from "@/components/LandingHero";
 import ClockCreationWizard from "@/components/ClockCreationWizard";
 import ExampleGrid from "@/components/ExampleGrid";
-import Pricing from "@/components/Pricing";
 import { quickStart } from "@/content/landing";
 import { levelFromCount, unlockedBoostIdsFor } from "@/utils/boost";
 
@@ -117,7 +116,6 @@ export default async function Home() {
                 <LandingHero />
                 <ClockCreationWizard heading={quickStart.title} subheading={quickStart.subtitle} />
                 <ExampleGrid clocks={examples} />
-                <Pricing />
             </main>
         </>
     );

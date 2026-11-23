@@ -7,3 +7,8 @@ export function formatClockTime(target) {
 export function formatFinishRow(target) {
     return `${target.getDate()} ${MONTHS[target.getMonth()]} ${target.getFullYear()} · ${formatClockTime(target)}`;
 }
+
+export function formatTarget(targetAt) {
+    const target = new Date(targetAt);
+    return `${target.getDate()} ${MONTHS[target.getMonth()]} ${target.getFullYear()} ${formatClockTime(target)}`;
+}

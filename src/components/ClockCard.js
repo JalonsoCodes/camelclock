@@ -7,21 +7,11 @@ import CamelClock from "./CamelClock";
 import ConfirmDialog from "./ConfirmDialog";
 import ShareDialog from "./ShareDialog";
 import LevelChip from "./LevelChip";
-import { refreshLiveCount } from "@/utils/liveCountEvents";
 import { levelFromCount } from "@/utils/boost";
-import { checkLiveLimit } from "@/utils/liveLimit";
+import { formatTarget } from "@/utils/clockValues";
 import { supabase } from "@/lib/supabase/client";
 import { track } from "@/utils/analytics";
 import { getBackgroundBgVar } from "@/content/backgrounds";
-
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
-function formatTarget(targetAt) {
-    const d = new Date(targetAt);
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${hh}:${mm}`;
-}
 
 function getStatus(clock) {
     if (clock.status === "draft") return "draft";
@@ -41,24 +31,12 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
     const status = getStatus(clock);
     const time = `${String(target.getHours()).padStart(2, "0")}:${String(target.getMinutes()).padStart(2, "0")}`;
 
-    // Unpublish needs no limit gate — it only ever removes a live row. Going live is a direct
-    // write through checkLiveLimit() (same gate the viewer uses); the simplified live dialog then
-    // opens so the owner can share or embed straight away.
+    // Publishing is a direct status write; the simplified live dialog then opens so the owner can
+    // share or embed straight away.
     const publishClock = async () => {
         if (toggling) return;
         setToggleError("");
         setToggling(true);
-
-        const check = await checkLiveLimit();
-        if (!check.ok) {
-            setToggling(false);
-            if (check.reason === "limit") {
-                setToggleError("Live clock limit reached (3). Unpublish one first.");
-            } else {
-                setToggleError(check.error);
-            }
-            return;
-        }
 
         const { error } = await supabase
             .from("clocks")
@@ -70,7 +48,6 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
             console.error("Error updating clock status:", error);
             setToggleError("Failed to publish. Please try again.");
         } else {
-            refreshLiveCount();
             onDeleted();
             setShareOpen(true);
             track("clock_published", { source: "dashboard" });
@@ -91,7 +68,6 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
             console.error("Error updating clock status:", error);
             setToggleError("Failed to unpublish. Please try again.");
         } else {
-            refreshLiveCount();
             onDeleted();
         }
     };
@@ -107,7 +83,6 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
             setDeleteError("Failed to delete. Please try again.");
         } else {
             setConfirmOpen(false);
-            refreshLiveCount();
             onDeleted();
         }
     };

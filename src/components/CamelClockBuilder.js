@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Check, Keyboard, Lock, Play, Save, Shuffle } from "lucide-react";
+import { Check, Keyboard, Play, Save, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
@@ -28,19 +28,6 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? initialClock?.secondary_colour ?? "#8E652C");
     const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? initialClock?.wearables ?? []);
     const [background, setBackground] = useState(initialValues?.background ?? initialClock?.background ?? null);
-    const [isPro, setIsPro] = useState(false);
-
-    const fetchIsPro = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("is_pro")
-                .eq("id", user.id)
-                .maybeSingle();
-            setIsPro(Boolean(profile?.is_pro));
-        }
-    };
 
     /* Boost equipment is not a creation option — it is earned, and equipped on the viewing page
        once the clock is live. The builder only has to carry two things: the rack a brand new
@@ -103,12 +90,10 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         primaryColour,
         secondaryColour,
         wearables: selectedWearables,
-        // Non-pro users may pick a background as a teaser, but it is stripped before save so it can
-        // never be persisted to the clock.
-        background: isPro ? background : null,
+        background,
         boosts: initialBoosts,
         boostOrder: initialValues?.boostOrder ?? initialClock?.boost_order,
-    }), [title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, selectedWearables, background, isPro, initialBoosts, initialValues, initialClock]);
+    }), [title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, selectedWearables, background, initialBoosts, initialValues, initialClock]);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -149,19 +134,13 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     useEffect(() => {
         // initialValues is stable; run-once mount behavior is intentional
         resumePendingIfPresent();
-        // Read is_pro on mount so the background picker/teaser is correct even when the user is
-        // already signed in (onAuthStateChange does not fire for an existing session).
-        fetchIsPro();
     }, []);
     /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
             if (event === "SIGNED_IN") {
                 resumePendingIfPresent();
-                await fetchIsPro();
-            } else if (event === "SIGNED_OUT") {
-                setIsPro(false);
             }
         });
 
@@ -171,7 +150,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
 
     return (
         <div className="camel-builder">
-            <div className="canvas-wrapper nbtc" style={{ backgroundColor: isPro && background ? getBackgroundBgVar(background) : undefined }}>
+            <div className="canvas-wrapper nbtc" style={{ backgroundColor: background ? getBackgroundBgVar(background) : undefined }}>
                 <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" wearables={selectedWearables} boosts={initialBoosts} />
             </div>
 
@@ -278,11 +257,7 @@ const isSelected = selectedWearables.includes(item.id);
                 </div>
 
                 <div className="form-group">
-                    <label className="background-label">BACKGROUND
-                        {!isPro && (
-                            <Lock className="lock-icon" aria-hidden="true" />
-                        )}
-                    </label>
+                    <label className="background-label">BACKGROUND</label>
                     <div className="background-picker nbtc">
                         {BACKGROUNDS.map((b) => (
                             <button
@@ -297,11 +272,6 @@ const isSelected = selectedWearables.includes(item.id);
                             </button>
                         ))}
                     </div>
-                    {!isPro && background && (
-                        <p className="background-teaser">
-                            Background is a Pro feature — upgrade to save it to your clock.
-                        </p>
-                    )}
                 </div>
 
                 <button

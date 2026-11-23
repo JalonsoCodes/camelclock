@@ -9,15 +9,11 @@ import {
     LogIn,
     LogOut,
     Plus,
-    Rocket,
     Settings as SettingsIcon,
     UserPlus,
 } from "lucide-react";
 import ThemeToggle from "./ThemeToggle";
 import AuthModal from "./auth/AuthModal";
-import WaitlistModal from "./WaitlistModal";
-import { MAX_LIVE_CLOCKS } from "@/utils/liveLimit";
-import { LIVE_COUNT_EVENT } from "@/utils/liveCountEvents";
 import { supabase } from "@/lib/supabase/client";
 import { navigation } from "@/content/navigation";
 
@@ -29,11 +25,8 @@ export default function Navbar() {
     const [authMode, setAuthMode] = useState("signup");
     const [user, setUser] = useState(null);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [liveCount, setLiveCount] = useState(null);
-    const [proOpen, setProOpen] = useState(false);
     const [accountOpen, setAccountOpen] = useState(false);
     const accountRef = useRef(null);
-    const fetchLiveCountRef = useRef(null);
 
     useEffect(() => {
         if (!accountOpen) return;
@@ -74,37 +67,6 @@ export default function Navbar() {
         }
         document.getElementById(id)?.scrollIntoView({ block: "start" });
     }, [pathname, router]);
-
-    useEffect(() => {
-        let mounted = true;
-
-        if (!user) return;
-
-        const fetchCount = async (retried = false) => {
-            const { data: count, error } = await supabase.rpc("count_my_live_clocks");
-            if (!mounted) return;
-            if (error && !retried && /jwt.*future/i.test(error.message)) {
-                await supabase.auth.getSession();
-                return fetchCount(true);
-            }
-            if (error) {
-                setLiveCount(null);
-            } else {
-                setLiveCount(count ?? 0);
-            }
-        };
-
-        fetchLiveCountRef.current = fetchCount;
-        fetchCount();
-
-        return () => { mounted = false; };
-    }, [user, pathname]);
-
-    useEffect(() => {
-        const handler = () => fetchLiveCountRef.current?.();
-        window.addEventListener(LIVE_COUNT_EVENT, handler);
-        return () => window.removeEventListener(LIVE_COUNT_EVENT, handler);
-    }, []);
 
     useEffect(() => {
         let mounted = true;
@@ -172,18 +134,6 @@ export default function Navbar() {
                     <>
                         <Link href="/dashboard" className={pathname === "/dashboard" ? "nav-active" : ""} onClick={() => setOpen(false)}>{navigation.myClocks}</Link>
                         {isAdmin && <Link href="/admin/showcases" className={pathname === "/admin/showcases" ? "nav-active" : ""} onClick={() => setOpen(false)}>{navigation.showcases}</Link>}
-                        {liveCount !== null && (
-                            <button
-                                className="nav-live-pill mobile-only"
-                                type="button"
-                                title={navigation.livePillTitle(liveCount, MAX_LIVE_CLOCKS)}
-                                aria-label={navigation.livePillAria(liveCount, MAX_LIVE_CLOCKS)}
-                                onClick={() => { setProOpen(true); setOpen(false); }}
-                            >
-                                <Rocket className="button-icon" />
-                                {liveCount}/{MAX_LIVE_CLOCKS}
-                            </button>
-                        )}
                         <Link href="/new" className="btn-link mobile-only" onClick={() => setOpen(false)}><Plus className="button-icon" />{navigation.newClock}</Link>
                         <Link href="/settings" className="btn-link mobile-only" onClick={() => setOpen(false)}><SettingsIcon className="button-icon" />{navigation.settings}</Link>
                         <button type="button" className="btn-link mobile-only" onClick={() => { handleSignOut(); setOpen(false); }}>
@@ -194,7 +144,6 @@ export default function Navbar() {
                 ) : (
                     <>
                         <a href="#create" onClick={(e) => handleSectionNav(e, "create")}>{navigation.makeAClock}</a>
-                        <a href="#pricing" onClick={(e) => handleSectionNav(e, "pricing")}>{navigation.pricing}</a>
                         <button className="btn-link btn-secondary mobile-only" type="button" onClick={() => { setAuthMode("login"); setAuthOpen(true); setOpen(false); }}>
                             <LogIn className="button-icon" />
                             {navigation.signIn}
@@ -209,19 +158,6 @@ export default function Navbar() {
 
             <div className="navbar-content">
                 <ThemeToggle />
-
-                {user && liveCount !== null && (
-                    <button
-                        className="nav-live-pill"
-                        type="button"
-                        title={navigation.livePillTitle(liveCount, MAX_LIVE_CLOCKS)}
-                        aria-label={navigation.livePillAria(liveCount, MAX_LIVE_CLOCKS)}
-                        onClick={() => setProOpen(true)}
-                    >
-                        <Rocket className="button-icon" />
-                        {liveCount}/{MAX_LIVE_CLOCKS}
-                    </button>
-                )}
 
                 {user ? (
                     <>
@@ -291,12 +227,6 @@ export default function Navbar() {
 
             {authOpen && (
                 <AuthModal mode={authMode} onClose={() => setAuthOpen(false)} onSuccess={() => { setAuthOpen(false); router.push("/dashboard"); }} />
-            )}
-
-            {proOpen && (
-                <WaitlistModal
-                    onClose={() => setProOpen(false)}
-                />
             )}
         </nav>
     );

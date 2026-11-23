@@ -299,26 +299,6 @@ body.show-navbar .navbar {
   opacity: 0.6;
 }
 
-.nav-live-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0;
-  font-size: 1.3rem;
-  font-weight: bold;
-  font-family: inherit;
-  color: #4caf50;
-  background: none;
-  border: none;
-  box-shadow: none;
-}
-
-.nav-live-pill:hover,
-.nav-live-pill:focus-visible {
-  transform: none;
-  box-shadow: none;
-}
-
 .hamburger {
   display: none;
   background: none;
@@ -1223,7 +1203,7 @@ input.colour-swatch::-webkit-color-swatch {
   font-size: 1.4rem;
 }
 
-/* Background picker (shown to all users; only persisted for Pro owners). */
+/* Background picker. */
 .background-label {
   font-size: 1.2rem;
   color: var(--fg-colour);
@@ -1274,20 +1254,6 @@ input.colour-swatch::-webkit-color-swatch {
 
 .background-name {
   line-height: 1;
-}
-
-.background-teaser {
-  margin-top: 0.6rem;
-  font-size: 1.2rem;
-  color: var(--secondary-colour);
-  letter-spacing: 0.05em;
-}
-
-.lock-icon {
-  width: 1.4rem;
-  height: 1.4rem;
-  margin-left: 0.4rem;
-  opacity: 0.7;
 }
 
 /* The reveal order is dealt once per clock, so the control that re-deals it (showcase sheet only)
@@ -1461,8 +1427,7 @@ input.colour-swatch::-webkit-color-swatch {
 /* The landing used to get its <h2> weight from body, so every section heading
    fell back to the 15px UA default. .section-title is the one scale for the
    landing's section headings, and .section-subtitle carries the long-form copy. */
-#create,
-#pricing {
+#create {
   margin-top: 12.0rem;
   scroll-margin-top: 16.0rem;
 }
@@ -1701,159 +1666,6 @@ body.show-navbar .quick-start-stage {
   .form-group {
     flex-direction: column;
   }
-}
-
-#pricing {
-  --primary-colour: #DBB279;
-  --secondary-colour: #8E652C;
-}
-
-.pricing-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 4.0rem;
-  margin-top: 4.0rem;
-}
-
-.pricing-card {
-  background-color: var(--card-colour);
-  padding: 3.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 2.0rem;
-}
-
-.pricing-badge {
-  align-self: flex-start;
-  font-size: 1.0rem;
-  letter-spacing: 0.1rem;
-  padding: 0.4rem 1.0rem;
-  background-color: var(--secondary-colour);
-  color: white;
-}
-
-.pricing-free {
-  border-color: var(--primary-colour);
-}
-
-.pricing-pro {
-  border-color: var(--secondary-colour);
-}
-
-.pricing-price {
-  font-size: 2.4rem;
-  font-weight: bold;
-}
-
-.pricing-period {
-  font-size: 1.4rem;
-  font-weight: normal;
-}
-
-.pricing-card ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2.4rem;
-}
-
-.pricing-card li {
-  font-size: 1.4rem;
-}
-
-.pricing-card li .feature-term {
-  position: relative;
-  cursor: help;
-  text-decoration: underline dotted;
-  text-decoration-color: var(--secondary-colour);
-  text-underline-offset: 4px;
-}
-
-.feature-tooltip {
-  position: absolute;
-  top: 50%;
-  left: calc(100% + 1.2rem);
-  transform: translateY(-50%);
-  width: max-content;
-  max-width: 20rem;
-  padding: 0.8rem 1.2rem;
-  background-color: var(--border-colour);
-  color: white;
-  font-size: 1.2rem;
-  line-height: 1.5;
-  text-align: left;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.15s ease;
-  z-index: 20;
-  pointer-events: none;
-}
-
-.feature-term:hover,
-.feature-term:focus {
-  text-decoration-style: solid;
-}
-
-.feature-term:hover .feature-tooltip,
-.feature-term:focus .feature-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
-
-.pricing-card li::before {
-  content: "• ";
-  color: var(--secondary-colour);
-}
-
-.pricing-button {
-  margin-top: auto;
-}
-
-.pricing-pro .pricing-button {
-  background-color: var(--secondary-colour);
-  color: white;
-}
-
-.waitlist-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.waitlist-form .auth-button {
-  width: 100%;
-}
-
-.waitlist-features {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-}
-
-.waitlist-features li {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  font-size: 1.3rem;
-  font-weight: bold;
-  text-align: left;
-  padding: 0.4rem 0.6rem;
-  border: 0.4rem solid transparent;
-}
-
-.waitlist-feature-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
-  flex-shrink: 0;
-  background: var(--primary-colour);
-  border: 0.3rem solid var(--border-colour);
-  color: #111111;
 }
 
 .section-subtitle {
@@ -3368,15 +3180,8 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   }
 
   .navbar-content .btn-link,
-  .navbar-content .account-trigger,
-  .navbar-content .nav-live-pill {
+  .navbar-content .account-trigger {
     display: none;
-  }
-
-  .feature-tooltip {
-    top: calc(100% + 0.8rem);
-    left: -1.2rem;
-    transform: none;
   }
 
   .draft-banner-row {
@@ -3447,9 +3252,6 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
     display: inline;
   }
 
-  .pricing-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 480px) {
@@ -3475,10 +3277,6 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   .navbar-content,
   .nav-links {
     gap: 1.5rem;
-  }
-
-  .pricing-grid {
-    grid-template-columns: 1fr;
   }
 
   .stats-row {
@@ -3543,8 +3341,7 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   }
 
   #create,
-  #examples,
-  #pricing {
+  #examples {
     margin-top: 7.0rem;
     scroll-margin-top: 10.0rem;
   }
@@ -3558,7 +3355,6 @@ th.col-hydrations, td.col-hydrations { width: 24rem; min-width: 24rem; max-width
   }
 }
 .auth-button,
-.pricing-button,
 .card-action-btn,
 .share-copy-button,
 .draft-publish-button,

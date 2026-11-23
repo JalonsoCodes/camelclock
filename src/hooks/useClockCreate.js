@@ -11,8 +11,7 @@ import { track } from "@/utils/analytics";
 
 export const PENDING_KEY = "camelClock.pending";
 
-// Creates are always drafts — publishing only ever happens through the
-// checkLiveLimit() gate. Edits drop the key so they can never change status.
+// Creates are always drafts. Edits drop the key so they can never change status.
 export function buildClockPayload(values) {
     const now = new Date();
     const currentYear = now.getFullYear();

@@ -4,15 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, ExternalLink } from "lucide-react";
 import { reorderShowcases } from "@/app/admin/showcases/actions";
-
-const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
-function formatTarget(targetAt) {
-    const d = new Date(targetAt);
-    const hh = String(d.getHours()).padStart(2, "0");
-    const mm = String(d.getMinutes()).padStart(2, "0");
-    return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()} ${hh}:${mm}`;
-}
+import { formatTarget } from "@/utils/clockValues";
 
 function byOrder(a, b) {
     return a.showcase_order - b.showcase_order;
