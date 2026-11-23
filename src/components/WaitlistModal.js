@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { Bell, Infinity as InfinityIcon, EyeOff, Mountain, X } from "lucide-react";
+import { Bell, Infinity as InfinityIcon, EyeOff, Lock, X } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import useFocusTrap from "@/hooks/useFocusTrap";
 import { PRO_FEATURES } from "@/content/pricing";
@@ -11,7 +11,7 @@ import { waitlist } from "@/content/pricing";
 const FEATURE_ICONS = {
     "unlimited-clocks": InfinityIcon,
     "no-watermark": EyeOff,
-    "scenes": Mountain,
+    "backgrounds": Lock,
 };
 
 export default function WaitlistModal({

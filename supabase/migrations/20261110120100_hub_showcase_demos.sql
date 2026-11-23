@@ -1,0 +1,107 @@
+-- Demo event-hub clocks for local pitching (parkrun-style community events,
+-- venue nights, fundraisers). Ownerless showcase rows, exactly the shape the
+-- migrated showcases used: live, hydratable (the showcase trigger forces
+-- viewer_hydrates on), fixed UUIDs so re-running can never duplicate them.
+--
+-- The dates, titles and example.com links are placeholders to edit before a
+-- pitch: update the rows in the Supabase SQL editor (they are ownerless, so
+-- there is no UI edit path) or edit this migration before pushing.
+
+insert into public.clocks (
+  id,
+  title,
+  target_at,
+  intro_text,
+  celebration_message,
+  celebration_type,
+  primary_colour,
+  secondary_colour,
+  wearables,
+  boosts,
+  boost_order,
+  hydrate_count,
+  level,
+  status,
+  user_id,
+  is_showcase,
+  showcase_order,
+  clock_type,
+  location_label,
+  location_url,
+  event_description,
+  event_links
+)
+values
+  (
+    'a1b2c3d4-0001-4000-8000-000000000001',
+    'Riverside parkrun 500',
+    '2027-01-02 09:00:00+00',
+    'in',
+    '500 EVENTS! THANK YOU, RIVERSIDE!',
+    'spit',
+    '#7CB342',
+    '#33691E',
+    '["trainers", "gold_medal"]'::jsonb,
+    '[{"id": "shine"}]'::jsonb,
+    '["sparkle", "pushup", "fireworks", "rain", "jack", "sun", "sandstorm"]'::jsonb,
+    0,
+    1,
+    'live',
+    null,
+    true,
+    90,
+    'hub',
+    'Riverside Park, Lower Field',
+    'https://example.com/riverside-park-map',
+    'Our 500th Saturday morning 5k! Walk, jog, run or volunteer — every pace welcome, finish time coffee by the flagpole.',
+    '[{"label": "VOLUNTEER", "url": "https://example.com/volunteer-signup"}, {"label": "COURSE INFO", "url": "https://example.com/course-page"}, {"label": "PARKING", "url": "https://example.com/parking"}]'::jsonb
+  ),
+  (
+    'a1b2c3d4-0002-4000-8000-000000000002',
+    'Lantern Room Live Night',
+    '2026-12-18 20:00:00+00',
+    'in',
+    'DOORS OPEN — LET''S GO!',
+    'spit',
+    '#7986CB',
+    '#303F9F',
+    '["top_hat", "bowtie"]'::jsonb,
+    '[{"id": "shine"}]'::jsonb,
+    '["fireworks", "sparkle", "sun", "jack", "sandstorm", "rain", "pushup"]'::jsonb,
+    0,
+    1,
+    'live',
+    null,
+    true,
+    91,
+    'hub',
+    'The Lantern Room, 14 Harbour Street',
+    'https://example.com/lantern-room-directions',
+    'Three live acts, one tiny stage, no phones on the floor. Doors 8pm, music from 8:30 sharp.',
+    '[{"label": "SET LIST", "url": "https://example.com/set-list"}, {"label": "FIND US", "url": "https://example.com/venue-info"}]'::jsonb
+  ),
+  (
+    'a1b2c3d4-0003-4000-8000-000000000003',
+    'Harbour Toy Drive',
+    '2026-12-21 18:00:00+00',
+    'in',
+    'THE VAN IS FULL! MERRY CHRISTMAS!',
+    'spit',
+    '#EF5350',
+    '#B71C1C',
+    '["party_hat", "scarf"]'::jsonb,
+    '[{"id": "shine"}]'::jsonb,
+    '["sparkle", "sun", "fireworks", "sandstorm", "pushup", "rain", "jack"]'::jsonb,
+    0,
+    1,
+    'live',
+    null,
+    true,
+    92,
+    'hub',
+    'Harbour Community Hall',
+    'https://example.com/harbour-hall-map',
+    'Help us fill a van with toys before Christmas. Drop off new, unwrapped toys any day this week — or donate online and we''ll shop for you.',
+    '[{"label": "DONATE", "url": "https://example.com/donate"}, {"label": "WISHLIST", "url": "https://example.com/wishlist"}, {"label": "VOLUNTEER", "url": "https://example.com/sort-night"}]'::jsonb
+  )
+on conflict (id) do nothing;

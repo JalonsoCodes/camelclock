@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Check, Keyboard, Play, Save, Shuffle } from "lucide-react";
+import { Check, Keyboard, Lock, Play, Save, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
 import { supabase } from "@/lib/supabase/client";
+import { BACKGROUNDS, getBackgroundBgVar } from "@/content/backgrounds";
 import TitleField from "./builder-fields/TitleField";
 import WhenFields from "./builder-fields/WhenFields";
 import ColourField from "./builder-fields/ColourField";
@@ -26,6 +27,20 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     const [primaryColour, setPrimaryColour] = useState(initialValues?.primaryColour ?? initialClock?.primary_colour ?? "#DBB279");
     const [secondaryColour, setSecondaryColour] = useState(initialValues?.secondaryColour ?? initialClock?.secondary_colour ?? "#8E652C");
     const [selectedWearables, setSelectedWearables] = useState(initialValues?.wearables ?? initialClock?.wearables ?? []);
+    const [background, setBackground] = useState(initialValues?.background ?? initialClock?.background ?? null);
+    const [isPro, setIsPro] = useState(false);
+
+    const fetchIsPro = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_pro")
+                .eq("id", user.id)
+                .maybeSingle();
+            setIsPro(Boolean(profile?.is_pro));
+        }
+    };
 
     /* Boost equipment is not a creation option — it is earned, and equipped on the viewing page
        once the clock is live. The builder only has to carry two things: the rack a brand new
@@ -48,6 +63,16 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         document.documentElement.style.setProperty('--secondary-colour', secondaryColour);
         return () => document.documentElement.style.setProperty('--secondary-colour', '#8E652C');
     }, [secondaryColour]);
+
+    // Sync grid colour to document root for the fixed body::before grid
+    useEffect(() => {
+        if (background) {
+            document.documentElement.style.setProperty('--grid-colour', getBackgroundBgVar(background));
+        } else {
+            document.documentElement.style.removeProperty('--grid-colour');
+        }
+        return () => document.documentElement.style.removeProperty('--grid-colour');
+    }, [background]);
 
     const randomiseColours = useCallback(() => {
         const { primaryColour, secondaryColour } = randomisePalette();
@@ -78,9 +103,12 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         primaryColour,
         secondaryColour,
         wearables: selectedWearables,
+        // Non-pro users may pick a background as a teaser, but it is stripped before save so it can
+        // never be persisted to the clock.
+        background: isPro ? background : null,
         boosts: initialBoosts,
         boostOrder: initialValues?.boostOrder ?? initialClock?.boost_order,
-    }), [title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, selectedWearables, initialBoosts, initialValues, initialClock]);
+    }), [title, month, day, time, introText, celebrationMessage, primaryColour, secondaryColour, selectedWearables, background, isPro, initialBoosts, initialValues, initialClock]);
 
     const handleSave = (e) => {
         e.preventDefault();
@@ -97,6 +125,7 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
         setPrimaryColour(pending.primaryColour ?? "#DBB279");
         setSecondaryColour(pending.secondaryColour ?? "#8E652C");
         setSelectedWearables(pending.wearables ?? []);
+        setBackground(pending.background ?? null);
         await submit(pending);
     };
 
@@ -120,24 +149,29 @@ export default function CamelClockBuilder({ initialValues = null, clockId = null
     useEffect(() => {
         // initialValues is stable; run-once mount behavior is intentional
         resumePendingIfPresent();
+        // Read is_pro on mount so the background picker/teaser is correct even when the user is
+        // already signed in (onAuthStateChange does not fire for an existing session).
+        fetchIsPro();
     }, []);
     /* eslint-enable react-hooks/set-state-in-effect, react-hooks/exhaustive-deps */
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event) => {
             if (event === "SIGNED_IN") {
                 resumePendingIfPresent();
+                await fetchIsPro();
+            } else if (event === "SIGNED_OUT") {
+                setIsPro(false);
             }
         });
 
         return () => subscription.unsubscribe();
-        // Auto-save the stashed design the moment a session arrives, whichever tab completes sign-in
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     return (
         <div className="camel-builder">
-            <div className="canvas-wrapper nbtc">
+            <div className="canvas-wrapper nbtc" style={{ backgroundColor: isPro && background ? getBackgroundBgVar(background) : undefined }}>
                 <CamelClock ref={clockRef} title={title} month={month} day={day} time={time} introText={introText} celebrationMessage={celebrationMessage} primaryColour={primaryColour} secondaryColour={secondaryColour} celebrationType="spit" wearables={selectedWearables} boosts={initialBoosts} />
             </div>
 
@@ -241,6 +275,33 @@ const isSelected = selectedWearables.includes(item.id);
                             </div>
                         ))}
                     </div>
+                </div>
+
+                <div className="form-group">
+                    <label className="background-label">BACKGROUND
+                        {!isPro && (
+                            <Lock className="lock-icon" aria-hidden="true" />
+                        )}
+                    </label>
+                    <div className="background-picker nbtc">
+                        {BACKGROUNDS.map((b) => (
+                            <button
+                                key={b.id}
+                                type="button"
+                                className={`background-option${background === b.id ? " selected" : ""}`}
+                                title={b.label}
+                                onClick={() => setBackground(background === b.id ? null : b.id)}
+                            >
+                                <span className="background-swatch" style={{ backgroundColor: getBackgroundBgVar(b.id) }} aria-hidden="true" />
+                                <span className="background-name">{b.label}</span>
+                            </button>
+                        ))}
+                    </div>
+                    {!isPro && background && (
+                        <p className="background-teaser">
+                            Background is a Pro feature — upgrade to save it to your clock.
+                        </p>
+                    )}
                 </div>
 
                 <button

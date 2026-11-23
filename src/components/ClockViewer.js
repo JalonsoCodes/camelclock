@@ -14,6 +14,7 @@ import EmbedSiteModal from "./EmbedSiteModal";
 import AuthModal from "./auth/AuthModal";
 import { formatClockTime, formatFinishRow } from "@/utils/clockValues";
 import { MAX_LIVE_CLOCKS, checkLiveLimit } from "@/utils/liveLimit";
+import { getBackgroundBgVar } from "@/content/backgrounds";
 import WaitlistModal from "./WaitlistModal";
 import { supabase } from "@/lib/supabase/client";
 import { refreshLiveCount } from "@/utils/liveCountEvents";
@@ -28,7 +29,7 @@ import { track } from "@/utils/analytics";
 
 const CATEGORY_LABEL = { exercise: "EXERCISE", aura: "AURA", weather: "WEATHER" };
 
-export default function ClockViewer({ clock, isOwner: initialOwner, entitlements = {}, creatorUsername = null, showTour = false }) {
+export default function ClockViewer({ clock, isOwner: initialOwner, entitlements = {}, creatorUsername = null, showTour = false, isPro = false }) {
     const router = useRouter();
     const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://camelclock.com").replace(/\/+$/, "");
     const [isOwner, setIsOwner] = useState(initialOwner);
@@ -151,6 +152,16 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
         const id = setTimeout(() => reloadPolls(), 1500);
         return () => clearTimeout(id);
     }, [pollLevel, reloadPolls]);
+
+    // Sync grid colour to document root for the fixed body::before grid
+    useEffect(() => {
+        if (isPro && clock.background) {
+            document.documentElement.style.setProperty('--grid-colour', getBackgroundBgVar(clock.background));
+        } else {
+            document.documentElement.style.removeProperty('--grid-colour');
+        }
+        return () => document.documentElement.style.removeProperty('--grid-colour');
+    }, [isPro, clock.background]);
 
     // The tour tells the owner they can hydrate by clicking the camel too. The camel and the rail
     // button both call beginHydrate, so wrap the camel's handler to record that this path was used.
@@ -461,7 +472,7 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                     </div>
                 )}
                 <div className="viewer-center">
-                    <div className="public-clock-card nbtc" ref={tourCardRef}>
+                    <div className="public-clock-card nbtc" ref={tourCardRef} style={{ backgroundColor: isPro && clock.background ? getBackgroundBgVar(clock.background) : undefined }}>
                         {isOwner && (
                             <>
                                 <Link href={`/edit/${clock.id}`} className="edit-fab nbtc" title="Edit this clock">
@@ -503,6 +514,9 @@ export default function ClockViewer({ clock, isOwner: initialOwner, entitlements
                             dropLeft={dropLeft}
                             hideHydrateNote
                             finishRowText={formatFinishRow(target)}
+                            createdAt={clock.created_at}
+                            showEndSummary
+                            onShare={() => { setShareMode("live"); setShareOpen(true); }}
                             levelBannerRef={tourLevelRef}
                             titleRef={tourTitleRef}
                             levelLabelRef={tourLevelLabelRef}

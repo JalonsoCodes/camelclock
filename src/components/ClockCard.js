@@ -12,6 +12,7 @@ import { levelFromCount } from "@/utils/boost";
 import { checkLiveLimit } from "@/utils/liveLimit";
 import { supabase } from "@/lib/supabase/client";
 import { track } from "@/utils/analytics";
+import { getBackgroundBgVar } from "@/content/backgrounds";
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -112,7 +113,7 @@ export default function ClockCard({ clock, onDeleted, owned = true, hydrated = f
     };
 
     return (
-        <div className={`clock-card nbtc status-${status}${hydrated && !owned ? " hydrated-card" : ""}${deleting ? " clock-card-deleting" : ""}`}>
+        <div className={`clock-card nbtc status-${status}${hydrated && !owned ? " hydrated-card" : ""}${deleting ? " clock-card-deleting" : ""}`} style={{ backgroundColor: clock.background ? getBackgroundBgVar(clock.background) : undefined }}>
             <Link href={`/clock/${clock.id}`} className="clock-card-link">
                 <CamelClock
                     title={clock.title}

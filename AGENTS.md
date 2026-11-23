@@ -32,7 +32,8 @@
 - **Owner-only writes.** Policies enforce `user_id = auth.uid()`. `hydrations` has no client write/delete (hydration permanent).
 - **Service role required** for `deleteAccount`. `SECURITY DEFINER` functions must pin `search_path`.
 - **Critical RPCs:** `hydrate_clock()` only writer of `hydrate_count`/`level`; `get_clock_hydrate_stats()` never exposes email/user_id; `clock_reports` INSERT-only for clients (admin RPCs only for reads/resolution); `clock_polls`/`clock_poll_votes` have no client write path.
-- **Migrations:** Apply with `npx supabase db push`. Read newest migration first. Never guess columns.
+- **Migrations:** Read newest migration first. Never guess columns. Apply with `npx supabase db push`.
+- **Validate migrations before pushing:** `npx supabase start` → `npx supabase db reset` (replays full chain on fresh local DB) → `npx supabase db lint` (squawk) → `npx supabase test db` (pgTAP, files in `supabase/tests/`) → `npx supabase db push --dry-run` → `npx supabase db push`. `db reset` only proves fresh-DB behaviour, so additive migrations are safe but destructive ones need manual migration testing. If the dashboard was ever edited directly, run `npx supabase db pull` first.
 
 ## Key Gotchas
 - **Embeds:** Only `/clock/[id]/embed` frameable. Theme/card/size via URL params only (no on-screen toggle). Embed camel opens viewer in new tab (no in-place hydrate).

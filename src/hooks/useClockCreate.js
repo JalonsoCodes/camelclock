@@ -29,6 +29,7 @@ export function buildClockPayload(values) {
         celebration_message: cleanText(values.celebrationMessage),
         primary_colour: values.primaryColour,
         secondary_colour: values.secondaryColour,
+        background: values.background ?? null,
         celebration_type: "spit",
         wearables: values.wearables ?? [],
         boosts: values.boosts ?? [],

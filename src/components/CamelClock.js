@@ -99,9 +99,12 @@ function getPreviewLevels(secondsRemaining) {
     return getLevels(now, target);
 }
 
-export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, ctaIcon = null, ctaLabel = "Hydrate this CamelClock", revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, levelBannerRef = null, titleRef = null, levelLabelRef = null, camelArtRef = null, onAnimatingChange = null, ref }) {
+export default function CamelClock({ title, month, day, time, targetAt, introText, celebrationMessage, primaryColour, secondaryColour, _celebrationType, wearables = [], boosts = [], showWatermark = false, watermarkExternal = false, watermarkHref = null, titleHref = null, titleExternal = false, viewerHydrates = false, hydrateCount = 0, level = 1, isOwner = false, dropLeft = 0, onHydrateClick = null, ctaIcon = null, ctaLabel = "Hydrate this CamelClock", revealProgress, wearableRevealProgress, hideHydrateNote = false, hideWatermarkLink = false, hideLevelBanner = false, boostCadence = true, finishRowText = null, createdAt = null, showEndSummary = false, onShare = null, levelBannerRef = null, titleRef = null, levelLabelRef = null, camelArtRef = null, onAnimatingChange = null, ref }) {
     const containerRef = useRef(null);
     const canvasRef = useRef(null);
+    const confettiRef = useRef(null);
+    const confettiRafRef = useRef(null);
+    const mountedAtRef = useRef(0);
     const phaseRef = useRef("counting");
     const revealPixelsRef = useRef(null);
     const wearableRevealPixelsRef = useRef(null);
@@ -216,6 +219,10 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
     }, [phase]);
 
     useEffect(() => {
+        mountedAtRef.current = Date.now();
+    }, []);
+
+    useEffect(() => {
         revealActiveRef.current = revealProgress != null && revealProgress > 0 && revealProgress < 1;
         if (revealProgress === 0) revealPixelsRef.current = null;
     }, [revealProgress]);
@@ -315,7 +322,11 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
 
             if (phaseRef.current === "counting") {
                 if (now >= target) {
-                    setPhase("celebrating");
+                    /* A clock that is already past its target when the page opens gets the calm
+                       end state straight away. The full finale only plays when we are present at
+                       the moment it crosses zero, so a months-old clock never bursts on load. */
+                    const endedOnArrival = targetAt && mountedAtRef.current >= new Date(targetAt).getTime();
+                    setPhase(endedOnArrival ? "celebrated" : "celebrating");
                 } else {
                     setLevels(getLevels(now, target));
                     setEyeFrame(prev => (prev + 1) % 4);
@@ -393,6 +404,84 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
             clearTimeout(timeoutId);
         };
     }, [phase]);
+
+    /* A burst of pixel confetti over the camel when the finale plays. It is fire-and-forget: the
+       run drives its own rAF and fades out, so it keeps falling into the settled end state rather
+       than being cut off when the phase changes. Only the unmount cleanup cancels it. */
+    useEffect(() => {
+        if (phase !== "celebrating") return;
+        const canvas = confettiRef.current;
+        const parent = canvas?.parentElement;
+        if (!canvas || !parent) return;
+        if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+        if (confettiRafRef.current) cancelAnimationFrame(confettiRafRef.current);
+
+        const rect = parent.getBoundingClientRect();
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
+        const width = Math.max(1, rect.width);
+        const height = Math.max(1, rect.height);
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        const fg = getComputedStyle(document.documentElement).getPropertyValue("--fg-colour").trim() || "#ffffff";
+        const palette = [primaryColour, secondaryColour, fg];
+        const originX = width / 2;
+        const originY = height * 0.42;
+        const particles = [];
+        for (let i = 0; i < 140; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = 3 + Math.random() * 9;
+            particles.push({
+                x: originX,
+                y: originY,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed - 4,
+                size: 4 + Math.round(Math.random() * 4),
+                colour: palette[(Math.random() * palette.length) | 0],
+                life: 0,
+                ttl: 70 + Math.random() * 50,
+                rot: Math.random() * Math.PI,
+                vr: (Math.random() - 0.5) * 0.3,
+            });
+        }
+
+        const step = () => {
+            ctx.clearRect(0, 0, width, height);
+            let alive = false;
+            for (const p of particles) {
+                p.life += 1;
+                if (p.life > p.ttl) continue;
+                alive = true;
+                p.vy += 0.28;
+                p.vx *= 0.99;
+                p.x += p.vx;
+                p.y += p.vy;
+                p.rot += p.vr;
+                ctx.globalAlpha = Math.max(0, 1 - p.life / p.ttl);
+                ctx.fillStyle = p.colour;
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.rot);
+                ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                ctx.restore();
+            }
+            ctx.globalAlpha = 1;
+            if (alive) {
+                confettiRafRef.current = requestAnimationFrame(step);
+            } else {
+                confettiRafRef.current = null;
+            }
+        };
+        confettiRafRef.current = requestAnimationFrame(step);
+    }, [phase, primaryColour, secondaryColour]);
+
+    useEffect(() => () => {
+        if (confettiRafRef.current) cancelAnimationFrame(confettiRafRef.current);
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -635,6 +724,21 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
 
     const revealT = revealProgress != null ? Math.max(0, Math.min(1, revealProgress)) : 1;
 
+    const endCardVisible = showEndSummary && phase === "celebrated";
+    let durationValue = null;
+    if (createdAt && targetAt) {
+        const spanMs = new Date(targetAt).getTime() - new Date(createdAt).getTime();
+        if (spanMs > 0) {
+            const days = Math.round(spanMs / 86400000);
+            if (days >= 1) {
+                durationValue = `${days} DAY${days === 1 ? "" : "S"}`;
+            } else {
+                const hours = Math.max(1, Math.round(spanMs / 3600000));
+                durationValue = `${hours} HR${hours === 1 ? "" : "S"}`;
+            }
+        }
+    }
+
     return (
         <div ref={containerRef} className={`${styles.clockContainer}${phase === "celebrated" ? ` ${styles.celebrated}` : ""}`} style={{ "--clock-primary": primaryColour, "--clock-secondary": secondaryColour, "--clock-scale": displayScale, "--reveal": revealT }}>
             <h2 ref={titleRef} className={styles.clockTitle}>
@@ -673,6 +777,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                             />
                         ) : null
                     )}
+                    <canvas ref={confettiRef} className={styles.confettiCanvas} aria-hidden="true" />
                     {phase === "celebrated" && celebrationMessage && (
                         <div className={styles.completionMessage}>{celebrationMessage}</div>
                     )}
@@ -715,14 +820,45 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                 </div>
             </div>
 
+            {endCardVisible && (
+                <div className="clock-end-card">
+                    <div className="clock-end-stats">
+                        <div className="clock-end-stat">
+                            <span className="clock-end-stat-value">{hydrateCount}</span>
+                            <span className="clock-end-stat-label">HYDRATIONS</span>
+                        </div>
+                        <div className="clock-end-stat">
+                            <span className="clock-end-stat-value">{quest.level}</span>
+                            <span className="clock-end-stat-label">LEVEL REACHED</span>
+                        </div>
+                        {durationValue && (
+                            <div className="clock-end-stat">
+                                <span className="clock-end-stat-value">{durationValue}</span>
+                                <span className="clock-end-stat-label">COUNTED DOWN</span>
+                            </div>
+                        )}
+                    </div>
+                    <div className="clock-end-actions">
+                        {onShare && (
+                            <button type="button" className="btn-link btn-secondary" onClick={onShare}>
+                                SHARE THIS CLOCK
+                            </button>
+                        )}
+                        <Link href="/" className="btn-link">
+                            CREATE YOUR OWN
+                        </Link>
+                    </div>
+                </div>
+            )}
+
             {phase === "celebrated" && (
                 <button className={styles.replayButton} onClick={handleReplay}>
                     <RotateCcw aria-hidden="true" />
-                    Replay completion animation
+                    Watch again
                 </button>
             )}
 
-            {!hideLevelBanner && viewerHydrates && (
+            {!hideLevelBanner && viewerHydrates && !endCardVisible && (
                 <div ref={levelBannerRef} className={styles.levelBanner} style={{ "--per-row": questPerRow }}>
                     <span ref={levelLabelRef} className={styles.levelBannerLabel}>LEVEL {quest.level}</span>
                     <span className={styles.levelTrackWrap} role="presentation">
@@ -739,7 +875,7 @@ export default function CamelClock({ title, month, day, time, targetAt, introTex
                 </div>
             )}
 
-            {showWatermark && (
+            {showWatermark && !endCardVisible && (
                 <div className={styles.hydrateWatermarkWrap}>
                     {viewerHydrates && !hideHydrateNote && isOwner && (() => {
                         const note = hydrateNoteText({ dropLeft });

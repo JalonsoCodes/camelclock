@@ -55,9 +55,9 @@ export const PRO_FEATURES = [
         detail: "Your clocks and embeds drop the 'Create your CamelClock' credit.",
     },
     {
-        id: "scenes",
-        label: "Background Scenes",
-        detail: "Place your camel in a scene instead of on a plain background.",
+        id: "backgrounds",
+        label: "Backgrounds",
+        detail: "Choose a background colour for your clock instead of plain white.",
     },
 ];
 

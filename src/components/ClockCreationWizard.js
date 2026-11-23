@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Shuffle } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Lock, Shuffle } from "lucide-react";
 import CamelClock from "./CamelClock";
 import AuthModal from "./auth/AuthModal";
 import TitleField from "./builder-fields/TitleField";
@@ -13,7 +13,9 @@ import { randomisePalette } from "@/utils/colour";
 import { getNextTarget } from "@/utils/time";
 import { formatFinishRow } from "@/utils/clockValues";
 import { quickStart } from "@/content/landing";
+import { BACKGROUNDS, getBackgroundBgVar } from "@/content/backgrounds";
 import { track } from "@/utils/analytics";
+import { supabase } from "@/lib/supabase/client";
 
 const SLIDE_MS = 260;
 const DEFAULT_BOOSTS = [{ id: "shine" }];
@@ -31,12 +33,14 @@ const BLANK_VALUES = {
     primaryColour: quickStart.defaults.primaryColour,
     secondaryColour: quickStart.defaults.secondaryColour,
     wearables: quickStart.defaults.wearables,
+    background: null,
 };
 
 export default function ClockCreationWizard({ heading = null, subheading = null }) {
     const { isSaving, statusMessage, authOpen, closeAuth, submit } = useClockCreate();
 
     const [values, setValues] = useState(BLANK_VALUES);
+    const [isPro, setIsPro] = useState(false);
     const [step, setStep] = useState(0);
     const [leaving, setLeaving] = useState(null);
     const [direction, setDirection] = useState(1);
@@ -97,14 +101,33 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
         });
     }, [step]);
 
+    const fetchIsPro = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("is_pro")
+                .eq("id", user.id)
+                .maybeSingle();
+            setIsPro(Boolean(profile?.is_pro));
+        }
+    };
+
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
+        fetchIsPro();
+    }, []);
+    /* eslint-enable react-hooks/set-state-in-effect */
+
     const randomiseColours = useCallback(() => {
         setValues((prev) => ({ ...prev, ...randomisePalette() }));
     }, []);
 
     const currentValues = useCallback(() => ({
         ...values,
+        background: isPro ? values.background : null,
         boosts: DEFAULT_BOOSTS,
-    }), [values]);
+    }), [values, isPro]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -186,6 +209,32 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
                         <ColourField label="PRIMARY COLOUR" idPrefix="qs-primary" value={values.primaryColour} onChange={(v) => setField("primaryColour", v)} />
                         <ColourField label="SECONDARY COLOUR" idPrefix="qs-secondary" value={values.secondaryColour} onChange={(v) => setField("secondaryColour", v)} />
                     </div>
+                    <div className="form-group">
+                        <label className="background-label">BACKGROUND
+                            {!isPro && (
+                                <Lock className="lock-icon" aria-hidden="true" />
+                            )}
+                        </label>
+                        <div className="background-picker nbtc">
+                            {BACKGROUNDS.map((b) => (
+                                <button
+                                    key={b.id}
+                                    type="button"
+                                    className={`background-option${values.background === b.id ? " selected" : ""}`}
+                                    title={b.label}
+                                    onClick={() => setField("background", values.background === b.id ? null : b.id)}
+                                >
+                                    <span className="background-swatch" style={{ backgroundColor: getBackgroundBgVar(b.id) }} aria-hidden="true" />
+                                    <span className="background-name">{b.label}</span>
+                                </button>
+                            ))}
+                        </div>
+                        {!isPro && values.background && (
+                            <p className="background-teaser">
+                                Background is a Pro feature — upgrade to save it to your clock.
+                            </p>
+                        )}
+                    </div>
                     <button className="randomise-button" type="button" title="Randomise the colour palette" onClick={randomiseColours}>
                         <Shuffle aria-hidden="true" />
                         Randomise colours
@@ -225,7 +274,7 @@ export default function ClockCreationWizard({ heading = null, subheading = null 
     };
 
     const preview = (
-        <div className="quick-start-preview nbtc">
+        <div className="quick-start-preview nbtc" style={{ backgroundColor: values.background ? getBackgroundBgVar(values.background) : undefined }}>
             <CamelClock
                 title={values.title}
                 month={values.month}
